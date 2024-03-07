@@ -66,6 +66,7 @@ func (s syncExecContext) run(ctx context.Context, args []string) error {
 		running:         make(chan struct{}, 8),
 		requestBucket:   make(chan struct{}, 8),
 		limits:          values,
+		updated:         make(map[string]struct{}),
 	}
 	go hub.limiter(ctx)
 
@@ -75,8 +76,8 @@ func (s syncExecContext) run(ctx context.Context, args []string) error {
 		if len(parts) != 2 {
 			log.Printf("invalid repo syntax: %q (must be <owner>/<repo>)", arg)
 		}
-		hub.runWait()
-		go hub.fetchRepository(ctx, parts[0], parts[1])
+
+		hub.fetchRepository(ctx, parts[0], parts[1])
 	}
 
 	// wait for all goros to finish
@@ -99,6 +100,10 @@ type syncHub struct {
 	limits rateLimitValues
 	// only at most 1 reader, so RWMutex isn't needed
 	limitsMu sync.Mutex
+
+	// list of updated resources, de-duplicating updates.
+	updated   map[string]struct{}
+	updatedMu sync.Mutex
 }
 
 type rateLimitValues struct {
@@ -156,6 +161,17 @@ func (s *syncHub) recover() {
 	}
 	s.wg.Done()
 	<-s.running
+}
+
+func (s *syncHub) shouldFetch(key string) (should bool) {
+	s.updatedMu.Lock()
+	_, ok := s.updated[key]
+	if !ok {
+		s.updated[key] = struct{}{}
+		should = true
+	}
+	s.updatedMu.Unlock()
+	return
 }
 
 // report adds an error to s
@@ -230,6 +246,18 @@ func parseLimits(resp *http.Response) (vals rateLimitValues, err error) {
 }
 
 func (s *syncHub) fetchRepository(ctx context.Context, owner, repo string) {
+	// determine if we should fetch the repository, or it's already been updated
+	keyVal := fmt.Sprintf("/repos/%s/%s", owner, repo)
+	if !s.shouldFetch(keyVal) {
+		return
+	}
+
+	// wait to run goroutine, and execute.
+	s.runWait()
+	go s._fetchRepository(ctx, owner, repo)
+}
+
+func (s *syncHub) _fetchRepository(ctx context.Context, owner, repo string) {
 	defer s.recover()
 
 	var r ent.Repository
