@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/user"
 )
 
 // Repository is the model entity for the Repository schema.
@@ -154,11 +156,11 @@ type Repository struct {
 	// Visibility holds the value of the "visibility" field.
 	Visibility repository.Visibility `json:"visibility,omitempty"`
 	// PushedAt holds the value of the "pushed_at" field.
-	PushedAt string `json:"pushed_at,omitempty"`
+	PushedAt time.Time `json:"pushed_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt string `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt string `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// SubscribersCount holds the value of the "subscribers_count" field.
 	SubscribersCount int `json:"subscribers_count,omitempty"`
 	// NetworkCount holds the value of the "network_count" field.
@@ -168,8 +170,32 @@ type Repository struct {
 	// OpenIssues holds the value of the "open_issues" field.
 	OpenIssues int `json:"open_issues,omitempty"`
 	// Watchers holds the value of the "watchers" field.
-	Watchers     int `json:"watchers,omitempty"`
+	Watchers int `json:"watchers,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the RepositoryQuery when eager-loading is set.
+	Edges        RepositoryEdges `json:"edges"`
+	user_repos   *int
 	selectValues sql.SelectValues
+}
+
+// RepositoryEdges holds the relations/edges for other nodes in the graph.
+type RepositoryEdges struct {
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// OwnerOrErr returns the Owner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RepositoryEdges) OwnerOrErr() (*User, error) {
+	if e.Owner != nil {
+		return e.Owner, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "owner"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -183,8 +209,12 @@ func (*Repository) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case repository.FieldID, repository.FieldForksCount, repository.FieldStargazersCount, repository.FieldWatchersCount, repository.FieldSize, repository.FieldOpenIssuesCount, repository.FieldSubscribersCount, repository.FieldNetworkCount, repository.FieldForks, repository.FieldOpenIssues, repository.FieldWatchers:
 			values[i] = new(sql.NullInt64)
-		case repository.FieldNodeID, repository.FieldName, repository.FieldFullName, repository.FieldHTMLURL, repository.FieldDescription, repository.FieldURL, repository.FieldArchiveURL, repository.FieldAssigneesURL, repository.FieldBlobsURL, repository.FieldBranchesURL, repository.FieldCollaboratorsURL, repository.FieldCommentsURL, repository.FieldCommitsURL, repository.FieldCompareURL, repository.FieldContentsURL, repository.FieldContributorsURL, repository.FieldDeploymentsURL, repository.FieldDownloadsURL, repository.FieldEventsURL, repository.FieldForksURL, repository.FieldGitCommitsURL, repository.FieldGitRefsURL, repository.FieldGitTagsURL, repository.FieldGitURL, repository.FieldIssueCommentURL, repository.FieldIssueEventsURL, repository.FieldIssuesURL, repository.FieldKeysURL, repository.FieldLabelsURL, repository.FieldLanguagesURL, repository.FieldMergesURL, repository.FieldMilestonesURL, repository.FieldNotificationsURL, repository.FieldPullsURL, repository.FieldReleasesURL, repository.FieldSSHURL, repository.FieldStargazersURL, repository.FieldStatusesURL, repository.FieldSubscribersURL, repository.FieldSubscriptionURL, repository.FieldTagsURL, repository.FieldTeamsURL, repository.FieldTreesURL, repository.FieldCloneURL, repository.FieldMirrorURL, repository.FieldHooksURL, repository.FieldSvnURL, repository.FieldHomepage, repository.FieldLanguage, repository.FieldDefaultBranch, repository.FieldVisibility, repository.FieldPushedAt, repository.FieldCreatedAt, repository.FieldUpdatedAt:
+		case repository.FieldNodeID, repository.FieldName, repository.FieldFullName, repository.FieldHTMLURL, repository.FieldDescription, repository.FieldURL, repository.FieldArchiveURL, repository.FieldAssigneesURL, repository.FieldBlobsURL, repository.FieldBranchesURL, repository.FieldCollaboratorsURL, repository.FieldCommentsURL, repository.FieldCommitsURL, repository.FieldCompareURL, repository.FieldContentsURL, repository.FieldContributorsURL, repository.FieldDeploymentsURL, repository.FieldDownloadsURL, repository.FieldEventsURL, repository.FieldForksURL, repository.FieldGitCommitsURL, repository.FieldGitRefsURL, repository.FieldGitTagsURL, repository.FieldGitURL, repository.FieldIssueCommentURL, repository.FieldIssueEventsURL, repository.FieldIssuesURL, repository.FieldKeysURL, repository.FieldLabelsURL, repository.FieldLanguagesURL, repository.FieldMergesURL, repository.FieldMilestonesURL, repository.FieldNotificationsURL, repository.FieldPullsURL, repository.FieldReleasesURL, repository.FieldSSHURL, repository.FieldStargazersURL, repository.FieldStatusesURL, repository.FieldSubscribersURL, repository.FieldSubscriptionURL, repository.FieldTagsURL, repository.FieldTeamsURL, repository.FieldTreesURL, repository.FieldCloneURL, repository.FieldMirrorURL, repository.FieldHooksURL, repository.FieldSvnURL, repository.FieldHomepage, repository.FieldLanguage, repository.FieldDefaultBranch, repository.FieldVisibility:
 			values[i] = new(sql.NullString)
+		case repository.FieldPushedAt, repository.FieldCreatedAt, repository.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
+		case repository.ForeignKeys[0]: // user_repos
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -617,22 +647,22 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 				r.Visibility = repository.Visibility(value.String)
 			}
 		case repository.FieldPushedAt:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field pushed_at", values[i])
 			} else if value.Valid {
-				r.PushedAt = value.String
+				r.PushedAt = value.Time
 			}
 		case repository.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				r.CreatedAt = value.String
+				r.CreatedAt = value.Time
 			}
 		case repository.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				r.UpdatedAt = value.String
+				r.UpdatedAt = value.Time
 			}
 		case repository.FieldSubscribersCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -664,6 +694,13 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				r.Watchers = int(value.Int64)
 			}
+		case repository.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_repos", value)
+			} else if value.Valid {
+				r.user_repos = new(int)
+				*r.user_repos = int(value.Int64)
+			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
 		}
@@ -675,6 +712,11 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (r *Repository) Value(name string) (ent.Value, error) {
 	return r.selectValues.Get(name)
+}
+
+// QueryOwner queries the "owner" edge of the Repository entity.
+func (r *Repository) QueryOwner() *UserQuery {
+	return NewRepositoryClient(r.config).QueryOwner(r)
 }
 
 // Update returns a builder for updating this Repository.
@@ -905,13 +947,13 @@ func (r *Repository) String() string {
 	builder.WriteString(fmt.Sprintf("%v", r.Visibility))
 	builder.WriteString(", ")
 	builder.WriteString("pushed_at=")
-	builder.WriteString(r.PushedAt)
+	builder.WriteString(r.PushedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(r.CreatedAt)
+	builder.WriteString(r.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(r.UpdatedAt)
+	builder.WriteString(r.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("subscribers_count=")
 	builder.WriteString(fmt.Sprintf("%v", r.SubscribersCount))

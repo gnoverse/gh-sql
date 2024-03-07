@@ -166,3 +166,76 @@ func (ruo *RepositoryUpdateOne) CopyRepository(input *Repository) *RepositoryUpd
 	ruo.SetWatchers(input.Watchers)
 	return ruo
 }
+
+// CopyUser allows to create a new User copying the existing
+// values of input.
+func (uc *UserCreate) CopyUser(input *User) *UserCreate {
+	uc.SetID(input.ID)
+	uc.SetLogin(input.Login)
+	uc.SetNodeID(input.NodeID)
+	uc.SetAvatarURL(input.AvatarURL)
+	uc.SetGravatarID(input.GravatarID)
+	uc.SetURL(input.URL)
+	uc.SetHTMLURL(input.HTMLURL)
+	uc.SetFollowersURL(input.FollowersURL)
+	uc.SetFollowingURL(input.FollowingURL)
+	uc.SetGistsURL(input.GistsURL)
+	uc.SetStarredURL(input.StarredURL)
+	uc.SetSubscriptionsURL(input.SubscriptionsURL)
+	uc.SetOrganizationsURL(input.OrganizationsURL)
+	uc.SetReposURL(input.ReposURL)
+	uc.SetEventsURL(input.EventsURL)
+	uc.SetReceivedEventsURL(input.ReceivedEventsURL)
+	uc.SetType(input.Type)
+	uc.SetSiteAdmin(input.SiteAdmin)
+	uc.SetName(input.Name)
+	uc.SetCompany(input.Company)
+	uc.SetBlog(input.Blog)
+	uc.SetLocation(input.Location)
+	uc.SetEmail(input.Email)
+	uc.SetHireable(input.Hireable)
+	uc.SetBio(input.Bio)
+	uc.SetPublicRepos(input.PublicRepos)
+	uc.SetPublicGists(input.PublicGists)
+	uc.SetFollowers(input.Followers)
+	uc.SetFollowing(input.Following)
+	uc.SetCreatedAt(input.CreatedAt)
+	uc.SetUpdatedAt(input.UpdatedAt)
+	return uc
+}
+
+// CopyUser allows to update a User copying the existing
+// values of input.
+func (uuo *UserUpdateOne) CopyUser(input *User) *UserUpdateOne {
+	uuo.SetLogin(input.Login)
+	uuo.SetNodeID(input.NodeID)
+	uuo.SetAvatarURL(input.AvatarURL)
+	uuo.SetGravatarID(input.GravatarID)
+	uuo.SetURL(input.URL)
+	uuo.SetHTMLURL(input.HTMLURL)
+	uuo.SetFollowersURL(input.FollowersURL)
+	uuo.SetFollowingURL(input.FollowingURL)
+	uuo.SetGistsURL(input.GistsURL)
+	uuo.SetStarredURL(input.StarredURL)
+	uuo.SetSubscriptionsURL(input.SubscriptionsURL)
+	uuo.SetOrganizationsURL(input.OrganizationsURL)
+	uuo.SetReposURL(input.ReposURL)
+	uuo.SetEventsURL(input.EventsURL)
+	uuo.SetReceivedEventsURL(input.ReceivedEventsURL)
+	uuo.SetType(input.Type)
+	uuo.SetSiteAdmin(input.SiteAdmin)
+	uuo.SetName(input.Name)
+	uuo.SetCompany(input.Company)
+	uuo.SetBlog(input.Blog)
+	uuo.SetLocation(input.Location)
+	uuo.SetEmail(input.Email)
+	uuo.SetHireable(input.Hireable)
+	uuo.SetBio(input.Bio)
+	uuo.SetPublicRepos(input.PublicRepos)
+	uuo.SetPublicGists(input.PublicGists)
+	uuo.SetFollowers(input.Followers)
+	uuo.SetFollowing(input.Following)
+	uuo.SetCreatedAt(input.CreatedAt)
+	uuo.SetUpdatedAt(input.UpdatedAt)
+	return uuo
+}

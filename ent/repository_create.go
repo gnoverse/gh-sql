@@ -6,11 +6,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/user"
 )
 
 // RepositoryCreate is the builder for creating a Repository entity.
@@ -462,20 +464,20 @@ func (rc *RepositoryCreate) SetVisibility(r repository.Visibility) *RepositoryCr
 }
 
 // SetPushedAt sets the "pushed_at" field.
-func (rc *RepositoryCreate) SetPushedAt(s string) *RepositoryCreate {
-	rc.mutation.SetPushedAt(s)
+func (rc *RepositoryCreate) SetPushedAt(t time.Time) *RepositoryCreate {
+	rc.mutation.SetPushedAt(t)
 	return rc
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (rc *RepositoryCreate) SetCreatedAt(s string) *RepositoryCreate {
-	rc.mutation.SetCreatedAt(s)
+func (rc *RepositoryCreate) SetCreatedAt(t time.Time) *RepositoryCreate {
+	rc.mutation.SetCreatedAt(t)
 	return rc
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rc *RepositoryCreate) SetUpdatedAt(s string) *RepositoryCreate {
-	rc.mutation.SetUpdatedAt(s)
+func (rc *RepositoryCreate) SetUpdatedAt(t time.Time) *RepositoryCreate {
+	rc.mutation.SetUpdatedAt(t)
 	return rc
 }
 
@@ -513,6 +515,25 @@ func (rc *RepositoryCreate) SetWatchers(i int) *RepositoryCreate {
 func (rc *RepositoryCreate) SetID(i int) *RepositoryCreate {
 	rc.mutation.SetID(i)
 	return rc
+}
+
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (rc *RepositoryCreate) SetOwnerID(id int) *RepositoryCreate {
+	rc.mutation.SetOwnerID(id)
+	return rc
+}
+
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
+func (rc *RepositoryCreate) SetNillableOwnerID(id *int) *RepositoryCreate {
+	if id != nil {
+		rc = rc.SetOwnerID(*id)
+	}
+	return rc
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (rc *RepositoryCreate) SetOwner(u *User) *RepositoryCreate {
+	return rc.SetOwnerID(u.ID)
 }
 
 // Mutation returns the RepositoryMutation object of the builder.
@@ -1076,15 +1097,15 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		_node.Visibility = value
 	}
 	if value, ok := rc.mutation.PushedAt(); ok {
-		_spec.SetField(repository.FieldPushedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldPushedAt, field.TypeTime, value)
 		_node.PushedAt = value
 	}
 	if value, ok := rc.mutation.CreatedAt(); ok {
-		_spec.SetField(repository.FieldCreatedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := rc.mutation.UpdatedAt(); ok {
-		_spec.SetField(repository.FieldUpdatedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	if value, ok := rc.mutation.SubscribersCount(); ok {
@@ -1106,6 +1127,23 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 	if value, ok := rc.mutation.Watchers(); ok {
 		_spec.SetField(repository.FieldWatchers, field.TypeInt, value)
 		_node.Watchers = value
+	}
+	if nodes := rc.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   repository.OwnerTable,
+			Columns: []string{repository.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_repos = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -2030,7 +2068,7 @@ func (u *RepositoryUpsert) UpdateVisibility() *RepositoryUpsert {
 }
 
 // SetPushedAt sets the "pushed_at" field.
-func (u *RepositoryUpsert) SetPushedAt(v string) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetPushedAt(v time.Time) *RepositoryUpsert {
 	u.Set(repository.FieldPushedAt, v)
 	return u
 }
@@ -2042,7 +2080,7 @@ func (u *RepositoryUpsert) UpdatePushedAt() *RepositoryUpsert {
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (u *RepositoryUpsert) SetCreatedAt(v string) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetCreatedAt(v time.Time) *RepositoryUpsert {
 	u.Set(repository.FieldCreatedAt, v)
 	return u
 }
@@ -2054,7 +2092,7 @@ func (u *RepositoryUpsert) UpdateCreatedAt() *RepositoryUpsert {
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (u *RepositoryUpsert) SetUpdatedAt(v string) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetUpdatedAt(v time.Time) *RepositoryUpsert {
 	u.Set(repository.FieldUpdatedAt, v)
 	return u
 }
@@ -3219,7 +3257,7 @@ func (u *RepositoryUpsertOne) UpdateVisibility() *RepositoryUpsertOne {
 }
 
 // SetPushedAt sets the "pushed_at" field.
-func (u *RepositoryUpsertOne) SetPushedAt(v string) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetPushedAt(v time.Time) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetPushedAt(v)
 	})
@@ -3233,7 +3271,7 @@ func (u *RepositoryUpsertOne) UpdatePushedAt() *RepositoryUpsertOne {
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (u *RepositoryUpsertOne) SetCreatedAt(v string) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetCreatedAt(v time.Time) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetCreatedAt(v)
 	})
@@ -3247,7 +3285,7 @@ func (u *RepositoryUpsertOne) UpdateCreatedAt() *RepositoryUpsertOne {
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (u *RepositoryUpsertOne) SetUpdatedAt(v string) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetUpdatedAt(v time.Time) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetUpdatedAt(v)
 	})
@@ -4594,7 +4632,7 @@ func (u *RepositoryUpsertBulk) UpdateVisibility() *RepositoryUpsertBulk {
 }
 
 // SetPushedAt sets the "pushed_at" field.
-func (u *RepositoryUpsertBulk) SetPushedAt(v string) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetPushedAt(v time.Time) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetPushedAt(v)
 	})
@@ -4608,7 +4646,7 @@ func (u *RepositoryUpsertBulk) UpdatePushedAt() *RepositoryUpsertBulk {
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (u *RepositoryUpsertBulk) SetCreatedAt(v string) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetCreatedAt(v time.Time) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetCreatedAt(v)
 	})
@@ -4622,7 +4660,7 @@ func (u *RepositoryUpsertBulk) UpdateCreatedAt() *RepositoryUpsertBulk {
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (u *RepositoryUpsertBulk) SetUpdatedAt(v string) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetUpdatedAt(v time.Time) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetUpdatedAt(v)
 	})

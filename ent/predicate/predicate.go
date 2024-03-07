@@ -8,3 +8,6 @@ import (
 
 // Repository is the predicate function for repository builders.
 type Repository func(*sql.Selector)
+
+// User is the predicate function for user builders.
+type User func(*sql.Selector)

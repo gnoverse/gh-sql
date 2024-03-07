@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -13,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/user"
 )
 
 // RepositoryUpdate is the builder for updating Repository entities.
@@ -1038,43 +1040,43 @@ func (ru *RepositoryUpdate) SetNillableVisibility(r *repository.Visibility) *Rep
 }
 
 // SetPushedAt sets the "pushed_at" field.
-func (ru *RepositoryUpdate) SetPushedAt(s string) *RepositoryUpdate {
-	ru.mutation.SetPushedAt(s)
+func (ru *RepositoryUpdate) SetPushedAt(t time.Time) *RepositoryUpdate {
+	ru.mutation.SetPushedAt(t)
 	return ru
 }
 
 // SetNillablePushedAt sets the "pushed_at" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillablePushedAt(s *string) *RepositoryUpdate {
-	if s != nil {
-		ru.SetPushedAt(*s)
+func (ru *RepositoryUpdate) SetNillablePushedAt(t *time.Time) *RepositoryUpdate {
+	if t != nil {
+		ru.SetPushedAt(*t)
 	}
 	return ru
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (ru *RepositoryUpdate) SetCreatedAt(s string) *RepositoryUpdate {
-	ru.mutation.SetCreatedAt(s)
+func (ru *RepositoryUpdate) SetCreatedAt(t time.Time) *RepositoryUpdate {
+	ru.mutation.SetCreatedAt(t)
 	return ru
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableCreatedAt(s *string) *RepositoryUpdate {
-	if s != nil {
-		ru.SetCreatedAt(*s)
+func (ru *RepositoryUpdate) SetNillableCreatedAt(t *time.Time) *RepositoryUpdate {
+	if t != nil {
+		ru.SetCreatedAt(*t)
 	}
 	return ru
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (ru *RepositoryUpdate) SetUpdatedAt(s string) *RepositoryUpdate {
-	ru.mutation.SetUpdatedAt(s)
+func (ru *RepositoryUpdate) SetUpdatedAt(t time.Time) *RepositoryUpdate {
+	ru.mutation.SetUpdatedAt(t)
 	return ru
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableUpdatedAt(s *string) *RepositoryUpdate {
-	if s != nil {
-		ru.SetUpdatedAt(*s)
+func (ru *RepositoryUpdate) SetNillableUpdatedAt(t *time.Time) *RepositoryUpdate {
+	if t != nil {
+		ru.SetUpdatedAt(*t)
 	}
 	return ru
 }
@@ -1184,9 +1186,34 @@ func (ru *RepositoryUpdate) AddWatchers(i int) *RepositoryUpdate {
 	return ru
 }
 
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (ru *RepositoryUpdate) SetOwnerID(id int) *RepositoryUpdate {
+	ru.mutation.SetOwnerID(id)
+	return ru
+}
+
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
+func (ru *RepositoryUpdate) SetNillableOwnerID(id *int) *RepositoryUpdate {
+	if id != nil {
+		ru = ru.SetOwnerID(*id)
+	}
+	return ru
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (ru *RepositoryUpdate) SetOwner(u *User) *RepositoryUpdate {
+	return ru.SetOwnerID(u.ID)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ru *RepositoryUpdate) Mutation() *RepositoryMutation {
 	return ru.mutation
+}
+
+// ClearOwner clears the "owner" edge to the User entity.
+func (ru *RepositoryUpdate) ClearOwner() *RepositoryUpdate {
+	ru.mutation.ClearOwner()
+	return ru
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1475,13 +1502,13 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(repository.FieldVisibility, field.TypeEnum, value)
 	}
 	if value, ok := ru.mutation.PushedAt(); ok {
-		_spec.SetField(repository.FieldPushedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldPushedAt, field.TypeTime, value)
 	}
 	if value, ok := ru.mutation.CreatedAt(); ok {
-		_spec.SetField(repository.FieldCreatedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldCreatedAt, field.TypeTime, value)
 	}
 	if value, ok := ru.mutation.UpdatedAt(); ok {
-		_spec.SetField(repository.FieldUpdatedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := ru.mutation.SubscribersCount(); ok {
 		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt, value)
@@ -1512,6 +1539,35 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ru.mutation.AddedWatchers(); ok {
 		_spec.AddField(repository.FieldWatchers, field.TypeInt, value)
+	}
+	if ru.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   repository.OwnerTable,
+			Columns: []string{repository.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   repository.OwnerTable,
+			Columns: []string{repository.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -2543,43 +2599,43 @@ func (ruo *RepositoryUpdateOne) SetNillableVisibility(r *repository.Visibility) 
 }
 
 // SetPushedAt sets the "pushed_at" field.
-func (ruo *RepositoryUpdateOne) SetPushedAt(s string) *RepositoryUpdateOne {
-	ruo.mutation.SetPushedAt(s)
+func (ruo *RepositoryUpdateOne) SetPushedAt(t time.Time) *RepositoryUpdateOne {
+	ruo.mutation.SetPushedAt(t)
 	return ruo
 }
 
 // SetNillablePushedAt sets the "pushed_at" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillablePushedAt(s *string) *RepositoryUpdateOne {
-	if s != nil {
-		ruo.SetPushedAt(*s)
+func (ruo *RepositoryUpdateOne) SetNillablePushedAt(t *time.Time) *RepositoryUpdateOne {
+	if t != nil {
+		ruo.SetPushedAt(*t)
 	}
 	return ruo
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (ruo *RepositoryUpdateOne) SetCreatedAt(s string) *RepositoryUpdateOne {
-	ruo.mutation.SetCreatedAt(s)
+func (ruo *RepositoryUpdateOne) SetCreatedAt(t time.Time) *RepositoryUpdateOne {
+	ruo.mutation.SetCreatedAt(t)
 	return ruo
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableCreatedAt(s *string) *RepositoryUpdateOne {
-	if s != nil {
-		ruo.SetCreatedAt(*s)
+func (ruo *RepositoryUpdateOne) SetNillableCreatedAt(t *time.Time) *RepositoryUpdateOne {
+	if t != nil {
+		ruo.SetCreatedAt(*t)
 	}
 	return ruo
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (ruo *RepositoryUpdateOne) SetUpdatedAt(s string) *RepositoryUpdateOne {
-	ruo.mutation.SetUpdatedAt(s)
+func (ruo *RepositoryUpdateOne) SetUpdatedAt(t time.Time) *RepositoryUpdateOne {
+	ruo.mutation.SetUpdatedAt(t)
 	return ruo
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableUpdatedAt(s *string) *RepositoryUpdateOne {
-	if s != nil {
-		ruo.SetUpdatedAt(*s)
+func (ruo *RepositoryUpdateOne) SetNillableUpdatedAt(t *time.Time) *RepositoryUpdateOne {
+	if t != nil {
+		ruo.SetUpdatedAt(*t)
 	}
 	return ruo
 }
@@ -2689,9 +2745,34 @@ func (ruo *RepositoryUpdateOne) AddWatchers(i int) *RepositoryUpdateOne {
 	return ruo
 }
 
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (ruo *RepositoryUpdateOne) SetOwnerID(id int) *RepositoryUpdateOne {
+	ruo.mutation.SetOwnerID(id)
+	return ruo
+}
+
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
+func (ruo *RepositoryUpdateOne) SetNillableOwnerID(id *int) *RepositoryUpdateOne {
+	if id != nil {
+		ruo = ruo.SetOwnerID(*id)
+	}
+	return ruo
+}
+
+// SetOwner sets the "owner" edge to the User entity.
+func (ruo *RepositoryUpdateOne) SetOwner(u *User) *RepositoryUpdateOne {
+	return ruo.SetOwnerID(u.ID)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ruo *RepositoryUpdateOne) Mutation() *RepositoryMutation {
 	return ruo.mutation
+}
+
+// ClearOwner clears the "owner" edge to the User entity.
+func (ruo *RepositoryUpdateOne) ClearOwner() *RepositoryUpdateOne {
+	ruo.mutation.ClearOwner()
+	return ruo
 }
 
 // Where appends a list predicates to the RepositoryUpdate builder.
@@ -3010,13 +3091,13 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 		_spec.SetField(repository.FieldVisibility, field.TypeEnum, value)
 	}
 	if value, ok := ruo.mutation.PushedAt(); ok {
-		_spec.SetField(repository.FieldPushedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldPushedAt, field.TypeTime, value)
 	}
 	if value, ok := ruo.mutation.CreatedAt(); ok {
-		_spec.SetField(repository.FieldCreatedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldCreatedAt, field.TypeTime, value)
 	}
 	if value, ok := ruo.mutation.UpdatedAt(); ok {
-		_spec.SetField(repository.FieldUpdatedAt, field.TypeString, value)
+		_spec.SetField(repository.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := ruo.mutation.SubscribersCount(); ok {
 		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt, value)
@@ -3047,6 +3128,35 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 	}
 	if value, ok := ruo.mutation.AddedWatchers(); ok {
 		_spec.AddField(repository.FieldWatchers, field.TypeInt, value)
+	}
+	if ruo.mutation.OwnerCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   repository.OwnerTable,
+			Columns: []string{repository.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.OwnerIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   repository.OwnerTable,
+			Columns: []string{repository.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Repository{config: ruo.config}
 	_spec.Assign = _node.assignValues

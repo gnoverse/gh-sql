@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -165,8 +166,17 @@ const (
 	FieldOpenIssues = "open_issues"
 	// FieldWatchers holds the string denoting the watchers field in the database.
 	FieldWatchers = "watchers"
+	// EdgeOwner holds the string denoting the owner edge name in mutations.
+	EdgeOwner = "owner"
 	// Table holds the table name of the repository in the database.
 	Table = "repositories"
+	// OwnerTable is the table that holds the owner relation/edge.
+	OwnerTable = "repositories"
+	// OwnerInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	OwnerInverseTable = "users"
+	// OwnerColumn is the table column denoting the owner relation/edge.
+	OwnerColumn = "user_repos"
 )
 
 // Columns holds all SQL columns for repository fields.
@@ -250,10 +260,21 @@ var Columns = []string{
 	FieldWatchers,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "repositories"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"user_repos",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -665,4 +686,18 @@ func ByOpenIssues(opts ...sql.OrderTermOption) OrderOption {
 // ByWatchers orders the results by the watchers field.
 func ByWatchers(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldWatchers, opts...).ToFunc()
+}
+
+// ByOwnerField orders the results by owner field.
+func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), sql.OrderByField(field, opts...))
+	}
+}
+func newOwnerStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OwnerInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+	)
 }

@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/gnolang/gh-sql/ent"
+	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/user"
 	"github.com/peterbourgon/ff/v4"
 )
 
@@ -23,6 +25,8 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 
 		full  = fset.BoolLong("full", "sync repositories from scratch (non-incremental), automatic if more than >10_000 events to retrieve")
 		token = fset.StringLong("token", "", "github personal access token to use (heavily suggested)")
+
+		debugHTTP = fset.BoolLong("debug.http", "log http requests")
 	)
 	return &ff.Command{
 		Name:      "sync",
@@ -35,6 +39,7 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 				ec,
 				*full,
 				*token,
+				*debugHTTP,
 			}.run(ctx, args)
 		},
 	}
@@ -43,8 +48,9 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 type syncExecContext struct {
 	// flags / global ctx
 	*execContext
-	full  bool
-	token string
+	full      bool
+	token     string
+	debugHTTP bool
 }
 
 func (s syncExecContext) run(ctx context.Context, args []string) error {
@@ -200,6 +206,10 @@ func (s *syncHub) get(ctx context.Context, path string, dst any) error {
 		req.Header.Set("Authorization", "Bearer "+s.token)
 	}
 
+	if s.debugHTTP {
+		log.Printf("%s %s", req.Method, req.URL)
+	}
+
 	// do request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -245,10 +255,78 @@ func parseLimits(resp *http.Response) (vals rateLimitValues, err error) {
 	return
 }
 
+// hookKey is an interface implemented by hook* types, which can be used as
+// context.Context values.
+//
+// hookKey enables to type check, through generics, the associated functions
+// and keys passed to addHook and runHooks.
+type hookKey[T any] interface{ hookKey(T) }
+
+type hookImpl[T any] struct{}
+
+func (hookImpl[T]) hookKey(T) {}
+
+type (
+	// hookRepository is called after a repository has been successfully
+	// fetched.
+	hookRepository struct {
+		hookImpl[*ent.Repository]
+		owner, repo string
+	}
+	// hookUser is called after a user has been successfully fetched.
+	hookUser struct {
+		hookImpl[*ent.User]
+		username string
+	}
+)
+
+// addHook adds a new hook for the "event" at key, which on success will
+// execute the function f.
+func addHook[T any](ctx context.Context, key hookKey[T], f func(T)) context.Context {
+	v := ctx.Value(key)
+	if v != nil {
+		f2, ok := v.(func(T))
+		if !ok {
+			panic(fmt.Errorf("addHook(%+v): invalid function for %T hook: %T", key, key, f))
+		}
+		return context.WithValue(ctx, key, func(val T) {
+			f(val)
+			f2(val)
+		})
+	}
+	return context.WithValue(ctx, key, f)
+}
+
+// runHooks calls the hooks associated with the given key.
+// query should be a closure to an ent function call, to retrieve the given
+// value. It is only executed if there are hooked functions.
+func runHooks[T any](ctx context.Context, key hookKey[T], query func(ctx context.Context) (T, error)) {
+	v := ctx.Value(key)
+	if v == nil {
+		return
+	}
+	f, ok := v.(func(T))
+	if !ok {
+		panic(fmt.Errorf("runHooks(%+v): invalid function for %T hook: %T", key, key, f))
+	}
+	result, err := query(ctx)
+	if err != nil {
+		// This should be an error rather than a panic, but normally this should happen only
+		// for database errors and it avoids us having to pass `*syncHub` to this fn.
+		panic(fmt.Errorf("runHooks(%+v) query: %w", key, err))
+	}
+	f(result)
+}
+
 func (s *syncHub) fetchRepository(ctx context.Context, owner, repo string) {
 	// determine if we should fetch the repository, or it's already been updated
 	keyVal := fmt.Sprintf("/repos/%s/%s", owner, repo)
 	if !s.shouldFetch(keyVal) {
+		runHooks(ctx,
+			hookRepository{owner: owner, repo: repo},
+			s.db.Repository.Query().
+				Where(repository.FullName(owner+"/"+repo)).Only,
+		)
 		return
 	}
 
@@ -260,17 +338,82 @@ func (s *syncHub) fetchRepository(ctx context.Context, owner, repo string) {
 func (s *syncHub) _fetchRepository(ctx context.Context, owner, repo string) {
 	defer s.recover()
 
-	var r ent.Repository
+	var r struct {
+		ent.Repository
+		Owner struct {
+			Login string `json:"login"`
+		} `json:"owner"`
+	}
 	if err := s.get(ctx, fmt.Sprintf("/repos/%s/%s", owner, repo), &r); err != nil {
 		s.report(fmt.Errorf("fetchRepository(%q, %q) get: %w", owner, repo, err))
 		return
 	}
 	err := s.db.Repository.Create().
-		CopyRepository(&r).
+		CopyRepository(&r.Repository).
 		OnConflict().UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
 		s.report(fmt.Errorf("fetchRepository(%q, %q) save: %w", owner, repo, err))
 		return
 	}
+
+	runHooks(ctx,
+		hookRepository{owner: owner, repo: repo},
+		s.db.Repository.Query().
+			Where(repository.FullName(owner+"/"+repo)).Only,
+	)
+
+	s.fetchUser(
+		addHook(ctx, hookUser{username: r.Owner.Login}, func(u *ent.User) {
+			err := s.db.Repository.Update().
+				Where(repository.ID(r.ID)).
+				SetOwnerID(u.ID).
+				Exec(ctx)
+			if err != nil {
+				s.report(fmt.Errorf("link repo %d (%s) to owner %d (%s): %w",
+					r.ID, r.Name, u.ID, u.Login, err))
+			}
+		}),
+		r.Owner.Login,
+	)
+}
+
+func (s *syncHub) fetchUser(ctx context.Context, username string) {
+	// determine if we should fetch the user, or it's already been updated
+	keyVal := fmt.Sprintf("/users/%s", username)
+	if !s.shouldFetch(keyVal) {
+		runHooks(ctx,
+			hookUser{username: username},
+			s.db.User.Query().
+				Where(user.Login(username)).Only,
+		)
+		return
+	}
+
+	// wait to run goroutine, and execute.
+	s.runWait()
+	go s._fetchUser(ctx, username)
+}
+
+func (s *syncHub) _fetchUser(ctx context.Context, username string) {
+	defer s.recover()
+
+	var u ent.User
+	if err := s.get(ctx, fmt.Sprintf("/users/%s", username), &u); err != nil {
+		s.report(fmt.Errorf("fetchUser(%q) get: %w", username, err))
+		return
+	}
+	err := s.db.User.Create().
+		CopyUser(&u).
+		OnConflict().UpdateNewValues().
+		Exec(ctx)
+	if err != nil {
+		s.report(fmt.Errorf("fetchUser(%q) save: %w", username, err))
+		return
+	}
+	runHooks(ctx,
+		hookUser{username: username},
+		s.db.User.Query().
+			Where(user.Login(username)).Only,
+	)
 }

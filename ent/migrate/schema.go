@@ -13,7 +13,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "node_id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
-		{Name: "full_name", Type: field.TypeString},
+		{Name: "full_name", Type: field.TypeString, Unique: true},
 		{Name: "private", Type: field.TypeBool},
 		{Name: "html_url", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Nullable: true},
@@ -79,26 +79,77 @@ var (
 		{Name: "archived", Type: field.TypeBool},
 		{Name: "disabled", Type: field.TypeBool},
 		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"public", "private", "internal"}},
-		{Name: "pushed_at", Type: field.TypeString},
-		{Name: "created_at", Type: field.TypeString},
-		{Name: "updated_at", Type: field.TypeString},
+		{Name: "pushed_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "subscribers_count", Type: field.TypeInt},
 		{Name: "network_count", Type: field.TypeInt},
 		{Name: "forks", Type: field.TypeInt},
 		{Name: "open_issues", Type: field.TypeInt},
 		{Name: "watchers", Type: field.TypeInt},
+		{Name: "user_repos", Type: field.TypeInt, Nullable: true},
 	}
 	// RepositoriesTable holds the schema information for the "repositories" table.
 	RepositoriesTable = &schema.Table{
 		Name:       "repositories",
 		Columns:    RepositoriesColumns,
 		PrimaryKey: []*schema.Column{RepositoriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "repositories_users_repos",
+				Columns:    []*schema.Column{RepositoriesColumns[77]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// UsersColumns holds the columns for the "users" table.
+	UsersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "login", Type: field.TypeString, Unique: true},
+		{Name: "node_id", Type: field.TypeString},
+		{Name: "avatar_url", Type: field.TypeString},
+		{Name: "gravatar_id", Type: field.TypeString, Nullable: true},
+		{Name: "url", Type: field.TypeString},
+		{Name: "html_url", Type: field.TypeString},
+		{Name: "followers_url", Type: field.TypeString},
+		{Name: "following_url", Type: field.TypeString},
+		{Name: "gists_url", Type: field.TypeString},
+		{Name: "starred_url", Type: field.TypeString},
+		{Name: "subscriptions_url", Type: field.TypeString},
+		{Name: "organizations_url", Type: field.TypeString},
+		{Name: "repos_url", Type: field.TypeString},
+		{Name: "events_url", Type: field.TypeString},
+		{Name: "received_events_url", Type: field.TypeString},
+		{Name: "type", Type: field.TypeString},
+		{Name: "site_admin", Type: field.TypeBool},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "company", Type: field.TypeString, Nullable: true},
+		{Name: "blog", Type: field.TypeString, Nullable: true},
+		{Name: "location", Type: field.TypeString, Nullable: true},
+		{Name: "email", Type: field.TypeString, Nullable: true},
+		{Name: "hireable", Type: field.TypeBool, Nullable: true},
+		{Name: "bio", Type: field.TypeString, Nullable: true},
+		{Name: "public_repos", Type: field.TypeInt},
+		{Name: "public_gists", Type: field.TypeInt},
+		{Name: "followers", Type: field.TypeInt},
+		{Name: "following", Type: field.TypeInt},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// UsersTable holds the schema information for the "users" table.
+	UsersTable = &schema.Table{
+		Name:       "users",
+		Columns:    UsersColumns,
+		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		RepositoriesTable,
+		UsersTable,
 	}
 )
 
 func init() {
+	RepositoriesTable.ForeignKeys[0].RefTable = UsersTable
 }

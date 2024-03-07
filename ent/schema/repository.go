@@ -1,7 +1,9 @@
+// Package schema specifies the ent schema types for gh-sql's database.
 package schema
 
 import (
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 )
 
@@ -19,7 +21,7 @@ func (Repository) Fields() []ent.Field {
 		field.Int("id"),
 		field.String("node_id"),
 		field.String("name"),
-		field.String("full_name"),
+		field.String("full_name").Unique(),
 		field.Bool("private"),
 		field.String("html_url"),
 		field.String("description").
@@ -91,9 +93,9 @@ func (Repository) Fields() []ent.Field {
 		field.Bool("disabled").
 			Comment("Returns whether or not this repository disabled."),
 		field.Enum("visibility").Values("public", "private", "internal"),
-		field.String("pushed_at"),
-		field.String("created_at"),
-		field.String("updated_at"),
+		field.Time("pushed_at"),
+		field.Time("created_at"),
+		field.Time("updated_at"),
 		// ignored: permissions: not required
 		// ignored: allow_rebase_merge: not required
 		// ignored: temp_clone_token: not required
@@ -123,6 +125,9 @@ func (Repository) Fields() []ent.Field {
 // Edges of the Repository.
 func (Repository) Edges() []ent.Edge {
 	return []ent.Edge{
+		edge.From("owner", User.Type).
+			Ref("repos").
+			Unique(),
 		// edge: owner (#/components/schemas/simple-user)
 		// edge: template_repository (#/components/schemas/nullable-repository)
 		// edge: license (#/components/schemas/nullable-license-simple)

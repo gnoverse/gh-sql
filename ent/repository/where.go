@@ -3,7 +3,10 @@
 package repository
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/gnolang/gh-sql/ent/predicate"
 )
 
@@ -383,17 +386,17 @@ func Disabled(v bool) predicate.Repository {
 }
 
 // PushedAt applies equality check predicate on the "pushed_at" field. It's identical to PushedAtEQ.
-func PushedAt(v string) predicate.Repository {
+func PushedAt(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldPushedAt, v))
 }
 
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
-func CreatedAt(v string) predicate.Repository {
+func CreatedAt(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldCreatedAt, v))
 }
 
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
-func UpdatedAt(v string) predicate.Repository {
+func UpdatedAt(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
@@ -4043,198 +4046,123 @@ func VisibilityNotIn(vs ...Visibility) predicate.Repository {
 }
 
 // PushedAtEQ applies the EQ predicate on the "pushed_at" field.
-func PushedAtEQ(v string) predicate.Repository {
+func PushedAtEQ(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldPushedAt, v))
 }
 
 // PushedAtNEQ applies the NEQ predicate on the "pushed_at" field.
-func PushedAtNEQ(v string) predicate.Repository {
+func PushedAtNEQ(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldPushedAt, v))
 }
 
 // PushedAtIn applies the In predicate on the "pushed_at" field.
-func PushedAtIn(vs ...string) predicate.Repository {
+func PushedAtIn(vs ...time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldPushedAt, vs...))
 }
 
 // PushedAtNotIn applies the NotIn predicate on the "pushed_at" field.
-func PushedAtNotIn(vs ...string) predicate.Repository {
+func PushedAtNotIn(vs ...time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldPushedAt, vs...))
 }
 
 // PushedAtGT applies the GT predicate on the "pushed_at" field.
-func PushedAtGT(v string) predicate.Repository {
+func PushedAtGT(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldPushedAt, v))
 }
 
 // PushedAtGTE applies the GTE predicate on the "pushed_at" field.
-func PushedAtGTE(v string) predicate.Repository {
+func PushedAtGTE(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldPushedAt, v))
 }
 
 // PushedAtLT applies the LT predicate on the "pushed_at" field.
-func PushedAtLT(v string) predicate.Repository {
+func PushedAtLT(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldPushedAt, v))
 }
 
 // PushedAtLTE applies the LTE predicate on the "pushed_at" field.
-func PushedAtLTE(v string) predicate.Repository {
+func PushedAtLTE(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldPushedAt, v))
 }
 
-// PushedAtContains applies the Contains predicate on the "pushed_at" field.
-func PushedAtContains(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldContains(FieldPushedAt, v))
-}
-
-// PushedAtHasPrefix applies the HasPrefix predicate on the "pushed_at" field.
-func PushedAtHasPrefix(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldHasPrefix(FieldPushedAt, v))
-}
-
-// PushedAtHasSuffix applies the HasSuffix predicate on the "pushed_at" field.
-func PushedAtHasSuffix(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldHasSuffix(FieldPushedAt, v))
-}
-
-// PushedAtEqualFold applies the EqualFold predicate on the "pushed_at" field.
-func PushedAtEqualFold(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldEqualFold(FieldPushedAt, v))
-}
-
-// PushedAtContainsFold applies the ContainsFold predicate on the "pushed_at" field.
-func PushedAtContainsFold(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldContainsFold(FieldPushedAt, v))
-}
-
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
-func CreatedAtEQ(v string) predicate.Repository {
+func CreatedAtEQ(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldCreatedAt, v))
 }
 
 // CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
-func CreatedAtNEQ(v string) predicate.Repository {
+func CreatedAtNEQ(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldCreatedAt, v))
 }
 
 // CreatedAtIn applies the In predicate on the "created_at" field.
-func CreatedAtIn(vs ...string) predicate.Repository {
+func CreatedAtIn(vs ...time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldCreatedAt, vs...))
 }
 
 // CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
-func CreatedAtNotIn(vs ...string) predicate.Repository {
+func CreatedAtNotIn(vs ...time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldCreatedAt, vs...))
 }
 
 // CreatedAtGT applies the GT predicate on the "created_at" field.
-func CreatedAtGT(v string) predicate.Repository {
+func CreatedAtGT(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldCreatedAt, v))
 }
 
 // CreatedAtGTE applies the GTE predicate on the "created_at" field.
-func CreatedAtGTE(v string) predicate.Repository {
+func CreatedAtGTE(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldCreatedAt, v))
 }
 
 // CreatedAtLT applies the LT predicate on the "created_at" field.
-func CreatedAtLT(v string) predicate.Repository {
+func CreatedAtLT(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldCreatedAt, v))
 }
 
 // CreatedAtLTE applies the LTE predicate on the "created_at" field.
-func CreatedAtLTE(v string) predicate.Repository {
+func CreatedAtLTE(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldCreatedAt, v))
 }
 
-// CreatedAtContains applies the Contains predicate on the "created_at" field.
-func CreatedAtContains(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldContains(FieldCreatedAt, v))
-}
-
-// CreatedAtHasPrefix applies the HasPrefix predicate on the "created_at" field.
-func CreatedAtHasPrefix(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldHasPrefix(FieldCreatedAt, v))
-}
-
-// CreatedAtHasSuffix applies the HasSuffix predicate on the "created_at" field.
-func CreatedAtHasSuffix(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldHasSuffix(FieldCreatedAt, v))
-}
-
-// CreatedAtEqualFold applies the EqualFold predicate on the "created_at" field.
-func CreatedAtEqualFold(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldEqualFold(FieldCreatedAt, v))
-}
-
-// CreatedAtContainsFold applies the ContainsFold predicate on the "created_at" field.
-func CreatedAtContainsFold(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldContainsFold(FieldCreatedAt, v))
-}
-
 // UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
-func UpdatedAtEQ(v string) predicate.Repository {
+func UpdatedAtEQ(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
 // UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
-func UpdatedAtNEQ(v string) predicate.Repository {
+func UpdatedAtNEQ(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldUpdatedAt, v))
 }
 
 // UpdatedAtIn applies the In predicate on the "updated_at" field.
-func UpdatedAtIn(vs ...string) predicate.Repository {
+func UpdatedAtIn(vs ...time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldUpdatedAt, vs...))
 }
 
 // UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
-func UpdatedAtNotIn(vs ...string) predicate.Repository {
+func UpdatedAtNotIn(vs ...time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldUpdatedAt, vs...))
 }
 
 // UpdatedAtGT applies the GT predicate on the "updated_at" field.
-func UpdatedAtGT(v string) predicate.Repository {
+func UpdatedAtGT(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldUpdatedAt, v))
 }
 
 // UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
-func UpdatedAtGTE(v string) predicate.Repository {
+func UpdatedAtGTE(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldUpdatedAt, v))
 }
 
 // UpdatedAtLT applies the LT predicate on the "updated_at" field.
-func UpdatedAtLT(v string) predicate.Repository {
+func UpdatedAtLT(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldUpdatedAt, v))
 }
 
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
-func UpdatedAtLTE(v string) predicate.Repository {
+func UpdatedAtLTE(v time.Time) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldUpdatedAt, v))
-}
-
-// UpdatedAtContains applies the Contains predicate on the "updated_at" field.
-func UpdatedAtContains(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldContains(FieldUpdatedAt, v))
-}
-
-// UpdatedAtHasPrefix applies the HasPrefix predicate on the "updated_at" field.
-func UpdatedAtHasPrefix(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldHasPrefix(FieldUpdatedAt, v))
-}
-
-// UpdatedAtHasSuffix applies the HasSuffix predicate on the "updated_at" field.
-func UpdatedAtHasSuffix(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldHasSuffix(FieldUpdatedAt, v))
-}
-
-// UpdatedAtEqualFold applies the EqualFold predicate on the "updated_at" field.
-func UpdatedAtEqualFold(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldEqualFold(FieldUpdatedAt, v))
-}
-
-// UpdatedAtContainsFold applies the ContainsFold predicate on the "updated_at" field.
-func UpdatedAtContainsFold(v string) predicate.Repository {
-	return predicate.Repository(sql.FieldContainsFold(FieldUpdatedAt, v))
 }
 
 // SubscribersCountEQ applies the EQ predicate on the "subscribers_count" field.
@@ -4435,6 +4363,29 @@ func WatchersLT(v int) predicate.Repository {
 // WatchersLTE applies the LTE predicate on the "watchers" field.
 func WatchersLTE(v int) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldWatchers, v))
+}
+
+// HasOwner applies the HasEdge predicate on the "owner" edge.
+func HasOwner() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasOwnerWith applies the HasEdge predicate on the "owner" edge with a given conditions (other predicates).
+func HasOwnerWith(preds ...predicate.User) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := newOwnerStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.
