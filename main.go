@@ -66,7 +66,6 @@ func run() error {
 		return err
 	}
 
-	// TODO: this does not work concurrently; consider what to do (mattn/sqlite3?)
 	ctx.sqlDB, err = sql.Open("sqlite", fmt.Sprintf("file://%s?_pragma=foreign_keys(1)&_txlock=exclusive", abs))
 	if err != nil {
 		return fmt.Errorf("failed opening connection to postgres: %v", err)
@@ -115,6 +114,12 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 		LongHelp:  "Repositories must be specified with the syntax <owner>/<repo>.",
 		Flags:     fset,
 		Exec: func(ctx context.Context, args []string) error {
+			// sync has mostly writes to the database, and modernc.org/sqlite
+			// does not support concurrent writes. Set MaxOpenConns=1 to avoid errors.
+			// TODO: when adding support for multiple databases, ensure to drop
+			// this line for all other DBs
+			ec.sqlDB.SetMaxOpenConns(1)
+
 			return sync.Sync(ctx, args, sync.Options{
 				DB:        ec.db,
 				Full:      *full,
