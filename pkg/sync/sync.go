@@ -1,4 +1,5 @@
-package main
+// Package sync implements a system to fetch GitHub repositories concurrently.
+package sync
 
 import (
 	"context"
@@ -18,71 +19,38 @@ import (
 	"github.com/gnolang/gh-sql/ent"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
-	"github.com/peterbourgon/ff/v4"
 )
 
-func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
-	var (
-		fset = ff.NewFlagSet("gh-sql sync").SetParent(fs)
-
-		full  = fset.BoolLong("full", "sync repositories from scratch (non-incremental), automatic if more than >10_000 events to retrieve")
-		token = fset.StringLong("token", "", "github personal access token to use (heavily suggested)")
-
-		debugHTTP = fset.BoolLong("debug.http", "log http requests")
-	)
-	return &ff.Command{
-		Name:      "sync",
-		Usage:     "gh-sql sync [FLAGS...] REPOS...",
-		ShortHelp: "synchronize the current state with GitHub",
-		LongHelp:  "Repositories must be specified with the syntax <owner>/<repo>.",
-		Flags:     fset,
-		Exec: func(ctx context.Context, args []string) error {
-			return syncExecContext{
-				ec,
-				*full,
-				*token,
-				*debugHTTP,
-			}.run(ctx, args)
-		},
-	}
-}
-
-type syncExecContext struct {
-	// flags / global ctx
-	*execContext
-	full      bool
-	token     string
-	debugHTTP bool
-}
-
-func (s syncExecContext) run(ctx context.Context, args []string) error {
+// Sync performs the synchronisation of repositories to the database provided
+// in the options.
+func Sync(ctx context.Context, repositories []string, opts Options) error {
 	values := rateLimitValues{
 		// GitHub defaults for unauthenticated
 		total:     60,
 		remaining: 60,
 		reset:     time.Now().Truncate(time.Hour).Add(time.Hour),
 	}
-	if s.token != "" {
+	if opts.Token != "" {
 		// GitHub defaults for authenticated
 		values.total = 5000
 		values.remaining = 5000
 	}
 
 	// set up hub
-	hub := &syncHub{
-		syncExecContext: s,
-		running:         make(chan struct{}, 8),
-		requestBucket:   make(chan struct{}, 8),
-		limits:          values,
-		updated:         make(map[string]struct{}),
+	hub := &hub{
+		Options:       opts,
+		running:       make(chan struct{}, 8),
+		requestBucket: make(chan struct{}, 8),
+		limits:        values,
+		updated:       make(map[string]struct{}),
 	}
 	go hub.limiter(ctx)
 
 	// execute
-	for _, arg := range args {
-		parts := strings.SplitN(arg, "/", 2)
+	for _, repo := range repositories {
+		parts := strings.SplitN(repo, "/", 2)
 		if len(parts) != 2 {
-			log.Printf("invalid repo syntax: %q (must be <owner>/<repo>)", arg)
+			log.Printf("invalid repo syntax: %q (must be <owner>/<repo>)", repo)
 		}
 
 		if strings.IndexByte(parts[1], '*') != -1 {
@@ -104,8 +72,18 @@ func (s syncExecContext) run(ctx context.Context, args []string) error {
 	return nil
 }
 
-type syncHub struct {
-	syncExecContext
+// Options repsent the options to run Sync. These match the flags provided on
+// the command line.
+type Options struct {
+	DB    *ent.Client
+	Full  bool
+	Token string
+
+	DebugHTTP bool
+}
+
+type hub struct {
+	Options
 
 	// synchronization/limiting channels
 	// number of running goroutines
@@ -133,20 +111,20 @@ type rateLimitValues struct {
 // limiter creates a simple rate limiter based off GitHub's rate limiting.
 // It divides the time up into how many requests are left in the rate limit,
 // up to when it's supposed to reset.
-func (s *syncHub) limiter(ctx context.Context) {
-	_ = s.limits // move nil check outside of loop
+func (h *hub) limiter(ctx context.Context) {
+	_ = h.limits // move nil check outside of loop
 	for {
-		s.limitsMu.Lock()
-		limits := s.limits
-		s.limitsMu.Unlock()
+		h.limitsMu.Lock()
+		limits := h.limits
+		h.limitsMu.Unlock()
 
 		if limits.remaining == 0 && time.Until(limits.reset) > 0 {
 			dur := time.Until(limits.reset)
 			log.Printf("hit rate limit, waiting until %v (%v)", limits.reset, dur)
 			time.Sleep(dur)
-			s.limitsMu.Lock()
+			h.limitsMu.Lock()
 			limits.remaining = limits.total
-			s.limitsMu.Unlock()
+			h.limitsMu.Unlock()
 			continue
 		}
 
@@ -154,7 +132,7 @@ func (s *syncHub) limiter(ctx context.Context) {
 		wait = max(wait, 100*time.Millisecond)
 		select {
 		case <-time.After(wait):
-			<-s.requestBucket
+			<-h.requestBucket
 		case <-ctx.Done():
 			return
 		}
@@ -163,37 +141,37 @@ func (s *syncHub) limiter(ctx context.Context) {
 
 // runWait waits until a spot frees up in s.running, useful before
 // starting a new goroutine.
-func (s *syncHub) runWait() {
-	s.running <- struct{}{}
-	s.wg.Add(1)
+func (h *hub) runWait() {
+	h.running <- struct{}{}
+	h.wg.Add(1)
 }
 
 // recover performs error recovery in s.fetch* functions,
 // as well as freeing up a space for running goroutines.
 // it should be ran as a deferred function in all fetch*
 // functions.
-func (s *syncHub) recover() {
+func (h *hub) recover() {
 	if err := recover(); err != nil {
 		trace := debug.Stack()
 		log.Printf("panic: %v\n%v", err, string(trace))
 	}
-	s.wg.Done()
-	<-s.running
+	h.wg.Done()
+	<-h.running
 }
 
-func (s *syncHub) shouldFetch(key string) (should bool) {
-	s.updatedMu.Lock()
-	_, ok := s.updated[key]
+func (h *hub) shouldFetch(key string) (should bool) {
+	h.updatedMu.Lock()
+	_, ok := h.updated[key]
 	if !ok {
-		s.updated[key] = struct{}{}
+		h.updated[key] = struct{}{}
 		should = true
 	}
-	s.updatedMu.Unlock()
+	h.updatedMu.Unlock()
 	return
 }
 
 // report adds an error to s
-func (s *syncHub) report(err error) {
+func (h *hub) report(err error) {
 	log.Println("error:", err)
 }
 
@@ -202,8 +180,8 @@ const (
 	apiVersion  = "2022-11-28"
 )
 
-func httpGet(ctx context.Context, s *syncHub, path string, dst any) error {
-	resp, err := httpInternal(ctx, s, "GET", apiEndpoint+path, nil)
+func httpGet(ctx context.Context, h *hub, path string, dst any) error {
+	resp, err := httpInternal(ctx, h, "GET", apiEndpoint+path, nil)
 
 	// unmarshal body into dst
 	defer resp.Body.Close()
@@ -214,9 +192,9 @@ func httpGet(ctx context.Context, s *syncHub, path string, dst any) error {
 	return json.Unmarshal(data, dst)
 }
 
-func httpInternal(ctx context.Context, s *syncHub, method, uri string, body io.Reader) (*http.Response, error) {
+func httpInternal(ctx context.Context, h *hub, method, uri string, body io.Reader) (*http.Response, error) {
 	// block until the rate limiter allows us to do request
-	s.requestBucket <- struct{}{}
+	h.requestBucket <- struct{}{}
 
 	// set up request
 	req, err := http.NewRequestWithContext(ctx, method, uri, body)
@@ -226,11 +204,11 @@ func httpInternal(ctx context.Context, s *syncHub, method, uri string, body io.R
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", apiVersion)
 	req.Header.Set("User-Agent", "gnolang/gh-sql")
-	if s.token != "" {
-		req.Header.Set("Authorization", "Bearer "+s.token)
+	if h.Token != "" {
+		req.Header.Set("Authorization", "Bearer "+h.Token)
 	}
 
-	if s.debugHTTP {
+	if h.DebugHTTP {
 		log.Printf("%s %s", req.Method, req.URL)
 	}
 
@@ -245,9 +223,9 @@ func httpInternal(ctx context.Context, s *syncHub, method, uri string, body io.R
 		if err != nil {
 			log.Printf("error parsing rate limits: %v", err)
 		} else {
-			s.limitsMu.Lock()
-			s.limits = limits
-			s.limitsMu.Unlock()
+			h.limitsMu.Lock()
+			h.limits = limits
+			h.limitsMu.Unlock()
 		}
 	}
 	return resp, nil
@@ -255,10 +233,10 @@ func httpInternal(ctx context.Context, s *syncHub, method, uri string, body io.R
 
 var httpLinkHeaderRe = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"(?:,\s*|$)`)
 
-func httpGetIterate[T any](ctx context.Context, s *syncHub, path string, fn func(item T) error) error {
+func httpGetIterate[T any](ctx context.Context, h *hub, path string, fn func(item T) error) error {
 	uri := apiEndpoint + path
 	for {
-		resp, err := httpInternal(ctx, s, "GET", uri, nil)
+		resp, err := httpInternal(ctx, h, "GET", uri, nil)
 
 		// retrieve data
 		data, err := ioutil.ReadAll(resp.Body)
@@ -370,31 +348,31 @@ func runHooks[T any](ctx context.Context, key hookKey[T], query func(ctx context
 	result, err := query(ctx)
 	if err != nil {
 		// This should be an error rather than a panic, but normally this should happen only
-		// for database errors and it avoids us having to pass `*syncHub` to this fn.
+		// for database errors and it avoids us having to pass `*hub` to this fn.
 		panic(fmt.Errorf("runHooks(%+v) query: %w", key, err))
 	}
 	f(result)
 }
 
-func (s *syncHub) fetchRepository(ctx context.Context, owner, repo string) {
+func (h *hub) fetchRepository(ctx context.Context, owner, repo string) {
 	// determine if we should fetch the repository, or it's already been updated
 	keyVal := fmt.Sprintf("/repos/%s/%s", owner, repo)
-	if !s.shouldFetch(keyVal) {
+	if !h.shouldFetch(keyVal) {
 		runHooks(ctx,
 			hookRepository{owner: owner, repo: repo},
-			s.db.Repository.Query().
+			h.DB.Repository.Query().
 				Where(repository.FullName(owner+"/"+repo)).Only,
 		)
 		return
 	}
 
 	// wait to run goroutine, and execute.
-	s.runWait()
-	go s._fetchRepository(ctx, owner, repo)
+	h.runWait()
+	go h._fetchRepository(ctx, owner, repo)
 }
 
-func (s *syncHub) _fetchRepository(ctx context.Context, owner, repo string) {
-	defer s.recover()
+func (h *hub) _fetchRepository(ctx context.Context, owner, repo string) {
+	defer h.recover()
 
 	var r struct {
 		ent.Repository
@@ -402,33 +380,33 @@ func (s *syncHub) _fetchRepository(ctx context.Context, owner, repo string) {
 			Login string `json:"login"`
 		} `json:"owner"`
 	}
-	if err := httpGet(ctx, s, fmt.Sprintf("/repos/%s/%s", owner, repo), &r); err != nil {
-		s.report(fmt.Errorf("fetchRepository(%q, %q) get: %w", owner, repo, err))
+	if err := httpGet(ctx, h, fmt.Sprintf("/repos/%s/%s", owner, repo), &r); err != nil {
+		h.report(fmt.Errorf("fetchRepository(%q, %q) get: %w", owner, repo, err))
 		return
 	}
-	err := s.db.Repository.Create().
+	err := h.DB.Repository.Create().
 		CopyRepository(&r.Repository).
 		OnConflict().UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
-		s.report(fmt.Errorf("fetchRepository(%q, %q) save: %w", owner, repo, err))
+		h.report(fmt.Errorf("fetchRepository(%q, %q) save: %w", owner, repo, err))
 		return
 	}
 
 	runHooks(ctx,
 		hookRepository{owner: owner, repo: repo},
-		s.db.Repository.Query().
+		h.DB.Repository.Query().
 			Where(repository.FullName(owner+"/"+repo)).Only,
 	)
 
-	s.fetchUser(
+	h.fetchUser(
 		addHook(ctx, hookUser{username: r.Owner.Login}, func(u *ent.User) {
-			err := s.db.Repository.Update().
+			err := h.DB.Repository.Update().
 				Where(repository.ID(r.ID)).
 				SetOwnerID(u.ID).
 				Exec(ctx)
 			if err != nil {
-				s.report(fmt.Errorf("link repo %d (%s) to owner %d (%s): %w",
+				h.report(fmt.Errorf("link repo %d (%s) to owner %d (%s): %w",
 					r.ID, r.Name, u.ID, u.Login, err))
 			}
 		}),
@@ -436,62 +414,62 @@ func (s *syncHub) _fetchRepository(ctx context.Context, owner, repo string) {
 	)
 }
 
-func (s *syncHub) fetchRepositories(ctx context.Context, owner string, shouldStore func(*ent.Repository) bool) {
+func (h *hub) fetchRepositories(ctx context.Context, owner string, shouldStore func(*ent.Repository) bool) {
 	// wait to run goroutine, and execute.
-	s.runWait()
-	go s._fetchRepositories(ctx, owner, shouldStore)
+	h.runWait()
+	go h._fetchRepositories(ctx, owner, shouldStore)
 }
 
-func (s *syncHub) _fetchRepositories(ctx context.Context, owner string, shouldFetch func(*ent.Repository) bool) {
-	defer s.recover()
+func (h *hub) _fetchRepositories(ctx context.Context, owner string, shouldFetch func(*ent.Repository) bool) {
+	defer h.recover()
 
-	err := httpGetIterate(ctx, s, fmt.Sprintf("/users/%s/repos?per_page=100", owner), func(r *ent.Repository) error {
+	err := httpGetIterate(ctx, h, fmt.Sprintf("/users/%s/repos?per_page=100", owner), func(r *ent.Repository) error {
 		if shouldFetch(r) {
-			s.fetchRepository(ctx, owner, r.Name)
+			h.fetchRepository(ctx, owner, r.Name)
 		}
 		return nil
 	})
 	if err != nil {
-		s.report(fmt.Errorf("fetchRepositories(%q): %w", owner, err))
+		h.report(fmt.Errorf("fetchRepositories(%q): %w", owner, err))
 	}
 }
 
-func (s *syncHub) fetchUser(ctx context.Context, username string) {
+func (h *hub) fetchUser(ctx context.Context, username string) {
 	// determine if we should fetch the user, or it's already been updated
 	keyVal := fmt.Sprintf("/users/%s", username)
-	if !s.shouldFetch(keyVal) {
+	if !h.shouldFetch(keyVal) {
 		runHooks(ctx,
 			hookUser{username: username},
-			s.db.User.Query().
+			h.DB.User.Query().
 				Where(user.Login(username)).Only,
 		)
 		return
 	}
 
 	// wait to run goroutine, and execute.
-	s.runWait()
-	go s._fetchUser(ctx, username)
+	h.runWait()
+	go h._fetchUser(ctx, username)
 }
 
-func (s *syncHub) _fetchUser(ctx context.Context, username string) {
-	defer s.recover()
+func (h *hub) _fetchUser(ctx context.Context, username string) {
+	defer h.recover()
 
 	var u ent.User
-	if err := httpGet(ctx, s, fmt.Sprintf("/users/%s", username), &u); err != nil {
-		s.report(fmt.Errorf("fetchUser(%q) get: %w", username, err))
+	if err := httpGet(ctx, h, fmt.Sprintf("/users/%s", username), &u); err != nil {
+		h.report(fmt.Errorf("fetchUser(%q) get: %w", username, err))
 		return
 	}
-	err := s.db.User.Create().
+	err := h.DB.User.Create().
 		CopyUser(&u).
 		OnConflict().UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
-		s.report(fmt.Errorf("fetchUser(%q) save: %w", username, err))
+		h.report(fmt.Errorf("fetchUser(%q) save: %w", username, err))
 		return
 	}
 	runHooks(ctx,
 		hookUser{username: username},
-		s.db.User.Query().
+		h.DB.User.Query().
 			Where(user.Login(username)).Only,
 	)
 }
