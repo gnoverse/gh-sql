@@ -65,7 +65,8 @@ func run() error {
 		return err
 	}
 
-	ctx.sqlDB, err = sql.Open("sqlite", fmt.Sprintf("file://%s?_pragma=foreign_keys(1)", abs))
+	// TODO: this does not work concurrently; consider what to do (mattn/sqlite3?)
+	ctx.sqlDB, err = sql.Open("sqlite", fmt.Sprintf("file://%s?_pragma=foreign_keys(1)&_txlock=exclusive", abs))
 	if err != nil {
 		return fmt.Errorf("failed opening connection to postgres: %v", err)
 	}

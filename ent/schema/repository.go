@@ -128,7 +128,6 @@ func (Repository) Edges() []ent.Edge {
 		edge.From("owner", User.Type).
 			Ref("repos").
 			Unique(),
-		// edge: owner (#/components/schemas/simple-user)
 		// edge: template_repository (#/components/schemas/nullable-repository)
 		// edge: license (#/components/schemas/nullable-license-simple)
 		// edge: organization (#/components/schemas/nullable-simple-user)

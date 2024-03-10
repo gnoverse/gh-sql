@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -83,7 +85,17 @@ func (s syncExecContext) run(ctx context.Context, args []string) error {
 			log.Printf("invalid repo syntax: %q (must be <owner>/<repo>)", arg)
 		}
 
-		hub.fetchRepository(ctx, parts[0], parts[1])
+		if strings.IndexByte(parts[1], '*') != -1 {
+			// contains wildcards
+			reString := "^" + strings.ReplaceAll(regexp.QuoteMeta(parts[1]), `\*`, `.*`) + "$"
+			re := regexp.MustCompile(reString)
+			hub.fetchRepositories(ctx, parts[0], func(r *ent.Repository) bool {
+				return re.MatchString(r.Name)
+			})
+		} else {
+			// no wildcards; fetch repo directly.
+			hub.fetchRepository(ctx, parts[0], parts[1])
+		}
 	}
 
 	// wait for all goros to finish
@@ -190,14 +202,26 @@ const (
 	apiVersion  = "2022-11-28"
 )
 
-func (s *syncHub) get(ctx context.Context, path string, dst any) error {
+func httpGet(ctx context.Context, s *syncHub, path string, dst any) error {
+	resp, err := httpInternal(ctx, s, "GET", apiEndpoint+path, nil)
+
+	// unmarshal body into dst
+	defer resp.Body.Close()
+	data, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, dst)
+}
+
+func httpInternal(ctx context.Context, s *syncHub, method, uri string, body io.Reader) (*http.Response, error) {
 	// block until the rate limiter allows us to do request
 	s.requestBucket <- struct{}{}
 
 	// set up request
-	req, err := http.NewRequestWithContext(ctx, "GET", apiEndpoint+path, nil)
+	req, err := http.NewRequestWithContext(ctx, method, uri, body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", apiVersion)
@@ -213,7 +237,7 @@ func (s *syncHub) get(ctx context.Context, path string, dst any) error {
 	// do request
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if resp.Header.Get("X-Ratelimit-Limit") != "" {
@@ -226,14 +250,48 @@ func (s *syncHub) get(ctx context.Context, path string, dst any) error {
 			s.limitsMu.Unlock()
 		}
 	}
+	return resp, nil
+}
 
-	// unmarshal body into dst
-	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
+var httpLinkHeaderRe = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"(?:,\s*|$)`)
+
+func httpGetIterate[T any](ctx context.Context, s *syncHub, path string, fn func(item T) error) error {
+	uri := apiEndpoint + path
+	for {
+		resp, err := httpInternal(ctx, s, "GET", uri, nil)
+
+		// retrieve data
+		data, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+		_ = resp.Body.Close()
+
+		// 100 is the max amount of elements on most GH API calls
+		dst := make([]T, 0, 100)
+		err = json.Unmarshal(data, &dst)
+		if err != nil {
+			return err
+		}
+
+		for _, item := range dst {
+			if err := fn(item); err != nil {
+				return err
+			}
+		}
+
+		// https://go.dev/play/p/RcjolrF-xOt
+		matches := httpLinkHeaderRe.FindAllStringSubmatch(resp.Header.Get("Link"), -1)
+		for _, match := range matches {
+			if match[2] == "next" {
+				uri = match[1]
+				continue
+			}
+		}
+
+		// "next" link not found, return
+		return nil
 	}
-	return json.Unmarshal(data, dst)
 }
 
 func parseLimits(resp *http.Response) (vals rateLimitValues, err error) {
@@ -344,7 +402,7 @@ func (s *syncHub) _fetchRepository(ctx context.Context, owner, repo string) {
 			Login string `json:"login"`
 		} `json:"owner"`
 	}
-	if err := s.get(ctx, fmt.Sprintf("/repos/%s/%s", owner, repo), &r); err != nil {
+	if err := httpGet(ctx, s, fmt.Sprintf("/repos/%s/%s", owner, repo), &r); err != nil {
 		s.report(fmt.Errorf("fetchRepository(%q, %q) get: %w", owner, repo, err))
 		return
 	}
@@ -378,6 +436,26 @@ func (s *syncHub) _fetchRepository(ctx context.Context, owner, repo string) {
 	)
 }
 
+func (s *syncHub) fetchRepositories(ctx context.Context, owner string, shouldStore func(*ent.Repository) bool) {
+	// wait to run goroutine, and execute.
+	s.runWait()
+	go s._fetchRepositories(ctx, owner, shouldStore)
+}
+
+func (s *syncHub) _fetchRepositories(ctx context.Context, owner string, shouldFetch func(*ent.Repository) bool) {
+	defer s.recover()
+
+	err := httpGetIterate(ctx, s, fmt.Sprintf("/users/%s/repos?per_page=100", owner), func(r *ent.Repository) error {
+		if shouldFetch(r) {
+			s.fetchRepository(ctx, owner, r.Name)
+		}
+		return nil
+	})
+	if err != nil {
+		s.report(fmt.Errorf("fetchRepositories(%q): %w", owner, err))
+	}
+}
+
 func (s *syncHub) fetchUser(ctx context.Context, username string) {
 	// determine if we should fetch the user, or it's already been updated
 	keyVal := fmt.Sprintf("/users/%s", username)
@@ -399,7 +477,7 @@ func (s *syncHub) _fetchUser(ctx context.Context, username string) {
 	defer s.recover()
 
 	var u ent.User
-	if err := s.get(ctx, fmt.Sprintf("/users/%s", username), &u); err != nil {
+	if err := httpGet(ctx, s, fmt.Sprintf("/users/%s", username), &u); err != nil {
 		s.report(fmt.Errorf("fetchUser(%q) get: %w", username, err))
 		return
 	}
