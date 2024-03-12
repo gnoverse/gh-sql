@@ -51,11 +51,12 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 
 	// set up hub
 	h := &hub{
-		Options:       opts,
-		Group:         gr,
-		requestBucket: make(chan struct{}, 8),
-		limits:        values,
-		updated:       make(map[string]any),
+		Options:      opts,
+		Group:        gr,
+		limits:       values,
+		limitsTimer:  make(chan struct{}, 1),
+		reqsInflight: make(chan struct{}, 16),
+		updated:      make(map[string]any),
 	}
 	go h.limiter(ctx)
 
@@ -101,8 +102,11 @@ type hub struct {
 	limits rateLimitValues
 	// only at most 1 reader, so RWMutex isn't needed
 	limitsMu sync.Mutex
-	// channel used to space out requests to the GitHub API
-	requestBucket chan struct{}
+	// limitsTimer regulates how requests can be sent to the GitHub API.
+	limitsTimer chan struct{}
+	// reqsInflight keeps track of how many inflights requests there are,
+	// and limits them to the chan's cap.
+	reqsInflight chan struct{}
 
 	// list of updated resources, de-duplicating updates.
 	// Keys are the values of ID() of each [resource] being fetched.
@@ -189,8 +193,16 @@ func httpGet(ctx context.Context, h *hub, path string, dst any) error {
 }
 
 func httpInternal(ctx context.Context, h *hub, method, uri string, body io.Reader) (*http.Response, error) {
-	// block until the rate limiter allows us to do request
-	h.requestBucket <- struct{}{}
+	// Two "flow regulators":
+	// - limitsTimer ensures that we are sending requests at a sustainable pace,
+	//   in accordance to GitHub's rate limit. Values are sent to it by [hub.limiter].
+	// - reqsInflight ensures that we are not making too many requests to GitHub
+	//   concurrently. It is only used by this function.
+	h.limitsTimer <- struct{}{}
+	h.reqsInflight <- struct{}{}
+	defer func() {
+		<-h.reqsInflight
+	}()
 
 	// set up request
 	req, err := http.NewRequestWithContext(ctx, method, uri, body)
@@ -292,7 +304,7 @@ func (h *hub) limiter(ctx context.Context) {
 		h.limitsMu.Unlock()
 
 		if limits.remaining == 0 && time.Until(limits.reset) > 0 {
-			dur := time.Until(limits.reset)
+			dur := time.Until(limits.reset.Add(time.Second))
 			log.Printf("hit rate limit, waiting until %v (%v)", limits.reset, dur)
 			time.Sleep(dur)
 			h.limitsMu.Lock()
@@ -301,16 +313,29 @@ func (h *hub) limiter(ctx context.Context) {
 			continue
 		}
 
-		wait := time.Until(limits.reset) / (time.Duration(limits.remaining) + 1)
-		if h.DebugHTTP {
-			log.Printf("rate limit delay: %v (resets %s)", wait, limits.reset.String())
-		}
-		wait = max(wait, 100*time.Millisecond)
-		select {
-		case <-time.After(wait):
-			<-h.requestBucket
-		case <-ctx.Done():
-			return
+		if limits.remaining > 2000 {
+			// not starving
+			// allow requests immediately to have speedy execution for
+			// incremental updates.
+			select {
+			case <-h.limitsTimer:
+			case <-ctx.Done():
+				return
+			}
+		} else {
+			// we're low on requests, perform them at a sustainable pace
+			// note that Personal Access Tokens in a GH account share rate limits;
+			// this allows other applications to use the same account to perform
+			// operations by not instantly depleting the rate limit.
+			wait := time.Until(limits.reset) / (time.Duration(limits.remaining) + 1)
+			log.Printf("rate limiter is starving: waiting %s [reset: %s | remaining: %d/%d]",
+				wait, limits.reset.String(), limits.remaining, limits.total)
+			select {
+			case <-time.After(wait):
+				<-h.limitsTimer
+			case <-ctx.Done():
+				return
+			}
 		}
 	}
 }
