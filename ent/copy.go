@@ -26,7 +26,6 @@ func (ic *IssueCreate) CopyIssue(input *Issue) *IssueCreate {
 	if input.ActiveLockReason != nil {
 		ic.SetActiveLockReason(*input.ActiveLockReason)
 	}
-	ic.SetComments(input.Comments)
 	if input.ClosedAt != nil {
 		ic.SetClosedAt(*input.ClosedAt)
 	}
@@ -59,7 +58,6 @@ func (iuo *IssueUpdateOne) CopyIssue(input *Issue) *IssueUpdateOne {
 	if input.ActiveLockReason != nil {
 		iuo.SetActiveLockReason(*input.ActiveLockReason)
 	}
-	iuo.SetComments(input.Comments)
 	if input.ClosedAt != nil {
 		iuo.SetClosedAt(*input.ClosedAt)
 	}
@@ -67,6 +65,37 @@ func (iuo *IssueUpdateOne) CopyIssue(input *Issue) *IssueUpdateOne {
 	iuo.SetUpdatedAt(input.UpdatedAt)
 	iuo.SetDraft(input.Draft)
 	return iuo
+}
+
+// CopyIssueComment allows to create a new IssueComment copying the existing
+// values of input.
+func (icc *IssueCommentCreate) CopyIssueComment(input *IssueComment) *IssueCommentCreate {
+	icc.SetID(input.ID)
+	icc.SetNodeID(input.NodeID)
+	icc.SetURL(input.URL)
+	icc.SetBody(input.Body)
+	icc.SetHTMLURL(input.HTMLURL)
+	icc.SetCreatedAt(input.CreatedAt)
+	icc.SetUpdatedAt(input.UpdatedAt)
+	icc.SetIssueURL(input.IssueURL)
+	icc.SetAuthorAssociation(input.AuthorAssociation)
+	icc.SetReactions(input.Reactions)
+	return icc
+}
+
+// CopyIssueComment allows to update a IssueComment copying the existing
+// values of input.
+func (icuo *IssueCommentUpdateOne) CopyIssueComment(input *IssueComment) *IssueCommentUpdateOne {
+	icuo.SetNodeID(input.NodeID)
+	icuo.SetURL(input.URL)
+	icuo.SetBody(input.Body)
+	icuo.SetHTMLURL(input.HTMLURL)
+	icuo.SetCreatedAt(input.CreatedAt)
+	icuo.SetUpdatedAt(input.UpdatedAt)
+	icuo.SetIssueURL(input.IssueURL)
+	icuo.SetAuthorAssociation(input.AuthorAssociation)
+	icuo.SetReactions(input.Reactions)
+	return icuo
 }
 
 // CopyRepository allows to create a new Repository copying the existing

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -28,6 +29,7 @@ type IssueQuery struct {
 	withUser       *UserQuery
 	withAssignees  *UserQuery
 	withClosedBy   *UserQuery
+	withComments   *IssueCommentQuery
 	withFKs        bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -153,6 +155,28 @@ func (iq *IssueQuery) QueryClosedBy() *UserQuery {
 	return query
 }
 
+// QueryComments chains the current query on the "comments" edge.
+func (iq *IssueQuery) QueryComments() *IssueCommentQuery {
+	query := (&IssueCommentClient{config: iq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := iq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := iq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, selector),
+			sqlgraph.To(issuecomment.Table, issuecomment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, issue.CommentsTable, issue.CommentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Issue entity from the query.
 // Returns a *NotFoundError when no Issue was found.
 func (iq *IssueQuery) First(ctx context.Context) (*Issue, error) {
@@ -177,8 +201,8 @@ func (iq *IssueQuery) FirstX(ctx context.Context) *Issue {
 
 // FirstID returns the first Issue ID from the query.
 // Returns a *NotFoundError when no Issue ID was found.
-func (iq *IssueQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (iq *IssueQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = iq.Limit(1).IDs(setContextOp(ctx, iq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -190,7 +214,7 @@ func (iq *IssueQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (iq *IssueQuery) FirstIDX(ctx context.Context) int {
+func (iq *IssueQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := iq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -228,8 +252,8 @@ func (iq *IssueQuery) OnlyX(ctx context.Context) *Issue {
 // OnlyID is like Only, but returns the only Issue ID in the query.
 // Returns a *NotSingularError when more than one Issue ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (iq *IssueQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (iq *IssueQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = iq.Limit(2).IDs(setContextOp(ctx, iq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -245,7 +269,7 @@ func (iq *IssueQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (iq *IssueQuery) OnlyIDX(ctx context.Context) int {
+func (iq *IssueQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := iq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -273,7 +297,7 @@ func (iq *IssueQuery) AllX(ctx context.Context) []*Issue {
 }
 
 // IDs executes the query and returns a list of Issue IDs.
-func (iq *IssueQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (iq *IssueQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if iq.ctx.Unique == nil && iq.path != nil {
 		iq.Unique(true)
 	}
@@ -285,7 +309,7 @@ func (iq *IssueQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (iq *IssueQuery) IDsX(ctx context.Context) []int {
+func (iq *IssueQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := iq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -349,6 +373,7 @@ func (iq *IssueQuery) Clone() *IssueQuery {
 		withUser:       iq.withUser.Clone(),
 		withAssignees:  iq.withAssignees.Clone(),
 		withClosedBy:   iq.withClosedBy.Clone(),
+		withComments:   iq.withComments.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
 		path: iq.path,
@@ -396,6 +421,17 @@ func (iq *IssueQuery) WithClosedBy(opts ...func(*UserQuery)) *IssueQuery {
 		opt(query)
 	}
 	iq.withClosedBy = query
+	return iq
+}
+
+// WithComments tells the query-builder to eager-load the nodes that are connected to
+// the "comments" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *IssueQuery) WithComments(opts ...func(*IssueCommentQuery)) *IssueQuery {
+	query := (&IssueCommentClient{config: iq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	iq.withComments = query
 	return iq
 }
 
@@ -478,11 +514,12 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 		nodes       = []*Issue{}
 		withFKs     = iq.withFKs
 		_spec       = iq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			iq.withRepository != nil,
 			iq.withUser != nil,
 			iq.withAssignees != nil,
 			iq.withClosedBy != nil,
+			iq.withComments != nil,
 		}
 	)
 	if iq.withRepository != nil || iq.withUser != nil || iq.withClosedBy != nil {
@@ -534,12 +571,19 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 			return nil, err
 		}
 	}
+	if query := iq.withComments; query != nil {
+		if err := iq.loadComments(ctx, query, nodes,
+			func(n *Issue) { n.Edges.Comments = []*IssueComment{} },
+			func(n *Issue, e *IssueComment) { n.Edges.Comments = append(n.Edges.Comments, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
 func (iq *IssueQuery) loadRepository(ctx context.Context, query *RepositoryQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *Repository)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Issue)
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Issue)
 	for i := range nodes {
 		if nodes[i].repository_issues == nil {
 			continue
@@ -570,8 +614,8 @@ func (iq *IssueQuery) loadRepository(ctx context.Context, query *RepositoryQuery
 	return nil
 }
 func (iq *IssueQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *User)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Issue)
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Issue)
 	for i := range nodes {
 		if nodes[i].user_issues_created == nil {
 			continue
@@ -603,8 +647,8 @@ func (iq *IssueQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*I
 }
 func (iq *IssueQuery) loadAssignees(ctx context.Context, query *UserQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *User)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[int]*Issue)
-	nids := make(map[int]map[*Issue]struct{})
+	byID := make(map[int64]*Issue)
+	nids := make(map[int64]map[*Issue]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -636,8 +680,8 @@ func (iq *IssueQuery) loadAssignees(ctx context.Context, query *UserQuery, nodes
 				return append([]any{new(sql.NullInt64)}, values...), nil
 			}
 			spec.Assign = func(columns []string, values []any) error {
-				outValue := int(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
+				outValue := values[0].(*sql.NullInt64).Int64
+				inValue := values[1].(*sql.NullInt64).Int64
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Issue]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -663,8 +707,8 @@ func (iq *IssueQuery) loadAssignees(ctx context.Context, query *UserQuery, nodes
 	return nil
 }
 func (iq *IssueQuery) loadClosedBy(ctx context.Context, query *UserQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *User)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Issue)
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Issue)
 	for i := range nodes {
 		if nodes[i].issue_closed_by == nil {
 			continue
@@ -694,6 +738,37 @@ func (iq *IssueQuery) loadClosedBy(ctx context.Context, query *UserQuery, nodes 
 	}
 	return nil
 }
+func (iq *IssueQuery) loadComments(ctx context.Context, query *IssueCommentQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *IssueComment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Issue)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.IssueComment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(issue.CommentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.issue_comments
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "issue_comments" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "issue_comments" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
 
 func (iq *IssueQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := iq.querySpec()
@@ -705,7 +780,7 @@ func (iq *IssueQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (iq *IssueQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(issue.Table, issue.Columns, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(issue.Table, issue.Columns, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64))
 	_spec.From = iq.sql
 	if unique := iq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

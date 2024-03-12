@@ -363,25 +363,25 @@ func (rc *RepositoryCreate) SetNillableLanguage(s *string) *RepositoryCreate {
 }
 
 // SetForksCount sets the "forks_count" field.
-func (rc *RepositoryCreate) SetForksCount(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetForksCount(i int64) *RepositoryCreate {
 	rc.mutation.SetForksCount(i)
 	return rc
 }
 
 // SetStargazersCount sets the "stargazers_count" field.
-func (rc *RepositoryCreate) SetStargazersCount(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetStargazersCount(i int64) *RepositoryCreate {
 	rc.mutation.SetStargazersCount(i)
 	return rc
 }
 
 // SetWatchersCount sets the "watchers_count" field.
-func (rc *RepositoryCreate) SetWatchersCount(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetWatchersCount(i int64) *RepositoryCreate {
 	rc.mutation.SetWatchersCount(i)
 	return rc
 }
 
 // SetSize sets the "size" field.
-func (rc *RepositoryCreate) SetSize(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetSize(i int64) *RepositoryCreate {
 	rc.mutation.SetSize(i)
 	return rc
 }
@@ -393,7 +393,7 @@ func (rc *RepositoryCreate) SetDefaultBranch(s string) *RepositoryCreate {
 }
 
 // SetOpenIssuesCount sets the "open_issues_count" field.
-func (rc *RepositoryCreate) SetOpenIssuesCount(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetOpenIssuesCount(i int64) *RepositoryCreate {
 	rc.mutation.SetOpenIssuesCount(i)
 	return rc
 }
@@ -491,49 +491,49 @@ func (rc *RepositoryCreate) SetUpdatedAt(t time.Time) *RepositoryCreate {
 }
 
 // SetSubscribersCount sets the "subscribers_count" field.
-func (rc *RepositoryCreate) SetSubscribersCount(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetSubscribersCount(i int64) *RepositoryCreate {
 	rc.mutation.SetSubscribersCount(i)
 	return rc
 }
 
 // SetNetworkCount sets the "network_count" field.
-func (rc *RepositoryCreate) SetNetworkCount(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetNetworkCount(i int64) *RepositoryCreate {
 	rc.mutation.SetNetworkCount(i)
 	return rc
 }
 
 // SetForks sets the "forks" field.
-func (rc *RepositoryCreate) SetForks(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetForks(i int64) *RepositoryCreate {
 	rc.mutation.SetForks(i)
 	return rc
 }
 
 // SetOpenIssues sets the "open_issues" field.
-func (rc *RepositoryCreate) SetOpenIssues(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetOpenIssues(i int64) *RepositoryCreate {
 	rc.mutation.SetOpenIssues(i)
 	return rc
 }
 
 // SetWatchers sets the "watchers" field.
-func (rc *RepositoryCreate) SetWatchers(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetWatchers(i int64) *RepositoryCreate {
 	rc.mutation.SetWatchers(i)
 	return rc
 }
 
 // SetID sets the "id" field.
-func (rc *RepositoryCreate) SetID(i int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetID(i int64) *RepositoryCreate {
 	rc.mutation.SetID(i)
 	return rc
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (rc *RepositoryCreate) SetOwnerID(id int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetOwnerID(id int64) *RepositoryCreate {
 	rc.mutation.SetOwnerID(id)
 	return rc
 }
 
 // SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
-func (rc *RepositoryCreate) SetNillableOwnerID(id *int) *RepositoryCreate {
+func (rc *RepositoryCreate) SetNillableOwnerID(id *int64) *RepositoryCreate {
 	if id != nil {
 		rc = rc.SetOwnerID(*id)
 	}
@@ -546,14 +546,14 @@ func (rc *RepositoryCreate) SetOwner(u *User) *RepositoryCreate {
 }
 
 // AddIssueIDs adds the "issues" edge to the Issue entity by IDs.
-func (rc *RepositoryCreate) AddIssueIDs(ids ...int) *RepositoryCreate {
+func (rc *RepositoryCreate) AddIssueIDs(ids ...int64) *RepositoryCreate {
 	rc.mutation.AddIssueIDs(ids...)
 	return rc
 }
 
 // AddIssues adds the "issues" edges to the Issue entity.
 func (rc *RepositoryCreate) AddIssues(i ...*Issue) *RepositoryCreate {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -828,7 +828,7 @@ func (rc *RepositoryCreate) sqlSave(ctx context.Context) (*Repository, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
+		_node.ID = int64(id)
 	}
 	rc.mutation.id = &_node.ID
 	rc.mutation.done = true
@@ -838,7 +838,7 @@ func (rc *RepositoryCreate) sqlSave(ctx context.Context) (*Repository, error) {
 func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Repository{config: rc.config}
-		_spec = sqlgraph.NewCreateSpec(repository.Table, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(repository.Table, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = rc.conflict
 	if id, ok := rc.mutation.ID(); ok {
@@ -1050,19 +1050,19 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		_node.Language = value
 	}
 	if value, ok := rc.mutation.ForksCount(); ok {
-		_spec.SetField(repository.FieldForksCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldForksCount, field.TypeInt64, value)
 		_node.ForksCount = value
 	}
 	if value, ok := rc.mutation.StargazersCount(); ok {
-		_spec.SetField(repository.FieldStargazersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldStargazersCount, field.TypeInt64, value)
 		_node.StargazersCount = value
 	}
 	if value, ok := rc.mutation.WatchersCount(); ok {
-		_spec.SetField(repository.FieldWatchersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldWatchersCount, field.TypeInt64, value)
 		_node.WatchersCount = value
 	}
 	if value, ok := rc.mutation.Size(); ok {
-		_spec.SetField(repository.FieldSize, field.TypeInt, value)
+		_spec.SetField(repository.FieldSize, field.TypeInt64, value)
 		_node.Size = value
 	}
 	if value, ok := rc.mutation.DefaultBranch(); ok {
@@ -1070,7 +1070,7 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		_node.DefaultBranch = value
 	}
 	if value, ok := rc.mutation.OpenIssuesCount(); ok {
-		_spec.SetField(repository.FieldOpenIssuesCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldOpenIssuesCount, field.TypeInt64, value)
 		_node.OpenIssuesCount = value
 	}
 	if value, ok := rc.mutation.IsTemplate(); ok {
@@ -1130,23 +1130,23 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		_node.UpdatedAt = value
 	}
 	if value, ok := rc.mutation.SubscribersCount(); ok {
-		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt64, value)
 		_node.SubscribersCount = value
 	}
 	if value, ok := rc.mutation.NetworkCount(); ok {
-		_spec.SetField(repository.FieldNetworkCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldNetworkCount, field.TypeInt64, value)
 		_node.NetworkCount = value
 	}
 	if value, ok := rc.mutation.Forks(); ok {
-		_spec.SetField(repository.FieldForks, field.TypeInt, value)
+		_spec.SetField(repository.FieldForks, field.TypeInt64, value)
 		_node.Forks = value
 	}
 	if value, ok := rc.mutation.OpenIssues(); ok {
-		_spec.SetField(repository.FieldOpenIssues, field.TypeInt, value)
+		_spec.SetField(repository.FieldOpenIssues, field.TypeInt64, value)
 		_node.OpenIssues = value
 	}
 	if value, ok := rc.mutation.Watchers(); ok {
-		_spec.SetField(repository.FieldWatchers, field.TypeInt, value)
+		_spec.SetField(repository.FieldWatchers, field.TypeInt64, value)
 		_node.Watchers = value
 	}
 	if nodes := rc.mutation.OwnerIDs(); len(nodes) > 0 {
@@ -1157,7 +1157,7 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 			Columns: []string{repository.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1174,7 +1174,7 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 			Columns: []string{repository.IssuesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1871,7 +1871,7 @@ func (u *RepositoryUpsert) ClearLanguage() *RepositoryUpsert {
 }
 
 // SetForksCount sets the "forks_count" field.
-func (u *RepositoryUpsert) SetForksCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetForksCount(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldForksCount, v)
 	return u
 }
@@ -1883,13 +1883,13 @@ func (u *RepositoryUpsert) UpdateForksCount() *RepositoryUpsert {
 }
 
 // AddForksCount adds v to the "forks_count" field.
-func (u *RepositoryUpsert) AddForksCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddForksCount(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldForksCount, v)
 	return u
 }
 
 // SetStargazersCount sets the "stargazers_count" field.
-func (u *RepositoryUpsert) SetStargazersCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetStargazersCount(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldStargazersCount, v)
 	return u
 }
@@ -1901,13 +1901,13 @@ func (u *RepositoryUpsert) UpdateStargazersCount() *RepositoryUpsert {
 }
 
 // AddStargazersCount adds v to the "stargazers_count" field.
-func (u *RepositoryUpsert) AddStargazersCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddStargazersCount(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldStargazersCount, v)
 	return u
 }
 
 // SetWatchersCount sets the "watchers_count" field.
-func (u *RepositoryUpsert) SetWatchersCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetWatchersCount(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldWatchersCount, v)
 	return u
 }
@@ -1919,13 +1919,13 @@ func (u *RepositoryUpsert) UpdateWatchersCount() *RepositoryUpsert {
 }
 
 // AddWatchersCount adds v to the "watchers_count" field.
-func (u *RepositoryUpsert) AddWatchersCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddWatchersCount(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldWatchersCount, v)
 	return u
 }
 
 // SetSize sets the "size" field.
-func (u *RepositoryUpsert) SetSize(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetSize(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldSize, v)
 	return u
 }
@@ -1937,7 +1937,7 @@ func (u *RepositoryUpsert) UpdateSize() *RepositoryUpsert {
 }
 
 // AddSize adds v to the "size" field.
-func (u *RepositoryUpsert) AddSize(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddSize(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldSize, v)
 	return u
 }
@@ -1955,7 +1955,7 @@ func (u *RepositoryUpsert) UpdateDefaultBranch() *RepositoryUpsert {
 }
 
 // SetOpenIssuesCount sets the "open_issues_count" field.
-func (u *RepositoryUpsert) SetOpenIssuesCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetOpenIssuesCount(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldOpenIssuesCount, v)
 	return u
 }
@@ -1967,7 +1967,7 @@ func (u *RepositoryUpsert) UpdateOpenIssuesCount() *RepositoryUpsert {
 }
 
 // AddOpenIssuesCount adds v to the "open_issues_count" field.
-func (u *RepositoryUpsert) AddOpenIssuesCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddOpenIssuesCount(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldOpenIssuesCount, v)
 	return u
 }
@@ -2147,7 +2147,7 @@ func (u *RepositoryUpsert) UpdateUpdatedAt() *RepositoryUpsert {
 }
 
 // SetSubscribersCount sets the "subscribers_count" field.
-func (u *RepositoryUpsert) SetSubscribersCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetSubscribersCount(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldSubscribersCount, v)
 	return u
 }
@@ -2159,13 +2159,13 @@ func (u *RepositoryUpsert) UpdateSubscribersCount() *RepositoryUpsert {
 }
 
 // AddSubscribersCount adds v to the "subscribers_count" field.
-func (u *RepositoryUpsert) AddSubscribersCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddSubscribersCount(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldSubscribersCount, v)
 	return u
 }
 
 // SetNetworkCount sets the "network_count" field.
-func (u *RepositoryUpsert) SetNetworkCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetNetworkCount(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldNetworkCount, v)
 	return u
 }
@@ -2177,13 +2177,13 @@ func (u *RepositoryUpsert) UpdateNetworkCount() *RepositoryUpsert {
 }
 
 // AddNetworkCount adds v to the "network_count" field.
-func (u *RepositoryUpsert) AddNetworkCount(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddNetworkCount(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldNetworkCount, v)
 	return u
 }
 
 // SetForks sets the "forks" field.
-func (u *RepositoryUpsert) SetForks(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetForks(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldForks, v)
 	return u
 }
@@ -2195,13 +2195,13 @@ func (u *RepositoryUpsert) UpdateForks() *RepositoryUpsert {
 }
 
 // AddForks adds v to the "forks" field.
-func (u *RepositoryUpsert) AddForks(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddForks(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldForks, v)
 	return u
 }
 
 // SetOpenIssues sets the "open_issues" field.
-func (u *RepositoryUpsert) SetOpenIssues(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetOpenIssues(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldOpenIssues, v)
 	return u
 }
@@ -2213,13 +2213,13 @@ func (u *RepositoryUpsert) UpdateOpenIssues() *RepositoryUpsert {
 }
 
 // AddOpenIssues adds v to the "open_issues" field.
-func (u *RepositoryUpsert) AddOpenIssues(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddOpenIssues(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldOpenIssues, v)
 	return u
 }
 
 // SetWatchers sets the "watchers" field.
-func (u *RepositoryUpsert) SetWatchers(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) SetWatchers(v int64) *RepositoryUpsert {
 	u.Set(repository.FieldWatchers, v)
 	return u
 }
@@ -2231,7 +2231,7 @@ func (u *RepositoryUpsert) UpdateWatchers() *RepositoryUpsert {
 }
 
 // AddWatchers adds v to the "watchers" field.
-func (u *RepositoryUpsert) AddWatchers(v int) *RepositoryUpsert {
+func (u *RepositoryUpsert) AddWatchers(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldWatchers, v)
 	return u
 }
@@ -3027,14 +3027,14 @@ func (u *RepositoryUpsertOne) ClearLanguage() *RepositoryUpsertOne {
 }
 
 // SetForksCount sets the "forks_count" field.
-func (u *RepositoryUpsertOne) SetForksCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetForksCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetForksCount(v)
 	})
 }
 
 // AddForksCount adds v to the "forks_count" field.
-func (u *RepositoryUpsertOne) AddForksCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddForksCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddForksCount(v)
 	})
@@ -3048,14 +3048,14 @@ func (u *RepositoryUpsertOne) UpdateForksCount() *RepositoryUpsertOne {
 }
 
 // SetStargazersCount sets the "stargazers_count" field.
-func (u *RepositoryUpsertOne) SetStargazersCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetStargazersCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetStargazersCount(v)
 	})
 }
 
 // AddStargazersCount adds v to the "stargazers_count" field.
-func (u *RepositoryUpsertOne) AddStargazersCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddStargazersCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddStargazersCount(v)
 	})
@@ -3069,14 +3069,14 @@ func (u *RepositoryUpsertOne) UpdateStargazersCount() *RepositoryUpsertOne {
 }
 
 // SetWatchersCount sets the "watchers_count" field.
-func (u *RepositoryUpsertOne) SetWatchersCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetWatchersCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetWatchersCount(v)
 	})
 }
 
 // AddWatchersCount adds v to the "watchers_count" field.
-func (u *RepositoryUpsertOne) AddWatchersCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddWatchersCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddWatchersCount(v)
 	})
@@ -3090,14 +3090,14 @@ func (u *RepositoryUpsertOne) UpdateWatchersCount() *RepositoryUpsertOne {
 }
 
 // SetSize sets the "size" field.
-func (u *RepositoryUpsertOne) SetSize(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetSize(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetSize(v)
 	})
 }
 
 // AddSize adds v to the "size" field.
-func (u *RepositoryUpsertOne) AddSize(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddSize(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddSize(v)
 	})
@@ -3125,14 +3125,14 @@ func (u *RepositoryUpsertOne) UpdateDefaultBranch() *RepositoryUpsertOne {
 }
 
 // SetOpenIssuesCount sets the "open_issues_count" field.
-func (u *RepositoryUpsertOne) SetOpenIssuesCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetOpenIssuesCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetOpenIssuesCount(v)
 	})
 }
 
 // AddOpenIssuesCount adds v to the "open_issues_count" field.
-func (u *RepositoryUpsertOne) AddOpenIssuesCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddOpenIssuesCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddOpenIssuesCount(v)
 	})
@@ -3349,14 +3349,14 @@ func (u *RepositoryUpsertOne) UpdateUpdatedAt() *RepositoryUpsertOne {
 }
 
 // SetSubscribersCount sets the "subscribers_count" field.
-func (u *RepositoryUpsertOne) SetSubscribersCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetSubscribersCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetSubscribersCount(v)
 	})
 }
 
 // AddSubscribersCount adds v to the "subscribers_count" field.
-func (u *RepositoryUpsertOne) AddSubscribersCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddSubscribersCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddSubscribersCount(v)
 	})
@@ -3370,14 +3370,14 @@ func (u *RepositoryUpsertOne) UpdateSubscribersCount() *RepositoryUpsertOne {
 }
 
 // SetNetworkCount sets the "network_count" field.
-func (u *RepositoryUpsertOne) SetNetworkCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetNetworkCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetNetworkCount(v)
 	})
 }
 
 // AddNetworkCount adds v to the "network_count" field.
-func (u *RepositoryUpsertOne) AddNetworkCount(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddNetworkCount(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddNetworkCount(v)
 	})
@@ -3391,14 +3391,14 @@ func (u *RepositoryUpsertOne) UpdateNetworkCount() *RepositoryUpsertOne {
 }
 
 // SetForks sets the "forks" field.
-func (u *RepositoryUpsertOne) SetForks(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetForks(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetForks(v)
 	})
 }
 
 // AddForks adds v to the "forks" field.
-func (u *RepositoryUpsertOne) AddForks(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddForks(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddForks(v)
 	})
@@ -3412,14 +3412,14 @@ func (u *RepositoryUpsertOne) UpdateForks() *RepositoryUpsertOne {
 }
 
 // SetOpenIssues sets the "open_issues" field.
-func (u *RepositoryUpsertOne) SetOpenIssues(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetOpenIssues(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetOpenIssues(v)
 	})
 }
 
 // AddOpenIssues adds v to the "open_issues" field.
-func (u *RepositoryUpsertOne) AddOpenIssues(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddOpenIssues(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddOpenIssues(v)
 	})
@@ -3433,14 +3433,14 @@ func (u *RepositoryUpsertOne) UpdateOpenIssues() *RepositoryUpsertOne {
 }
 
 // SetWatchers sets the "watchers" field.
-func (u *RepositoryUpsertOne) SetWatchers(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) SetWatchers(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetWatchers(v)
 	})
 }
 
 // AddWatchers adds v to the "watchers" field.
-func (u *RepositoryUpsertOne) AddWatchers(v int) *RepositoryUpsertOne {
+func (u *RepositoryUpsertOne) AddWatchers(v int64) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddWatchers(v)
 	})
@@ -3469,7 +3469,7 @@ func (u *RepositoryUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *RepositoryUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *RepositoryUpsertOne) ID(ctx context.Context) (id int64, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -3478,7 +3478,7 @@ func (u *RepositoryUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *RepositoryUpsertOne) IDX(ctx context.Context) int {
+func (u *RepositoryUpsertOne) IDX(ctx context.Context) int64 {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -3534,7 +3534,7 @@ func (rcb *RepositoryCreateBulk) Save(ctx context.Context) ([]*Repository, error
 				mutation.id = &nodes[i].ID
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
@@ -4409,14 +4409,14 @@ func (u *RepositoryUpsertBulk) ClearLanguage() *RepositoryUpsertBulk {
 }
 
 // SetForksCount sets the "forks_count" field.
-func (u *RepositoryUpsertBulk) SetForksCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetForksCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetForksCount(v)
 	})
 }
 
 // AddForksCount adds v to the "forks_count" field.
-func (u *RepositoryUpsertBulk) AddForksCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddForksCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddForksCount(v)
 	})
@@ -4430,14 +4430,14 @@ func (u *RepositoryUpsertBulk) UpdateForksCount() *RepositoryUpsertBulk {
 }
 
 // SetStargazersCount sets the "stargazers_count" field.
-func (u *RepositoryUpsertBulk) SetStargazersCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetStargazersCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetStargazersCount(v)
 	})
 }
 
 // AddStargazersCount adds v to the "stargazers_count" field.
-func (u *RepositoryUpsertBulk) AddStargazersCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddStargazersCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddStargazersCount(v)
 	})
@@ -4451,14 +4451,14 @@ func (u *RepositoryUpsertBulk) UpdateStargazersCount() *RepositoryUpsertBulk {
 }
 
 // SetWatchersCount sets the "watchers_count" field.
-func (u *RepositoryUpsertBulk) SetWatchersCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetWatchersCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetWatchersCount(v)
 	})
 }
 
 // AddWatchersCount adds v to the "watchers_count" field.
-func (u *RepositoryUpsertBulk) AddWatchersCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddWatchersCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddWatchersCount(v)
 	})
@@ -4472,14 +4472,14 @@ func (u *RepositoryUpsertBulk) UpdateWatchersCount() *RepositoryUpsertBulk {
 }
 
 // SetSize sets the "size" field.
-func (u *RepositoryUpsertBulk) SetSize(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetSize(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetSize(v)
 	})
 }
 
 // AddSize adds v to the "size" field.
-func (u *RepositoryUpsertBulk) AddSize(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddSize(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddSize(v)
 	})
@@ -4507,14 +4507,14 @@ func (u *RepositoryUpsertBulk) UpdateDefaultBranch() *RepositoryUpsertBulk {
 }
 
 // SetOpenIssuesCount sets the "open_issues_count" field.
-func (u *RepositoryUpsertBulk) SetOpenIssuesCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetOpenIssuesCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetOpenIssuesCount(v)
 	})
 }
 
 // AddOpenIssuesCount adds v to the "open_issues_count" field.
-func (u *RepositoryUpsertBulk) AddOpenIssuesCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddOpenIssuesCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddOpenIssuesCount(v)
 	})
@@ -4731,14 +4731,14 @@ func (u *RepositoryUpsertBulk) UpdateUpdatedAt() *RepositoryUpsertBulk {
 }
 
 // SetSubscribersCount sets the "subscribers_count" field.
-func (u *RepositoryUpsertBulk) SetSubscribersCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetSubscribersCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetSubscribersCount(v)
 	})
 }
 
 // AddSubscribersCount adds v to the "subscribers_count" field.
-func (u *RepositoryUpsertBulk) AddSubscribersCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddSubscribersCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddSubscribersCount(v)
 	})
@@ -4752,14 +4752,14 @@ func (u *RepositoryUpsertBulk) UpdateSubscribersCount() *RepositoryUpsertBulk {
 }
 
 // SetNetworkCount sets the "network_count" field.
-func (u *RepositoryUpsertBulk) SetNetworkCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetNetworkCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetNetworkCount(v)
 	})
 }
 
 // AddNetworkCount adds v to the "network_count" field.
-func (u *RepositoryUpsertBulk) AddNetworkCount(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddNetworkCount(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddNetworkCount(v)
 	})
@@ -4773,14 +4773,14 @@ func (u *RepositoryUpsertBulk) UpdateNetworkCount() *RepositoryUpsertBulk {
 }
 
 // SetForks sets the "forks" field.
-func (u *RepositoryUpsertBulk) SetForks(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetForks(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetForks(v)
 	})
 }
 
 // AddForks adds v to the "forks" field.
-func (u *RepositoryUpsertBulk) AddForks(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddForks(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddForks(v)
 	})
@@ -4794,14 +4794,14 @@ func (u *RepositoryUpsertBulk) UpdateForks() *RepositoryUpsertBulk {
 }
 
 // SetOpenIssues sets the "open_issues" field.
-func (u *RepositoryUpsertBulk) SetOpenIssues(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetOpenIssues(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetOpenIssues(v)
 	})
 }
 
 // AddOpenIssues adds v to the "open_issues" field.
-func (u *RepositoryUpsertBulk) AddOpenIssues(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddOpenIssues(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddOpenIssues(v)
 	})
@@ -4815,14 +4815,14 @@ func (u *RepositoryUpsertBulk) UpdateOpenIssues() *RepositoryUpsertBulk {
 }
 
 // SetWatchers sets the "watchers" field.
-func (u *RepositoryUpsertBulk) SetWatchers(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) SetWatchers(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.SetWatchers(v)
 	})
 }
 
 // AddWatchers adds v to the "watchers" field.
-func (u *RepositoryUpsertBulk) AddWatchers(v int) *RepositoryUpsertBulk {
+func (u *RepositoryUpsertBulk) AddWatchers(v int64) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.AddWatchers(v)
 	})

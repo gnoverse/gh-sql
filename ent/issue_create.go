@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 )
@@ -67,7 +68,7 @@ func (ic *IssueCreate) SetHTMLURL(s string) *IssueCreate {
 }
 
 // SetNumber sets the "number" field.
-func (ic *IssueCreate) SetNumber(i int) *IssueCreate {
+func (ic *IssueCreate) SetNumber(i int64) *IssueCreate {
 	ic.mutation.SetNumber(i)
 	return ic
 }
@@ -132,12 +133,6 @@ func (ic *IssueCreate) SetNillableActiveLockReason(s *string) *IssueCreate {
 	return ic
 }
 
-// SetComments sets the "comments" field.
-func (ic *IssueCreate) SetComments(i int) *IssueCreate {
-	ic.mutation.SetComments(i)
-	return ic
-}
-
 // SetClosedAt sets the "closed_at" field.
 func (ic *IssueCreate) SetClosedAt(t time.Time) *IssueCreate {
 	ic.mutation.SetClosedAt(t)
@@ -171,13 +166,13 @@ func (ic *IssueCreate) SetDraft(b bool) *IssueCreate {
 }
 
 // SetID sets the "id" field.
-func (ic *IssueCreate) SetID(i int) *IssueCreate {
+func (ic *IssueCreate) SetID(i int64) *IssueCreate {
 	ic.mutation.SetID(i)
 	return ic
 }
 
 // SetRepositoryID sets the "repository" edge to the Repository entity by ID.
-func (ic *IssueCreate) SetRepositoryID(id int) *IssueCreate {
+func (ic *IssueCreate) SetRepositoryID(id int64) *IssueCreate {
 	ic.mutation.SetRepositoryID(id)
 	return ic
 }
@@ -188,13 +183,13 @@ func (ic *IssueCreate) SetRepository(r *Repository) *IssueCreate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (ic *IssueCreate) SetUserID(id int) *IssueCreate {
+func (ic *IssueCreate) SetUserID(id int64) *IssueCreate {
 	ic.mutation.SetUserID(id)
 	return ic
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (ic *IssueCreate) SetNillableUserID(id *int) *IssueCreate {
+func (ic *IssueCreate) SetNillableUserID(id *int64) *IssueCreate {
 	if id != nil {
 		ic = ic.SetUserID(*id)
 	}
@@ -207,14 +202,14 @@ func (ic *IssueCreate) SetUser(u *User) *IssueCreate {
 }
 
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
-func (ic *IssueCreate) AddAssigneeIDs(ids ...int) *IssueCreate {
+func (ic *IssueCreate) AddAssigneeIDs(ids ...int64) *IssueCreate {
 	ic.mutation.AddAssigneeIDs(ids...)
 	return ic
 }
 
 // AddAssignees adds the "assignees" edges to the User entity.
 func (ic *IssueCreate) AddAssignees(u ...*User) *IssueCreate {
-	ids := make([]int, len(u))
+	ids := make([]int64, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -222,13 +217,13 @@ func (ic *IssueCreate) AddAssignees(u ...*User) *IssueCreate {
 }
 
 // SetClosedByID sets the "closed_by" edge to the User entity by ID.
-func (ic *IssueCreate) SetClosedByID(id int) *IssueCreate {
+func (ic *IssueCreate) SetClosedByID(id int64) *IssueCreate {
 	ic.mutation.SetClosedByID(id)
 	return ic
 }
 
 // SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
-func (ic *IssueCreate) SetNillableClosedByID(id *int) *IssueCreate {
+func (ic *IssueCreate) SetNillableClosedByID(id *int64) *IssueCreate {
 	if id != nil {
 		ic = ic.SetClosedByID(*id)
 	}
@@ -238,6 +233,21 @@ func (ic *IssueCreate) SetNillableClosedByID(id *int) *IssueCreate {
 // SetClosedBy sets the "closed_by" edge to the User entity.
 func (ic *IssueCreate) SetClosedBy(u *User) *IssueCreate {
 	return ic.SetClosedByID(u.ID)
+}
+
+// AddCommentIDs adds the "comments" edge to the IssueComment entity by IDs.
+func (ic *IssueCreate) AddCommentIDs(ids ...int64) *IssueCreate {
+	ic.mutation.AddCommentIDs(ids...)
+	return ic
+}
+
+// AddComments adds the "comments" edges to the IssueComment entity.
+func (ic *IssueCreate) AddComments(i ...*IssueComment) *IssueCreate {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ic.AddCommentIDs(ids...)
 }
 
 // Mutation returns the IssueMutation object of the builder.
@@ -312,9 +322,6 @@ func (ic *IssueCreate) check() error {
 	if _, ok := ic.mutation.Locked(); !ok {
 		return &ValidationError{Name: "locked", err: errors.New(`ent: missing required field "Issue.locked"`)}
 	}
-	if _, ok := ic.mutation.Comments(); !ok {
-		return &ValidationError{Name: "comments", err: errors.New(`ent: missing required field "Issue.comments"`)}
-	}
 	if _, ok := ic.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Issue.created_at"`)}
 	}
@@ -343,7 +350,7 @@ func (ic *IssueCreate) sqlSave(ctx context.Context) (*Issue, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
+		_node.ID = int64(id)
 	}
 	ic.mutation.id = &_node.ID
 	ic.mutation.done = true
@@ -353,7 +360,7 @@ func (ic *IssueCreate) sqlSave(ctx context.Context) (*Issue, error) {
 func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 	var (
 		_node = &Issue{config: ic.config}
-		_spec = sqlgraph.NewCreateSpec(issue.Table, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(issue.Table, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = ic.conflict
 	if id, ok := ic.mutation.ID(); ok {
@@ -389,7 +396,7 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 		_node.HTMLURL = value
 	}
 	if value, ok := ic.mutation.Number(); ok {
-		_spec.SetField(issue.FieldNumber, field.TypeInt, value)
+		_spec.SetField(issue.FieldNumber, field.TypeInt64, value)
 		_node.Number = value
 	}
 	if value, ok := ic.mutation.State(); ok {
@@ -416,10 +423,6 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 		_spec.SetField(issue.FieldActiveLockReason, field.TypeString, value)
 		_node.ActiveLockReason = &value
 	}
-	if value, ok := ic.mutation.Comments(); ok {
-		_spec.SetField(issue.FieldComments, field.TypeInt, value)
-		_node.Comments = value
-	}
 	if value, ok := ic.mutation.ClosedAt(); ok {
 		_spec.SetField(issue.FieldClosedAt, field.TypeTime, value)
 		_node.ClosedAt = &value
@@ -444,7 +447,7 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 			Columns: []string{issue.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -461,7 +464,7 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 			Columns: []string{issue.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -478,7 +481,7 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 			Columns: issue.AssigneesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -494,13 +497,29 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 			Columns: []string{issue.ClosedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.issue_closed_by = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ic.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.CommentsTable,
+			Columns: []string{issue.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -640,7 +659,7 @@ func (u *IssueUpsert) UpdateHTMLURL() *IssueUpsert {
 }
 
 // SetNumber sets the "number" field.
-func (u *IssueUpsert) SetNumber(v int) *IssueUpsert {
+func (u *IssueUpsert) SetNumber(v int64) *IssueUpsert {
 	u.Set(issue.FieldNumber, v)
 	return u
 }
@@ -652,7 +671,7 @@ func (u *IssueUpsert) UpdateNumber() *IssueUpsert {
 }
 
 // AddNumber adds v to the "number" field.
-func (u *IssueUpsert) AddNumber(v int) *IssueUpsert {
+func (u *IssueUpsert) AddNumber(v int64) *IssueUpsert {
 	u.Add(issue.FieldNumber, v)
 	return u
 }
@@ -744,24 +763,6 @@ func (u *IssueUpsert) UpdateActiveLockReason() *IssueUpsert {
 // ClearActiveLockReason clears the value of the "active_lock_reason" field.
 func (u *IssueUpsert) ClearActiveLockReason() *IssueUpsert {
 	u.SetNull(issue.FieldActiveLockReason)
-	return u
-}
-
-// SetComments sets the "comments" field.
-func (u *IssueUpsert) SetComments(v int) *IssueUpsert {
-	u.Set(issue.FieldComments, v)
-	return u
-}
-
-// UpdateComments sets the "comments" field to the value that was provided on create.
-func (u *IssueUpsert) UpdateComments() *IssueUpsert {
-	u.SetExcluded(issue.FieldComments)
-	return u
-}
-
-// AddComments adds v to the "comments" field.
-func (u *IssueUpsert) AddComments(v int) *IssueUpsert {
-	u.Add(issue.FieldComments, v)
 	return u
 }
 
@@ -966,14 +967,14 @@ func (u *IssueUpsertOne) UpdateHTMLURL() *IssueUpsertOne {
 }
 
 // SetNumber sets the "number" field.
-func (u *IssueUpsertOne) SetNumber(v int) *IssueUpsertOne {
+func (u *IssueUpsertOne) SetNumber(v int64) *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetNumber(v)
 	})
 }
 
 // AddNumber adds v to the "number" field.
-func (u *IssueUpsertOne) AddNumber(v int) *IssueUpsertOne {
+func (u *IssueUpsertOne) AddNumber(v int64) *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
 		s.AddNumber(v)
 	})
@@ -1091,27 +1092,6 @@ func (u *IssueUpsertOne) ClearActiveLockReason() *IssueUpsertOne {
 	})
 }
 
-// SetComments sets the "comments" field.
-func (u *IssueUpsertOne) SetComments(v int) *IssueUpsertOne {
-	return u.Update(func(s *IssueUpsert) {
-		s.SetComments(v)
-	})
-}
-
-// AddComments adds v to the "comments" field.
-func (u *IssueUpsertOne) AddComments(v int) *IssueUpsertOne {
-	return u.Update(func(s *IssueUpsert) {
-		s.AddComments(v)
-	})
-}
-
-// UpdateComments sets the "comments" field to the value that was provided on create.
-func (u *IssueUpsertOne) UpdateComments() *IssueUpsertOne {
-	return u.Update(func(s *IssueUpsert) {
-		s.UpdateComments()
-	})
-}
-
 // SetClosedAt sets the "closed_at" field.
 func (u *IssueUpsertOne) SetClosedAt(v time.Time) *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
@@ -1191,7 +1171,7 @@ func (u *IssueUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *IssueUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *IssueUpsertOne) ID(ctx context.Context) (id int64, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -1200,7 +1180,7 @@ func (u *IssueUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *IssueUpsertOne) IDX(ctx context.Context) int {
+func (u *IssueUpsertOne) IDX(ctx context.Context) int64 {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -1256,7 +1236,7 @@ func (icb *IssueCreateBulk) Save(ctx context.Context) ([]*Issue, error) {
 				mutation.id = &nodes[i].ID
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
@@ -1487,14 +1467,14 @@ func (u *IssueUpsertBulk) UpdateHTMLURL() *IssueUpsertBulk {
 }
 
 // SetNumber sets the "number" field.
-func (u *IssueUpsertBulk) SetNumber(v int) *IssueUpsertBulk {
+func (u *IssueUpsertBulk) SetNumber(v int64) *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetNumber(v)
 	})
 }
 
 // AddNumber adds v to the "number" field.
-func (u *IssueUpsertBulk) AddNumber(v int) *IssueUpsertBulk {
+func (u *IssueUpsertBulk) AddNumber(v int64) *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.AddNumber(v)
 	})
@@ -1609,27 +1589,6 @@ func (u *IssueUpsertBulk) UpdateActiveLockReason() *IssueUpsertBulk {
 func (u *IssueUpsertBulk) ClearActiveLockReason() *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.ClearActiveLockReason()
-	})
-}
-
-// SetComments sets the "comments" field.
-func (u *IssueUpsertBulk) SetComments(v int) *IssueUpsertBulk {
-	return u.Update(func(s *IssueUpsert) {
-		s.SetComments(v)
-	})
-}
-
-// AddComments adds v to the "comments" field.
-func (u *IssueUpsertBulk) AddComments(v int) *IssueUpsertBulk {
-	return u.Update(func(s *IssueUpsert) {
-		s.AddComments(v)
-	})
-}
-
-// UpdateComments sets the "comments" field to the value that was provided on create.
-func (u *IssueUpsertBulk) UpdateComments() *IssueUpsertBulk {
-	return u.Update(func(s *IssueUpsert) {
-		s.UpdateComments()
 	})
 }
 

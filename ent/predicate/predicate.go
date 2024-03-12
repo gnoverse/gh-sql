@@ -9,6 +9,9 @@ import (
 // Issue is the predicate function for issue builders.
 type Issue func(*sql.Selector)
 
+// IssueComment is the predicate function for issuecomment builders.
+type IssueComment func(*sql.Selector)
+
 // Repository is the predicate function for repository builders.
 type Repository func(*sql.Selector)
 

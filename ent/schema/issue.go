@@ -14,7 +14,7 @@ type Issue struct {
 // Fields of the Issue.
 func (Issue) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int("id"),
+		field.Int64("id"),
 		field.String("node_id"),
 		field.String("url").
 			Comment("URL for the issue"),
@@ -23,7 +23,7 @@ func (Issue) Fields() []ent.Field {
 		field.String("comments_url"),
 		field.String("events_url"),
 		field.String("html_url"),
-		field.Int("number").
+		field.Int64("number").
 			Comment("Number uniquely identifying the issue within its repository"),
 		field.String("state").
 			Comment("State of the issue; either 'open' or 'closed'"),
@@ -40,7 +40,7 @@ func (Issue) Fields() []ent.Field {
 		field.String("active_lock_reason").
 			Optional().
 			Nillable(),
-		field.Int("comments"),
+		// field.Int64("comments"), removed in favour of comments edge
 		field.Time("closed_at").
 			Optional().
 			Nillable(),
@@ -53,7 +53,6 @@ func (Issue) Fields() []ent.Field {
 // Edges of the Issue.
 func (Issue) Edges() []ent.Edge {
 	// edge: labels
-	// edge: assignees
 	// edge: pull_request
 	// edge: milestone (#/components/schemas/nullable-milestone)
 	// edge: performed_via_github_app (#/components/schemas/nullable-integration)
@@ -70,5 +69,6 @@ func (Issue) Edges() []ent.Edge {
 		edge.To("assignees", User.Type),
 		edge.To("closed_by", User.Type).
 			Unique(),
+		edge.To("comments", IssueComment.Type),
 	}
 }

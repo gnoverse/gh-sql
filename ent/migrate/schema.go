@@ -10,7 +10,7 @@ import (
 var (
 	// IssuesColumns holds the columns for the "issues" table.
 	IssuesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "node_id", Type: field.TypeString},
 		{Name: "url", Type: field.TypeString},
 		{Name: "repository_url", Type: field.TypeString},
@@ -18,21 +18,20 @@ var (
 		{Name: "comments_url", Type: field.TypeString},
 		{Name: "events_url", Type: field.TypeString},
 		{Name: "html_url", Type: field.TypeString},
-		{Name: "number", Type: field.TypeInt},
+		{Name: "number", Type: field.TypeInt64},
 		{Name: "state", Type: field.TypeString},
 		{Name: "state_reason", Type: field.TypeEnum, Nullable: true, Enums: []string{"completed", "reopened", "not_planned"}},
 		{Name: "title", Type: field.TypeString},
 		{Name: "body", Type: field.TypeString, Nullable: true},
 		{Name: "locked", Type: field.TypeBool},
 		{Name: "active_lock_reason", Type: field.TypeString, Nullable: true},
-		{Name: "comments", Type: field.TypeInt},
 		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "draft", Type: field.TypeBool},
-		{Name: "issue_closed_by", Type: field.TypeInt, Nullable: true},
-		{Name: "repository_issues", Type: field.TypeInt},
-		{Name: "user_issues_created", Type: field.TypeInt, Nullable: true},
+		{Name: "issue_closed_by", Type: field.TypeInt64, Nullable: true},
+		{Name: "repository_issues", Type: field.TypeInt64},
+		{Name: "user_issues_created", Type: field.TypeInt64, Nullable: true},
 	}
 	// IssuesTable holds the schema information for the "issues" table.
 	IssuesTable = &schema.Table{
@@ -42,19 +41,54 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "issues_users_closed_by",
-				Columns:    []*schema.Column{IssuesColumns[20]},
+				Columns:    []*schema.Column{IssuesColumns[19]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "issues_repositories_issues",
-				Columns:    []*schema.Column{IssuesColumns[21]},
+				Columns:    []*schema.Column{IssuesColumns[20]},
 				RefColumns: []*schema.Column{RepositoriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "issues_users_issues_created",
-				Columns:    []*schema.Column{IssuesColumns[22]},
+				Columns:    []*schema.Column{IssuesColumns[21]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// IssueCommentsColumns holds the columns for the "issue_comments" table.
+	IssueCommentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "node_id", Type: field.TypeString},
+		{Name: "url", Type: field.TypeString},
+		{Name: "body", Type: field.TypeString},
+		{Name: "html_url", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeString},
+		{Name: "updated_at", Type: field.TypeString},
+		{Name: "issue_url", Type: field.TypeString},
+		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "NONE", "OWNER"}},
+		{Name: "reactions", Type: field.TypeJSON},
+		{Name: "issue_comments", Type: field.TypeInt64, Nullable: true},
+		{Name: "user_comments_created", Type: field.TypeInt64, Nullable: true},
+	}
+	// IssueCommentsTable holds the schema information for the "issue_comments" table.
+	IssueCommentsTable = &schema.Table{
+		Name:       "issue_comments",
+		Columns:    IssueCommentsColumns,
+		PrimaryKey: []*schema.Column{IssueCommentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "issue_comments_issues_comments",
+				Columns:    []*schema.Column{IssueCommentsColumns[10]},
+				RefColumns: []*schema.Column{IssuesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "issue_comments_users_comments_created",
+				Columns:    []*schema.Column{IssueCommentsColumns[11]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -62,7 +96,7 @@ var (
 	}
 	// RepositoriesColumns holds the columns for the "repositories" table.
 	RepositoriesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "node_id", Type: field.TypeString},
 		{Name: "name", Type: field.TypeString},
 		{Name: "full_name", Type: field.TypeString, Unique: true},
@@ -114,12 +148,12 @@ var (
 		{Name: "svn_url", Type: field.TypeString},
 		{Name: "homepage", Type: field.TypeString, Nullable: true},
 		{Name: "language", Type: field.TypeString, Nullable: true},
-		{Name: "forks_count", Type: field.TypeInt},
-		{Name: "stargazers_count", Type: field.TypeInt},
-		{Name: "watchers_count", Type: field.TypeInt},
-		{Name: "size", Type: field.TypeInt},
+		{Name: "forks_count", Type: field.TypeInt64},
+		{Name: "stargazers_count", Type: field.TypeInt64},
+		{Name: "watchers_count", Type: field.TypeInt64},
+		{Name: "size", Type: field.TypeInt64},
 		{Name: "default_branch", Type: field.TypeString},
-		{Name: "open_issues_count", Type: field.TypeInt},
+		{Name: "open_issues_count", Type: field.TypeInt64},
 		{Name: "is_template", Type: field.TypeBool},
 		{Name: "topics", Type: field.TypeJSON},
 		{Name: "has_issues_enabled", Type: field.TypeBool},
@@ -134,12 +168,12 @@ var (
 		{Name: "pushed_at", Type: field.TypeTime},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "subscribers_count", Type: field.TypeInt},
-		{Name: "network_count", Type: field.TypeInt},
-		{Name: "forks", Type: field.TypeInt},
-		{Name: "open_issues", Type: field.TypeInt},
-		{Name: "watchers", Type: field.TypeInt},
-		{Name: "user_repositories", Type: field.TypeInt, Nullable: true},
+		{Name: "subscribers_count", Type: field.TypeInt64},
+		{Name: "network_count", Type: field.TypeInt64},
+		{Name: "forks", Type: field.TypeInt64},
+		{Name: "open_issues", Type: field.TypeInt64},
+		{Name: "watchers", Type: field.TypeInt64},
+		{Name: "user_repositories", Type: field.TypeInt64, Nullable: true},
 	}
 	// RepositoriesTable holds the schema information for the "repositories" table.
 	RepositoriesTable = &schema.Table{
@@ -157,7 +191,7 @@ var (
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "login", Type: field.TypeString, Unique: true},
 		{Name: "node_id", Type: field.TypeString},
 		{Name: "avatar_url", Type: field.TypeString},
@@ -182,10 +216,10 @@ var (
 		{Name: "email", Type: field.TypeString, Nullable: true},
 		{Name: "hireable", Type: field.TypeBool, Nullable: true},
 		{Name: "bio", Type: field.TypeString, Nullable: true},
-		{Name: "public_repos", Type: field.TypeInt},
-		{Name: "public_gists", Type: field.TypeInt},
-		{Name: "followers", Type: field.TypeInt},
-		{Name: "following", Type: field.TypeInt},
+		{Name: "public_repos", Type: field.TypeInt64},
+		{Name: "public_gists", Type: field.TypeInt64},
+		{Name: "followers", Type: field.TypeInt64},
+		{Name: "following", Type: field.TypeInt64},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 	}
@@ -197,8 +231,8 @@ var (
 	}
 	// IssueAssigneesColumns holds the columns for the "issue_assignees" table.
 	IssueAssigneesColumns = []*schema.Column{
-		{Name: "issue_id", Type: field.TypeInt},
-		{Name: "user_id", Type: field.TypeInt},
+		{Name: "issue_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
 	}
 	// IssueAssigneesTable holds the schema information for the "issue_assignees" table.
 	IssueAssigneesTable = &schema.Table{
@@ -223,6 +257,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		IssuesTable,
+		IssueCommentsTable,
 		RepositoriesTable,
 		UsersTable,
 		IssueAssigneesTable,
@@ -233,6 +268,8 @@ func init() {
 	IssuesTable.ForeignKeys[0].RefTable = UsersTable
 	IssuesTable.ForeignKeys[1].RefTable = RepositoriesTable
 	IssuesTable.ForeignKeys[2].RefTable = UsersTable
+	IssueCommentsTable.ForeignKeys[0].RefTable = IssuesTable
+	IssueCommentsTable.ForeignKeys[1].RefTable = UsersTable
 	RepositoriesTable.ForeignKeys[0].RefTable = UsersTable
 	IssueAssigneesTable.ForeignKeys[0].RefTable = IssuesTable
 	IssueAssigneesTable.ForeignKeys[1].RefTable = UsersTable

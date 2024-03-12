@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Issue is the client for interacting with the Issue builders.
 	Issue *IssueClient
+	// IssueComment is the client for interacting with the IssueComment builders.
+	IssueComment *IssueCommentClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
 	// User is the client for interacting with the User builders.
@@ -150,6 +152,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Issue = NewIssueClient(tx.config)
+	tx.IssueComment = NewIssueCommentClient(tx.config)
 	tx.Repository = NewRepositoryClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }

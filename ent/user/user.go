@@ -76,6 +76,8 @@ const (
 	EdgeRepositories = "repositories"
 	// EdgeIssuesCreated holds the string denoting the issues_created edge name in mutations.
 	EdgeIssuesCreated = "issues_created"
+	// EdgeCommentsCreated holds the string denoting the comments_created edge name in mutations.
+	EdgeCommentsCreated = "comments_created"
 	// EdgeIssuesAssigned holds the string denoting the issues_assigned edge name in mutations.
 	EdgeIssuesAssigned = "issues_assigned"
 	// EdgeIssuesClosed holds the string denoting the issues_closed edge name in mutations.
@@ -96,6 +98,13 @@ const (
 	IssuesCreatedInverseTable = "issues"
 	// IssuesCreatedColumn is the table column denoting the issues_created relation/edge.
 	IssuesCreatedColumn = "user_issues_created"
+	// CommentsCreatedTable is the table that holds the comments_created relation/edge.
+	CommentsCreatedTable = "issue_comments"
+	// CommentsCreatedInverseTable is the table name for the IssueComment entity.
+	// It exists in this package in order to avoid circular dependency with the "issuecomment" package.
+	CommentsCreatedInverseTable = "issue_comments"
+	// CommentsCreatedColumn is the table column denoting the comments_created relation/edge.
+	CommentsCreatedColumn = "user_comments_created"
 	// IssuesAssignedTable is the table that holds the issues_assigned relation/edge. The primary key declared below.
 	IssuesAssignedTable = "issue_assignees"
 	// IssuesAssignedInverseTable is the table name for the Issue entity.
@@ -347,6 +356,20 @@ func ByIssuesCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByCommentsCreatedCount orders the results by comments_created count.
+func ByCommentsCreatedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCommentsCreatedStep(), opts...)
+	}
+}
+
+// ByCommentsCreated orders the results by comments_created terms.
+func ByCommentsCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCommentsCreatedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByIssuesAssignedCount orders the results by issues_assigned count.
 func ByIssuesAssignedCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -386,6 +409,13 @@ func newIssuesCreatedStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IssuesCreatedInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, IssuesCreatedTable, IssuesCreatedColumn),
+	)
+}
+func newCommentsCreatedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CommentsCreatedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CommentsCreatedTable, CommentsCreatedColumn),
 	)
 }
 func newIssuesAssignedStep() *sqlgraph.Step {

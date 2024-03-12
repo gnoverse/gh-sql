@@ -18,7 +18,7 @@ func (Repository) Fields() []ent.Field {
 		// Order should match the OpenAPI description (not what is actually returned by the API),
 		// see misc/schema2schema for help generating a schema like this.
 
-		field.Int("id"),
+		field.Int64("id"),
 		field.String("node_id"),
 		field.String("name"),
 		field.String("full_name").Unique(),
@@ -74,13 +74,13 @@ func (Repository) Fields() []ent.Field {
 			Optional(),
 		field.String("language").
 			Optional(),
-		field.Int("forks_count"),
-		field.Int("stargazers_count"),
-		field.Int("watchers_count"),
-		field.Int("size").
+		field.Int64("forks_count"),
+		field.Int64("stargazers_count"),
+		field.Int64("watchers_count"),
+		field.Int64("size").
 			Comment("The size of the repository, in kilobytes. Size is calculated hourly. When a repository is initially created, the size is 0."),
 		field.String("default_branch"),
-		field.Int("open_issues_count"),
+		field.Int64("open_issues_count"),
 		field.Bool("is_template"),
 		field.Strings("topics"),
 		field.Bool("has_issues_enabled").StructTag(`json:"has_issues"`),
@@ -111,12 +111,12 @@ func (Repository) Fields() []ent.Field {
 		// ignored: merge_commit_message: not required
 		// ignored: allow_forking: not required
 		// ignored: web_commit_signoff_required: not required
-		field.Int("subscribers_count"),
-		field.Int("network_count"),
-		field.Int("forks"),
+		field.Int64("subscribers_count"),
+		field.Int64("network_count"),
+		field.Int64("forks"),
 		// ignored: master_branch: not required
-		field.Int("open_issues"),
-		field.Int("watchers"),
+		field.Int64("open_issues"),
+		field.Int64("watchers"),
 		// ignored: anonymous_access_enabled: not required
 		// ignored: custom_properties: not required
 	}

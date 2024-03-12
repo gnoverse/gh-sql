@@ -770,14 +770,14 @@ func (ru *RepositoryUpdate) ClearLanguage() *RepositoryUpdate {
 }
 
 // SetForksCount sets the "forks_count" field.
-func (ru *RepositoryUpdate) SetForksCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetForksCount(i int64) *RepositoryUpdate {
 	ru.mutation.ResetForksCount()
 	ru.mutation.SetForksCount(i)
 	return ru
 }
 
 // SetNillableForksCount sets the "forks_count" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableForksCount(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableForksCount(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetForksCount(*i)
 	}
@@ -785,20 +785,20 @@ func (ru *RepositoryUpdate) SetNillableForksCount(i *int) *RepositoryUpdate {
 }
 
 // AddForksCount adds i to the "forks_count" field.
-func (ru *RepositoryUpdate) AddForksCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddForksCount(i int64) *RepositoryUpdate {
 	ru.mutation.AddForksCount(i)
 	return ru
 }
 
 // SetStargazersCount sets the "stargazers_count" field.
-func (ru *RepositoryUpdate) SetStargazersCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetStargazersCount(i int64) *RepositoryUpdate {
 	ru.mutation.ResetStargazersCount()
 	ru.mutation.SetStargazersCount(i)
 	return ru
 }
 
 // SetNillableStargazersCount sets the "stargazers_count" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableStargazersCount(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableStargazersCount(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetStargazersCount(*i)
 	}
@@ -806,20 +806,20 @@ func (ru *RepositoryUpdate) SetNillableStargazersCount(i *int) *RepositoryUpdate
 }
 
 // AddStargazersCount adds i to the "stargazers_count" field.
-func (ru *RepositoryUpdate) AddStargazersCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddStargazersCount(i int64) *RepositoryUpdate {
 	ru.mutation.AddStargazersCount(i)
 	return ru
 }
 
 // SetWatchersCount sets the "watchers_count" field.
-func (ru *RepositoryUpdate) SetWatchersCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetWatchersCount(i int64) *RepositoryUpdate {
 	ru.mutation.ResetWatchersCount()
 	ru.mutation.SetWatchersCount(i)
 	return ru
 }
 
 // SetNillableWatchersCount sets the "watchers_count" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableWatchersCount(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableWatchersCount(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetWatchersCount(*i)
 	}
@@ -827,20 +827,20 @@ func (ru *RepositoryUpdate) SetNillableWatchersCount(i *int) *RepositoryUpdate {
 }
 
 // AddWatchersCount adds i to the "watchers_count" field.
-func (ru *RepositoryUpdate) AddWatchersCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddWatchersCount(i int64) *RepositoryUpdate {
 	ru.mutation.AddWatchersCount(i)
 	return ru
 }
 
 // SetSize sets the "size" field.
-func (ru *RepositoryUpdate) SetSize(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetSize(i int64) *RepositoryUpdate {
 	ru.mutation.ResetSize()
 	ru.mutation.SetSize(i)
 	return ru
 }
 
 // SetNillableSize sets the "size" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableSize(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableSize(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetSize(*i)
 	}
@@ -848,7 +848,7 @@ func (ru *RepositoryUpdate) SetNillableSize(i *int) *RepositoryUpdate {
 }
 
 // AddSize adds i to the "size" field.
-func (ru *RepositoryUpdate) AddSize(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddSize(i int64) *RepositoryUpdate {
 	ru.mutation.AddSize(i)
 	return ru
 }
@@ -868,14 +868,14 @@ func (ru *RepositoryUpdate) SetNillableDefaultBranch(s *string) *RepositoryUpdat
 }
 
 // SetOpenIssuesCount sets the "open_issues_count" field.
-func (ru *RepositoryUpdate) SetOpenIssuesCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetOpenIssuesCount(i int64) *RepositoryUpdate {
 	ru.mutation.ResetOpenIssuesCount()
 	ru.mutation.SetOpenIssuesCount(i)
 	return ru
 }
 
 // SetNillableOpenIssuesCount sets the "open_issues_count" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableOpenIssuesCount(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableOpenIssuesCount(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetOpenIssuesCount(*i)
 	}
@@ -883,7 +883,7 @@ func (ru *RepositoryUpdate) SetNillableOpenIssuesCount(i *int) *RepositoryUpdate
 }
 
 // AddOpenIssuesCount adds i to the "open_issues_count" field.
-func (ru *RepositoryUpdate) AddOpenIssuesCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddOpenIssuesCount(i int64) *RepositoryUpdate {
 	ru.mutation.AddOpenIssuesCount(i)
 	return ru
 }
@@ -1089,14 +1089,14 @@ func (ru *RepositoryUpdate) SetNillableUpdatedAt(t *time.Time) *RepositoryUpdate
 }
 
 // SetSubscribersCount sets the "subscribers_count" field.
-func (ru *RepositoryUpdate) SetSubscribersCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetSubscribersCount(i int64) *RepositoryUpdate {
 	ru.mutation.ResetSubscribersCount()
 	ru.mutation.SetSubscribersCount(i)
 	return ru
 }
 
 // SetNillableSubscribersCount sets the "subscribers_count" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableSubscribersCount(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableSubscribersCount(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetSubscribersCount(*i)
 	}
@@ -1104,20 +1104,20 @@ func (ru *RepositoryUpdate) SetNillableSubscribersCount(i *int) *RepositoryUpdat
 }
 
 // AddSubscribersCount adds i to the "subscribers_count" field.
-func (ru *RepositoryUpdate) AddSubscribersCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddSubscribersCount(i int64) *RepositoryUpdate {
 	ru.mutation.AddSubscribersCount(i)
 	return ru
 }
 
 // SetNetworkCount sets the "network_count" field.
-func (ru *RepositoryUpdate) SetNetworkCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNetworkCount(i int64) *RepositoryUpdate {
 	ru.mutation.ResetNetworkCount()
 	ru.mutation.SetNetworkCount(i)
 	return ru
 }
 
 // SetNillableNetworkCount sets the "network_count" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableNetworkCount(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableNetworkCount(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetNetworkCount(*i)
 	}
@@ -1125,20 +1125,20 @@ func (ru *RepositoryUpdate) SetNillableNetworkCount(i *int) *RepositoryUpdate {
 }
 
 // AddNetworkCount adds i to the "network_count" field.
-func (ru *RepositoryUpdate) AddNetworkCount(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddNetworkCount(i int64) *RepositoryUpdate {
 	ru.mutation.AddNetworkCount(i)
 	return ru
 }
 
 // SetForks sets the "forks" field.
-func (ru *RepositoryUpdate) SetForks(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetForks(i int64) *RepositoryUpdate {
 	ru.mutation.ResetForks()
 	ru.mutation.SetForks(i)
 	return ru
 }
 
 // SetNillableForks sets the "forks" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableForks(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableForks(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetForks(*i)
 	}
@@ -1146,20 +1146,20 @@ func (ru *RepositoryUpdate) SetNillableForks(i *int) *RepositoryUpdate {
 }
 
 // AddForks adds i to the "forks" field.
-func (ru *RepositoryUpdate) AddForks(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddForks(i int64) *RepositoryUpdate {
 	ru.mutation.AddForks(i)
 	return ru
 }
 
 // SetOpenIssues sets the "open_issues" field.
-func (ru *RepositoryUpdate) SetOpenIssues(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetOpenIssues(i int64) *RepositoryUpdate {
 	ru.mutation.ResetOpenIssues()
 	ru.mutation.SetOpenIssues(i)
 	return ru
 }
 
 // SetNillableOpenIssues sets the "open_issues" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableOpenIssues(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableOpenIssues(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetOpenIssues(*i)
 	}
@@ -1167,20 +1167,20 @@ func (ru *RepositoryUpdate) SetNillableOpenIssues(i *int) *RepositoryUpdate {
 }
 
 // AddOpenIssues adds i to the "open_issues" field.
-func (ru *RepositoryUpdate) AddOpenIssues(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddOpenIssues(i int64) *RepositoryUpdate {
 	ru.mutation.AddOpenIssues(i)
 	return ru
 }
 
 // SetWatchers sets the "watchers" field.
-func (ru *RepositoryUpdate) SetWatchers(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetWatchers(i int64) *RepositoryUpdate {
 	ru.mutation.ResetWatchers()
 	ru.mutation.SetWatchers(i)
 	return ru
 }
 
 // SetNillableWatchers sets the "watchers" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableWatchers(i *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableWatchers(i *int64) *RepositoryUpdate {
 	if i != nil {
 		ru.SetWatchers(*i)
 	}
@@ -1188,19 +1188,19 @@ func (ru *RepositoryUpdate) SetNillableWatchers(i *int) *RepositoryUpdate {
 }
 
 // AddWatchers adds i to the "watchers" field.
-func (ru *RepositoryUpdate) AddWatchers(i int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddWatchers(i int64) *RepositoryUpdate {
 	ru.mutation.AddWatchers(i)
 	return ru
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (ru *RepositoryUpdate) SetOwnerID(id int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetOwnerID(id int64) *RepositoryUpdate {
 	ru.mutation.SetOwnerID(id)
 	return ru
 }
 
 // SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableOwnerID(id *int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) SetNillableOwnerID(id *int64) *RepositoryUpdate {
 	if id != nil {
 		ru = ru.SetOwnerID(*id)
 	}
@@ -1213,14 +1213,14 @@ func (ru *RepositoryUpdate) SetOwner(u *User) *RepositoryUpdate {
 }
 
 // AddIssueIDs adds the "issues" edge to the Issue entity by IDs.
-func (ru *RepositoryUpdate) AddIssueIDs(ids ...int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) AddIssueIDs(ids ...int64) *RepositoryUpdate {
 	ru.mutation.AddIssueIDs(ids...)
 	return ru
 }
 
 // AddIssues adds the "issues" edges to the Issue entity.
 func (ru *RepositoryUpdate) AddIssues(i ...*Issue) *RepositoryUpdate {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -1245,14 +1245,14 @@ func (ru *RepositoryUpdate) ClearIssues() *RepositoryUpdate {
 }
 
 // RemoveIssueIDs removes the "issues" edge to Issue entities by IDs.
-func (ru *RepositoryUpdate) RemoveIssueIDs(ids ...int) *RepositoryUpdate {
+func (ru *RepositoryUpdate) RemoveIssueIDs(ids ...int64) *RepositoryUpdate {
 	ru.mutation.RemoveIssueIDs(ids...)
 	return ru
 }
 
 // RemoveIssues removes "issues" edges to Issue entities.
 func (ru *RepositoryUpdate) RemoveIssues(i ...*Issue) *RepositoryUpdate {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -1300,7 +1300,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := ru.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(repository.Table, repository.Columns, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(repository.Table, repository.Columns, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64))
 	if ps := ru.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -1474,37 +1474,37 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.ClearField(repository.FieldLanguage, field.TypeString)
 	}
 	if value, ok := ru.mutation.ForksCount(); ok {
-		_spec.SetField(repository.FieldForksCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldForksCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedForksCount(); ok {
-		_spec.AddField(repository.FieldForksCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldForksCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.StargazersCount(); ok {
-		_spec.SetField(repository.FieldStargazersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldStargazersCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedStargazersCount(); ok {
-		_spec.AddField(repository.FieldStargazersCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldStargazersCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.WatchersCount(); ok {
-		_spec.SetField(repository.FieldWatchersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldWatchersCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedWatchersCount(); ok {
-		_spec.AddField(repository.FieldWatchersCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldWatchersCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.Size(); ok {
-		_spec.SetField(repository.FieldSize, field.TypeInt, value)
+		_spec.SetField(repository.FieldSize, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedSize(); ok {
-		_spec.AddField(repository.FieldSize, field.TypeInt, value)
+		_spec.AddField(repository.FieldSize, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.DefaultBranch(); ok {
 		_spec.SetField(repository.FieldDefaultBranch, field.TypeString, value)
 	}
 	if value, ok := ru.mutation.OpenIssuesCount(); ok {
-		_spec.SetField(repository.FieldOpenIssuesCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldOpenIssuesCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedOpenIssuesCount(); ok {
-		_spec.AddField(repository.FieldOpenIssuesCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldOpenIssuesCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.IsTemplate(); ok {
 		_spec.SetField(repository.FieldIsTemplate, field.TypeBool, value)
@@ -1557,34 +1557,34 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(repository.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := ru.mutation.SubscribersCount(); ok {
-		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedSubscribersCount(); ok {
-		_spec.AddField(repository.FieldSubscribersCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldSubscribersCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.NetworkCount(); ok {
-		_spec.SetField(repository.FieldNetworkCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldNetworkCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedNetworkCount(); ok {
-		_spec.AddField(repository.FieldNetworkCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldNetworkCount, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.Forks(); ok {
-		_spec.SetField(repository.FieldForks, field.TypeInt, value)
+		_spec.SetField(repository.FieldForks, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedForks(); ok {
-		_spec.AddField(repository.FieldForks, field.TypeInt, value)
+		_spec.AddField(repository.FieldForks, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.OpenIssues(); ok {
-		_spec.SetField(repository.FieldOpenIssues, field.TypeInt, value)
+		_spec.SetField(repository.FieldOpenIssues, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedOpenIssues(); ok {
-		_spec.AddField(repository.FieldOpenIssues, field.TypeInt, value)
+		_spec.AddField(repository.FieldOpenIssues, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.Watchers(); ok {
-		_spec.SetField(repository.FieldWatchers, field.TypeInt, value)
+		_spec.SetField(repository.FieldWatchers, field.TypeInt64, value)
 	}
 	if value, ok := ru.mutation.AddedWatchers(); ok {
-		_spec.AddField(repository.FieldWatchers, field.TypeInt, value)
+		_spec.AddField(repository.FieldWatchers, field.TypeInt64, value)
 	}
 	if ru.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1594,7 +1594,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{repository.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1607,7 +1607,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{repository.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1623,7 +1623,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{repository.IssuesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1636,7 +1636,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{repository.IssuesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1652,7 +1652,7 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{repository.IssuesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2419,14 +2419,14 @@ func (ruo *RepositoryUpdateOne) ClearLanguage() *RepositoryUpdateOne {
 }
 
 // SetForksCount sets the "forks_count" field.
-func (ruo *RepositoryUpdateOne) SetForksCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetForksCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetForksCount()
 	ruo.mutation.SetForksCount(i)
 	return ruo
 }
 
 // SetNillableForksCount sets the "forks_count" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableForksCount(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableForksCount(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetForksCount(*i)
 	}
@@ -2434,20 +2434,20 @@ func (ruo *RepositoryUpdateOne) SetNillableForksCount(i *int) *RepositoryUpdateO
 }
 
 // AddForksCount adds i to the "forks_count" field.
-func (ruo *RepositoryUpdateOne) AddForksCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddForksCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddForksCount(i)
 	return ruo
 }
 
 // SetStargazersCount sets the "stargazers_count" field.
-func (ruo *RepositoryUpdateOne) SetStargazersCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetStargazersCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetStargazersCount()
 	ruo.mutation.SetStargazersCount(i)
 	return ruo
 }
 
 // SetNillableStargazersCount sets the "stargazers_count" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableStargazersCount(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableStargazersCount(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetStargazersCount(*i)
 	}
@@ -2455,20 +2455,20 @@ func (ruo *RepositoryUpdateOne) SetNillableStargazersCount(i *int) *RepositoryUp
 }
 
 // AddStargazersCount adds i to the "stargazers_count" field.
-func (ruo *RepositoryUpdateOne) AddStargazersCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddStargazersCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddStargazersCount(i)
 	return ruo
 }
 
 // SetWatchersCount sets the "watchers_count" field.
-func (ruo *RepositoryUpdateOne) SetWatchersCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetWatchersCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetWatchersCount()
 	ruo.mutation.SetWatchersCount(i)
 	return ruo
 }
 
 // SetNillableWatchersCount sets the "watchers_count" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableWatchersCount(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableWatchersCount(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetWatchersCount(*i)
 	}
@@ -2476,20 +2476,20 @@ func (ruo *RepositoryUpdateOne) SetNillableWatchersCount(i *int) *RepositoryUpda
 }
 
 // AddWatchersCount adds i to the "watchers_count" field.
-func (ruo *RepositoryUpdateOne) AddWatchersCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddWatchersCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddWatchersCount(i)
 	return ruo
 }
 
 // SetSize sets the "size" field.
-func (ruo *RepositoryUpdateOne) SetSize(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetSize(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetSize()
 	ruo.mutation.SetSize(i)
 	return ruo
 }
 
 // SetNillableSize sets the "size" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableSize(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableSize(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetSize(*i)
 	}
@@ -2497,7 +2497,7 @@ func (ruo *RepositoryUpdateOne) SetNillableSize(i *int) *RepositoryUpdateOne {
 }
 
 // AddSize adds i to the "size" field.
-func (ruo *RepositoryUpdateOne) AddSize(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddSize(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddSize(i)
 	return ruo
 }
@@ -2517,14 +2517,14 @@ func (ruo *RepositoryUpdateOne) SetNillableDefaultBranch(s *string) *RepositoryU
 }
 
 // SetOpenIssuesCount sets the "open_issues_count" field.
-func (ruo *RepositoryUpdateOne) SetOpenIssuesCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetOpenIssuesCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetOpenIssuesCount()
 	ruo.mutation.SetOpenIssuesCount(i)
 	return ruo
 }
 
 // SetNillableOpenIssuesCount sets the "open_issues_count" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableOpenIssuesCount(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableOpenIssuesCount(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetOpenIssuesCount(*i)
 	}
@@ -2532,7 +2532,7 @@ func (ruo *RepositoryUpdateOne) SetNillableOpenIssuesCount(i *int) *RepositoryUp
 }
 
 // AddOpenIssuesCount adds i to the "open_issues_count" field.
-func (ruo *RepositoryUpdateOne) AddOpenIssuesCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddOpenIssuesCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddOpenIssuesCount(i)
 	return ruo
 }
@@ -2738,14 +2738,14 @@ func (ruo *RepositoryUpdateOne) SetNillableUpdatedAt(t *time.Time) *RepositoryUp
 }
 
 // SetSubscribersCount sets the "subscribers_count" field.
-func (ruo *RepositoryUpdateOne) SetSubscribersCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetSubscribersCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetSubscribersCount()
 	ruo.mutation.SetSubscribersCount(i)
 	return ruo
 }
 
 // SetNillableSubscribersCount sets the "subscribers_count" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableSubscribersCount(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableSubscribersCount(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetSubscribersCount(*i)
 	}
@@ -2753,20 +2753,20 @@ func (ruo *RepositoryUpdateOne) SetNillableSubscribersCount(i *int) *RepositoryU
 }
 
 // AddSubscribersCount adds i to the "subscribers_count" field.
-func (ruo *RepositoryUpdateOne) AddSubscribersCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddSubscribersCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddSubscribersCount(i)
 	return ruo
 }
 
 // SetNetworkCount sets the "network_count" field.
-func (ruo *RepositoryUpdateOne) SetNetworkCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNetworkCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetNetworkCount()
 	ruo.mutation.SetNetworkCount(i)
 	return ruo
 }
 
 // SetNillableNetworkCount sets the "network_count" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableNetworkCount(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableNetworkCount(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetNetworkCount(*i)
 	}
@@ -2774,20 +2774,20 @@ func (ruo *RepositoryUpdateOne) SetNillableNetworkCount(i *int) *RepositoryUpdat
 }
 
 // AddNetworkCount adds i to the "network_count" field.
-func (ruo *RepositoryUpdateOne) AddNetworkCount(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddNetworkCount(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddNetworkCount(i)
 	return ruo
 }
 
 // SetForks sets the "forks" field.
-func (ruo *RepositoryUpdateOne) SetForks(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetForks(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetForks()
 	ruo.mutation.SetForks(i)
 	return ruo
 }
 
 // SetNillableForks sets the "forks" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableForks(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableForks(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetForks(*i)
 	}
@@ -2795,20 +2795,20 @@ func (ruo *RepositoryUpdateOne) SetNillableForks(i *int) *RepositoryUpdateOne {
 }
 
 // AddForks adds i to the "forks" field.
-func (ruo *RepositoryUpdateOne) AddForks(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddForks(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddForks(i)
 	return ruo
 }
 
 // SetOpenIssues sets the "open_issues" field.
-func (ruo *RepositoryUpdateOne) SetOpenIssues(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetOpenIssues(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetOpenIssues()
 	ruo.mutation.SetOpenIssues(i)
 	return ruo
 }
 
 // SetNillableOpenIssues sets the "open_issues" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableOpenIssues(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableOpenIssues(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetOpenIssues(*i)
 	}
@@ -2816,20 +2816,20 @@ func (ruo *RepositoryUpdateOne) SetNillableOpenIssues(i *int) *RepositoryUpdateO
 }
 
 // AddOpenIssues adds i to the "open_issues" field.
-func (ruo *RepositoryUpdateOne) AddOpenIssues(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddOpenIssues(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddOpenIssues(i)
 	return ruo
 }
 
 // SetWatchers sets the "watchers" field.
-func (ruo *RepositoryUpdateOne) SetWatchers(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetWatchers(i int64) *RepositoryUpdateOne {
 	ruo.mutation.ResetWatchers()
 	ruo.mutation.SetWatchers(i)
 	return ruo
 }
 
 // SetNillableWatchers sets the "watchers" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableWatchers(i *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableWatchers(i *int64) *RepositoryUpdateOne {
 	if i != nil {
 		ruo.SetWatchers(*i)
 	}
@@ -2837,19 +2837,19 @@ func (ruo *RepositoryUpdateOne) SetNillableWatchers(i *int) *RepositoryUpdateOne
 }
 
 // AddWatchers adds i to the "watchers" field.
-func (ruo *RepositoryUpdateOne) AddWatchers(i int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddWatchers(i int64) *RepositoryUpdateOne {
 	ruo.mutation.AddWatchers(i)
 	return ruo
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (ruo *RepositoryUpdateOne) SetOwnerID(id int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetOwnerID(id int64) *RepositoryUpdateOne {
 	ruo.mutation.SetOwnerID(id)
 	return ruo
 }
 
 // SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableOwnerID(id *int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) SetNillableOwnerID(id *int64) *RepositoryUpdateOne {
 	if id != nil {
 		ruo = ruo.SetOwnerID(*id)
 	}
@@ -2862,14 +2862,14 @@ func (ruo *RepositoryUpdateOne) SetOwner(u *User) *RepositoryUpdateOne {
 }
 
 // AddIssueIDs adds the "issues" edge to the Issue entity by IDs.
-func (ruo *RepositoryUpdateOne) AddIssueIDs(ids ...int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) AddIssueIDs(ids ...int64) *RepositoryUpdateOne {
 	ruo.mutation.AddIssueIDs(ids...)
 	return ruo
 }
 
 // AddIssues adds the "issues" edges to the Issue entity.
 func (ruo *RepositoryUpdateOne) AddIssues(i ...*Issue) *RepositoryUpdateOne {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -2894,14 +2894,14 @@ func (ruo *RepositoryUpdateOne) ClearIssues() *RepositoryUpdateOne {
 }
 
 // RemoveIssueIDs removes the "issues" edge to Issue entities by IDs.
-func (ruo *RepositoryUpdateOne) RemoveIssueIDs(ids ...int) *RepositoryUpdateOne {
+func (ruo *RepositoryUpdateOne) RemoveIssueIDs(ids ...int64) *RepositoryUpdateOne {
 	ruo.mutation.RemoveIssueIDs(ids...)
 	return ruo
 }
 
 // RemoveIssues removes "issues" edges to Issue entities.
 func (ruo *RepositoryUpdateOne) RemoveIssues(i ...*Issue) *RepositoryUpdateOne {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -2962,7 +2962,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 	if err := ruo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(repository.Table, repository.Columns, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(repository.Table, repository.Columns, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64))
 	id, ok := ruo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Repository.id" for update`)}
@@ -3153,37 +3153,37 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 		_spec.ClearField(repository.FieldLanguage, field.TypeString)
 	}
 	if value, ok := ruo.mutation.ForksCount(); ok {
-		_spec.SetField(repository.FieldForksCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldForksCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedForksCount(); ok {
-		_spec.AddField(repository.FieldForksCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldForksCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.StargazersCount(); ok {
-		_spec.SetField(repository.FieldStargazersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldStargazersCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedStargazersCount(); ok {
-		_spec.AddField(repository.FieldStargazersCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldStargazersCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.WatchersCount(); ok {
-		_spec.SetField(repository.FieldWatchersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldWatchersCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedWatchersCount(); ok {
-		_spec.AddField(repository.FieldWatchersCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldWatchersCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.Size(); ok {
-		_spec.SetField(repository.FieldSize, field.TypeInt, value)
+		_spec.SetField(repository.FieldSize, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedSize(); ok {
-		_spec.AddField(repository.FieldSize, field.TypeInt, value)
+		_spec.AddField(repository.FieldSize, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.DefaultBranch(); ok {
 		_spec.SetField(repository.FieldDefaultBranch, field.TypeString, value)
 	}
 	if value, ok := ruo.mutation.OpenIssuesCount(); ok {
-		_spec.SetField(repository.FieldOpenIssuesCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldOpenIssuesCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedOpenIssuesCount(); ok {
-		_spec.AddField(repository.FieldOpenIssuesCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldOpenIssuesCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.IsTemplate(); ok {
 		_spec.SetField(repository.FieldIsTemplate, field.TypeBool, value)
@@ -3236,34 +3236,34 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 		_spec.SetField(repository.FieldUpdatedAt, field.TypeTime, value)
 	}
 	if value, ok := ruo.mutation.SubscribersCount(); ok {
-		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldSubscribersCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedSubscribersCount(); ok {
-		_spec.AddField(repository.FieldSubscribersCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldSubscribersCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.NetworkCount(); ok {
-		_spec.SetField(repository.FieldNetworkCount, field.TypeInt, value)
+		_spec.SetField(repository.FieldNetworkCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedNetworkCount(); ok {
-		_spec.AddField(repository.FieldNetworkCount, field.TypeInt, value)
+		_spec.AddField(repository.FieldNetworkCount, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.Forks(); ok {
-		_spec.SetField(repository.FieldForks, field.TypeInt, value)
+		_spec.SetField(repository.FieldForks, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedForks(); ok {
-		_spec.AddField(repository.FieldForks, field.TypeInt, value)
+		_spec.AddField(repository.FieldForks, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.OpenIssues(); ok {
-		_spec.SetField(repository.FieldOpenIssues, field.TypeInt, value)
+		_spec.SetField(repository.FieldOpenIssues, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedOpenIssues(); ok {
-		_spec.AddField(repository.FieldOpenIssues, field.TypeInt, value)
+		_spec.AddField(repository.FieldOpenIssues, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.Watchers(); ok {
-		_spec.SetField(repository.FieldWatchers, field.TypeInt, value)
+		_spec.SetField(repository.FieldWatchers, field.TypeInt64, value)
 	}
 	if value, ok := ruo.mutation.AddedWatchers(); ok {
-		_spec.AddField(repository.FieldWatchers, field.TypeInt, value)
+		_spec.AddField(repository.FieldWatchers, field.TypeInt64, value)
 	}
 	if ruo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -3273,7 +3273,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Columns: []string{repository.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -3286,7 +3286,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Columns: []string{repository.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -3302,7 +3302,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Columns: []string{repository.IssuesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -3315,7 +3315,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Columns: []string{repository.IssuesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -3331,7 +3331,7 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Columns: []string{repository.IssuesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

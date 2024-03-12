@@ -15,7 +15,7 @@ type User struct {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("login").Unique(),
-		field.Int("id"),
+		field.Int64("id"),
 		field.String("node_id"),
 		field.String("avatar_url"),
 		field.String("gravatar_id").
@@ -47,10 +47,10 @@ func (User) Fields() []ent.Field {
 			Optional(),
 		field.String("bio").
 			Optional(),
-		field.Int("public_repos"),
-		field.Int("public_gists"),
-		field.Int("followers"),
-		field.Int("following"),
+		field.Int64("public_repos"),
+		field.Int64("public_gists"),
+		field.Int64("followers"),
+		field.Int64("following"),
 		field.Time("created_at"),
 		field.Time("updated_at"),
 	}
@@ -61,6 +61,7 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("repositories", Repository.Type),
 		edge.To("issues_created", Issue.Type),
+		edge.To("comments_created", IssueComment.Type),
 		edge.From("issues_assigned", Issue.Type).
 			Ref("assignees"),
 		edge.From("issues_closed", Issue.Type).

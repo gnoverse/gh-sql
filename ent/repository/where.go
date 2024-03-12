@@ -11,47 +11,47 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Repository {
+func ID(id int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Repository {
+func IDEQ(id int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Repository {
+func IDNEQ(id int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Repository {
+func IDIn(ids ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Repository {
+func IDNotIn(ids ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Repository {
+func IDGT(id int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Repository {
+func IDGTE(id int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Repository {
+func IDLT(id int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Repository {
+func IDLTE(id int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldID, id))
 }
 
@@ -311,22 +311,22 @@ func Language(v string) predicate.Repository {
 }
 
 // ForksCount applies equality check predicate on the "forks_count" field. It's identical to ForksCountEQ.
-func ForksCount(v int) predicate.Repository {
+func ForksCount(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldForksCount, v))
 }
 
 // StargazersCount applies equality check predicate on the "stargazers_count" field. It's identical to StargazersCountEQ.
-func StargazersCount(v int) predicate.Repository {
+func StargazersCount(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldStargazersCount, v))
 }
 
 // WatchersCount applies equality check predicate on the "watchers_count" field. It's identical to WatchersCountEQ.
-func WatchersCount(v int) predicate.Repository {
+func WatchersCount(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldWatchersCount, v))
 }
 
 // Size applies equality check predicate on the "size" field. It's identical to SizeEQ.
-func Size(v int) predicate.Repository {
+func Size(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldSize, v))
 }
 
@@ -336,7 +336,7 @@ func DefaultBranch(v string) predicate.Repository {
 }
 
 // OpenIssuesCount applies equality check predicate on the "open_issues_count" field. It's identical to OpenIssuesCountEQ.
-func OpenIssuesCount(v int) predicate.Repository {
+func OpenIssuesCount(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldOpenIssuesCount, v))
 }
 
@@ -401,27 +401,27 @@ func UpdatedAt(v time.Time) predicate.Repository {
 }
 
 // SubscribersCount applies equality check predicate on the "subscribers_count" field. It's identical to SubscribersCountEQ.
-func SubscribersCount(v int) predicate.Repository {
+func SubscribersCount(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldSubscribersCount, v))
 }
 
 // NetworkCount applies equality check predicate on the "network_count" field. It's identical to NetworkCountEQ.
-func NetworkCount(v int) predicate.Repository {
+func NetworkCount(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldNetworkCount, v))
 }
 
 // Forks applies equality check predicate on the "forks" field. It's identical to ForksEQ.
-func Forks(v int) predicate.Repository {
+func Forks(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldForks, v))
 }
 
 // OpenIssues applies equality check predicate on the "open_issues" field. It's identical to OpenIssuesEQ.
-func OpenIssues(v int) predicate.Repository {
+func OpenIssues(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldOpenIssues, v))
 }
 
 // Watchers applies equality check predicate on the "watchers" field. It's identical to WatchersEQ.
-func Watchers(v int) predicate.Repository {
+func Watchers(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldWatchers, v))
 }
 
@@ -3671,162 +3671,162 @@ func LanguageContainsFold(v string) predicate.Repository {
 }
 
 // ForksCountEQ applies the EQ predicate on the "forks_count" field.
-func ForksCountEQ(v int) predicate.Repository {
+func ForksCountEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldForksCount, v))
 }
 
 // ForksCountNEQ applies the NEQ predicate on the "forks_count" field.
-func ForksCountNEQ(v int) predicate.Repository {
+func ForksCountNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldForksCount, v))
 }
 
 // ForksCountIn applies the In predicate on the "forks_count" field.
-func ForksCountIn(vs ...int) predicate.Repository {
+func ForksCountIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldForksCount, vs...))
 }
 
 // ForksCountNotIn applies the NotIn predicate on the "forks_count" field.
-func ForksCountNotIn(vs ...int) predicate.Repository {
+func ForksCountNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldForksCount, vs...))
 }
 
 // ForksCountGT applies the GT predicate on the "forks_count" field.
-func ForksCountGT(v int) predicate.Repository {
+func ForksCountGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldForksCount, v))
 }
 
 // ForksCountGTE applies the GTE predicate on the "forks_count" field.
-func ForksCountGTE(v int) predicate.Repository {
+func ForksCountGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldForksCount, v))
 }
 
 // ForksCountLT applies the LT predicate on the "forks_count" field.
-func ForksCountLT(v int) predicate.Repository {
+func ForksCountLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldForksCount, v))
 }
 
 // ForksCountLTE applies the LTE predicate on the "forks_count" field.
-func ForksCountLTE(v int) predicate.Repository {
+func ForksCountLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldForksCount, v))
 }
 
 // StargazersCountEQ applies the EQ predicate on the "stargazers_count" field.
-func StargazersCountEQ(v int) predicate.Repository {
+func StargazersCountEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldStargazersCount, v))
 }
 
 // StargazersCountNEQ applies the NEQ predicate on the "stargazers_count" field.
-func StargazersCountNEQ(v int) predicate.Repository {
+func StargazersCountNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldStargazersCount, v))
 }
 
 // StargazersCountIn applies the In predicate on the "stargazers_count" field.
-func StargazersCountIn(vs ...int) predicate.Repository {
+func StargazersCountIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldStargazersCount, vs...))
 }
 
 // StargazersCountNotIn applies the NotIn predicate on the "stargazers_count" field.
-func StargazersCountNotIn(vs ...int) predicate.Repository {
+func StargazersCountNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldStargazersCount, vs...))
 }
 
 // StargazersCountGT applies the GT predicate on the "stargazers_count" field.
-func StargazersCountGT(v int) predicate.Repository {
+func StargazersCountGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldStargazersCount, v))
 }
 
 // StargazersCountGTE applies the GTE predicate on the "stargazers_count" field.
-func StargazersCountGTE(v int) predicate.Repository {
+func StargazersCountGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldStargazersCount, v))
 }
 
 // StargazersCountLT applies the LT predicate on the "stargazers_count" field.
-func StargazersCountLT(v int) predicate.Repository {
+func StargazersCountLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldStargazersCount, v))
 }
 
 // StargazersCountLTE applies the LTE predicate on the "stargazers_count" field.
-func StargazersCountLTE(v int) predicate.Repository {
+func StargazersCountLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldStargazersCount, v))
 }
 
 // WatchersCountEQ applies the EQ predicate on the "watchers_count" field.
-func WatchersCountEQ(v int) predicate.Repository {
+func WatchersCountEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldWatchersCount, v))
 }
 
 // WatchersCountNEQ applies the NEQ predicate on the "watchers_count" field.
-func WatchersCountNEQ(v int) predicate.Repository {
+func WatchersCountNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldWatchersCount, v))
 }
 
 // WatchersCountIn applies the In predicate on the "watchers_count" field.
-func WatchersCountIn(vs ...int) predicate.Repository {
+func WatchersCountIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldWatchersCount, vs...))
 }
 
 // WatchersCountNotIn applies the NotIn predicate on the "watchers_count" field.
-func WatchersCountNotIn(vs ...int) predicate.Repository {
+func WatchersCountNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldWatchersCount, vs...))
 }
 
 // WatchersCountGT applies the GT predicate on the "watchers_count" field.
-func WatchersCountGT(v int) predicate.Repository {
+func WatchersCountGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldWatchersCount, v))
 }
 
 // WatchersCountGTE applies the GTE predicate on the "watchers_count" field.
-func WatchersCountGTE(v int) predicate.Repository {
+func WatchersCountGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldWatchersCount, v))
 }
 
 // WatchersCountLT applies the LT predicate on the "watchers_count" field.
-func WatchersCountLT(v int) predicate.Repository {
+func WatchersCountLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldWatchersCount, v))
 }
 
 // WatchersCountLTE applies the LTE predicate on the "watchers_count" field.
-func WatchersCountLTE(v int) predicate.Repository {
+func WatchersCountLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldWatchersCount, v))
 }
 
 // SizeEQ applies the EQ predicate on the "size" field.
-func SizeEQ(v int) predicate.Repository {
+func SizeEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldSize, v))
 }
 
 // SizeNEQ applies the NEQ predicate on the "size" field.
-func SizeNEQ(v int) predicate.Repository {
+func SizeNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldSize, v))
 }
 
 // SizeIn applies the In predicate on the "size" field.
-func SizeIn(vs ...int) predicate.Repository {
+func SizeIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldSize, vs...))
 }
 
 // SizeNotIn applies the NotIn predicate on the "size" field.
-func SizeNotIn(vs ...int) predicate.Repository {
+func SizeNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldSize, vs...))
 }
 
 // SizeGT applies the GT predicate on the "size" field.
-func SizeGT(v int) predicate.Repository {
+func SizeGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldSize, v))
 }
 
 // SizeGTE applies the GTE predicate on the "size" field.
-func SizeGTE(v int) predicate.Repository {
+func SizeGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldSize, v))
 }
 
 // SizeLT applies the LT predicate on the "size" field.
-func SizeLT(v int) predicate.Repository {
+func SizeLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldSize, v))
 }
 
 // SizeLTE applies the LTE predicate on the "size" field.
-func SizeLTE(v int) predicate.Repository {
+func SizeLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldSize, v))
 }
 
@@ -3896,42 +3896,42 @@ func DefaultBranchContainsFold(v string) predicate.Repository {
 }
 
 // OpenIssuesCountEQ applies the EQ predicate on the "open_issues_count" field.
-func OpenIssuesCountEQ(v int) predicate.Repository {
+func OpenIssuesCountEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldOpenIssuesCount, v))
 }
 
 // OpenIssuesCountNEQ applies the NEQ predicate on the "open_issues_count" field.
-func OpenIssuesCountNEQ(v int) predicate.Repository {
+func OpenIssuesCountNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldOpenIssuesCount, v))
 }
 
 // OpenIssuesCountIn applies the In predicate on the "open_issues_count" field.
-func OpenIssuesCountIn(vs ...int) predicate.Repository {
+func OpenIssuesCountIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldOpenIssuesCount, vs...))
 }
 
 // OpenIssuesCountNotIn applies the NotIn predicate on the "open_issues_count" field.
-func OpenIssuesCountNotIn(vs ...int) predicate.Repository {
+func OpenIssuesCountNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldOpenIssuesCount, vs...))
 }
 
 // OpenIssuesCountGT applies the GT predicate on the "open_issues_count" field.
-func OpenIssuesCountGT(v int) predicate.Repository {
+func OpenIssuesCountGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldOpenIssuesCount, v))
 }
 
 // OpenIssuesCountGTE applies the GTE predicate on the "open_issues_count" field.
-func OpenIssuesCountGTE(v int) predicate.Repository {
+func OpenIssuesCountGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldOpenIssuesCount, v))
 }
 
 // OpenIssuesCountLT applies the LT predicate on the "open_issues_count" field.
-func OpenIssuesCountLT(v int) predicate.Repository {
+func OpenIssuesCountLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldOpenIssuesCount, v))
 }
 
 // OpenIssuesCountLTE applies the LTE predicate on the "open_issues_count" field.
-func OpenIssuesCountLTE(v int) predicate.Repository {
+func OpenIssuesCountLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldOpenIssuesCount, v))
 }
 
@@ -4176,202 +4176,202 @@ func UpdatedAtLTE(v time.Time) predicate.Repository {
 }
 
 // SubscribersCountEQ applies the EQ predicate on the "subscribers_count" field.
-func SubscribersCountEQ(v int) predicate.Repository {
+func SubscribersCountEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldSubscribersCount, v))
 }
 
 // SubscribersCountNEQ applies the NEQ predicate on the "subscribers_count" field.
-func SubscribersCountNEQ(v int) predicate.Repository {
+func SubscribersCountNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldSubscribersCount, v))
 }
 
 // SubscribersCountIn applies the In predicate on the "subscribers_count" field.
-func SubscribersCountIn(vs ...int) predicate.Repository {
+func SubscribersCountIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldSubscribersCount, vs...))
 }
 
 // SubscribersCountNotIn applies the NotIn predicate on the "subscribers_count" field.
-func SubscribersCountNotIn(vs ...int) predicate.Repository {
+func SubscribersCountNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldSubscribersCount, vs...))
 }
 
 // SubscribersCountGT applies the GT predicate on the "subscribers_count" field.
-func SubscribersCountGT(v int) predicate.Repository {
+func SubscribersCountGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldSubscribersCount, v))
 }
 
 // SubscribersCountGTE applies the GTE predicate on the "subscribers_count" field.
-func SubscribersCountGTE(v int) predicate.Repository {
+func SubscribersCountGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldSubscribersCount, v))
 }
 
 // SubscribersCountLT applies the LT predicate on the "subscribers_count" field.
-func SubscribersCountLT(v int) predicate.Repository {
+func SubscribersCountLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldSubscribersCount, v))
 }
 
 // SubscribersCountLTE applies the LTE predicate on the "subscribers_count" field.
-func SubscribersCountLTE(v int) predicate.Repository {
+func SubscribersCountLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldSubscribersCount, v))
 }
 
 // NetworkCountEQ applies the EQ predicate on the "network_count" field.
-func NetworkCountEQ(v int) predicate.Repository {
+func NetworkCountEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldNetworkCount, v))
 }
 
 // NetworkCountNEQ applies the NEQ predicate on the "network_count" field.
-func NetworkCountNEQ(v int) predicate.Repository {
+func NetworkCountNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldNetworkCount, v))
 }
 
 // NetworkCountIn applies the In predicate on the "network_count" field.
-func NetworkCountIn(vs ...int) predicate.Repository {
+func NetworkCountIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldNetworkCount, vs...))
 }
 
 // NetworkCountNotIn applies the NotIn predicate on the "network_count" field.
-func NetworkCountNotIn(vs ...int) predicate.Repository {
+func NetworkCountNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldNetworkCount, vs...))
 }
 
 // NetworkCountGT applies the GT predicate on the "network_count" field.
-func NetworkCountGT(v int) predicate.Repository {
+func NetworkCountGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldNetworkCount, v))
 }
 
 // NetworkCountGTE applies the GTE predicate on the "network_count" field.
-func NetworkCountGTE(v int) predicate.Repository {
+func NetworkCountGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldNetworkCount, v))
 }
 
 // NetworkCountLT applies the LT predicate on the "network_count" field.
-func NetworkCountLT(v int) predicate.Repository {
+func NetworkCountLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldNetworkCount, v))
 }
 
 // NetworkCountLTE applies the LTE predicate on the "network_count" field.
-func NetworkCountLTE(v int) predicate.Repository {
+func NetworkCountLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldNetworkCount, v))
 }
 
 // ForksEQ applies the EQ predicate on the "forks" field.
-func ForksEQ(v int) predicate.Repository {
+func ForksEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldForks, v))
 }
 
 // ForksNEQ applies the NEQ predicate on the "forks" field.
-func ForksNEQ(v int) predicate.Repository {
+func ForksNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldForks, v))
 }
 
 // ForksIn applies the In predicate on the "forks" field.
-func ForksIn(vs ...int) predicate.Repository {
+func ForksIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldForks, vs...))
 }
 
 // ForksNotIn applies the NotIn predicate on the "forks" field.
-func ForksNotIn(vs ...int) predicate.Repository {
+func ForksNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldForks, vs...))
 }
 
 // ForksGT applies the GT predicate on the "forks" field.
-func ForksGT(v int) predicate.Repository {
+func ForksGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldForks, v))
 }
 
 // ForksGTE applies the GTE predicate on the "forks" field.
-func ForksGTE(v int) predicate.Repository {
+func ForksGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldForks, v))
 }
 
 // ForksLT applies the LT predicate on the "forks" field.
-func ForksLT(v int) predicate.Repository {
+func ForksLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldForks, v))
 }
 
 // ForksLTE applies the LTE predicate on the "forks" field.
-func ForksLTE(v int) predicate.Repository {
+func ForksLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldForks, v))
 }
 
 // OpenIssuesEQ applies the EQ predicate on the "open_issues" field.
-func OpenIssuesEQ(v int) predicate.Repository {
+func OpenIssuesEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldOpenIssues, v))
 }
 
 // OpenIssuesNEQ applies the NEQ predicate on the "open_issues" field.
-func OpenIssuesNEQ(v int) predicate.Repository {
+func OpenIssuesNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldOpenIssues, v))
 }
 
 // OpenIssuesIn applies the In predicate on the "open_issues" field.
-func OpenIssuesIn(vs ...int) predicate.Repository {
+func OpenIssuesIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldOpenIssues, vs...))
 }
 
 // OpenIssuesNotIn applies the NotIn predicate on the "open_issues" field.
-func OpenIssuesNotIn(vs ...int) predicate.Repository {
+func OpenIssuesNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldOpenIssues, vs...))
 }
 
 // OpenIssuesGT applies the GT predicate on the "open_issues" field.
-func OpenIssuesGT(v int) predicate.Repository {
+func OpenIssuesGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldOpenIssues, v))
 }
 
 // OpenIssuesGTE applies the GTE predicate on the "open_issues" field.
-func OpenIssuesGTE(v int) predicate.Repository {
+func OpenIssuesGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldOpenIssues, v))
 }
 
 // OpenIssuesLT applies the LT predicate on the "open_issues" field.
-func OpenIssuesLT(v int) predicate.Repository {
+func OpenIssuesLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldOpenIssues, v))
 }
 
 // OpenIssuesLTE applies the LTE predicate on the "open_issues" field.
-func OpenIssuesLTE(v int) predicate.Repository {
+func OpenIssuesLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldOpenIssues, v))
 }
 
 // WatchersEQ applies the EQ predicate on the "watchers" field.
-func WatchersEQ(v int) predicate.Repository {
+func WatchersEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldWatchers, v))
 }
 
 // WatchersNEQ applies the NEQ predicate on the "watchers" field.
-func WatchersNEQ(v int) predicate.Repository {
+func WatchersNEQ(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldWatchers, v))
 }
 
 // WatchersIn applies the In predicate on the "watchers" field.
-func WatchersIn(vs ...int) predicate.Repository {
+func WatchersIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldIn(FieldWatchers, vs...))
 }
 
 // WatchersNotIn applies the NotIn predicate on the "watchers" field.
-func WatchersNotIn(vs ...int) predicate.Repository {
+func WatchersNotIn(vs ...int64) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldWatchers, vs...))
 }
 
 // WatchersGT applies the GT predicate on the "watchers" field.
-func WatchersGT(v int) predicate.Repository {
+func WatchersGT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGT(FieldWatchers, v))
 }
 
 // WatchersGTE applies the GTE predicate on the "watchers" field.
-func WatchersGTE(v int) predicate.Repository {
+func WatchersGTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldGTE(FieldWatchers, v))
 }
 
 // WatchersLT applies the LT predicate on the "watchers" field.
-func WatchersLT(v int) predicate.Repository {
+func WatchersLT(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLT(FieldWatchers, v))
 }
 
 // WatchersLTE applies the LTE predicate on the "watchers" field.
-func WatchersLTE(v int) predicate.Repository {
+func WatchersLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldWatchers, v))
 }
 

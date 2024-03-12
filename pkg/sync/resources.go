@@ -104,7 +104,7 @@ func (fu fetchUser) Fetch(ctx context.Context, h *hub) (*ent.User, error) {
 type fetchIssue struct {
 	owner       string
 	repo        string
-	issueNumber int
+	issueNumber int64
 }
 
 var _ resource[*ent.Issue] = fetchIssue{}
@@ -143,7 +143,7 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
 		cr.SetRepositoryID(repo.ID)
 		return nil
 	})
-	localGetUser := func(login string, setter func(id int) *ent.IssueCreate) {
+	localGetUser := func(login string, setter func(id int64) *ent.IssueCreate) {
 		if login == "" {
 			return
 		}
@@ -162,7 +162,7 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
 	}
 	for _, assignee := range i.Assignees {
 		login := assignee.Login
-		localGetUser(login, func(i int) *ent.IssueCreate { return cr.AddAssigneeIDs(i) })
+		localGetUser(login, func(i int64) *ent.IssueCreate { return cr.AddAssigneeIDs(i) })
 	}
 	if i.ClosedBy != nil {
 		localGetUser(i.ClosedBy.Login, cr.SetClosedByID)
@@ -179,6 +179,13 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
 		return nil, fmt.Errorf("fetchIssue%+v save: %w", fi, err)
 	}
 
+	h.Go(func() error {
+		if err := fetchIssueComments(ctx, h, fi.owner, fi.repo, fi.issueNumber); err != nil {
+			h.warn(err)
+		}
+		return nil
+	})
+
 	return h.DB.Issue.Get(ctx, i.ID)
 }
 
@@ -190,6 +197,47 @@ func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 	if err != nil {
 		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, err))
 	}
+}
+
+func fetchIssueComments(ctx context.Context, h *hub,
+	repoOwner, repoName string, issueNumber int64,
+) error {
+	iss, err := fetch(ctx, h, fetchIssue{repoOwner, repoName, issueNumber})
+	if err != nil {
+		return err
+	}
+	type dstType struct {
+		ent.IssueComment
+		User *struct {
+			Login string `json:"login"`
+		} `json:"user"`
+	}
+	err = httpGetIterate(
+		ctx, h,
+		fmt.Sprintf("/repos/%s/%s/issues/%d/comments?per_page=100",
+			repoOwner, repoName, issueNumber),
+		func(ic *dstType) error {
+			// Create issue comment
+			cr := h.DB.IssueComment.Create().
+				CopyIssueComment(&ic.IssueComment).
+				SetIssueID(iss.ID)
+			// Assign user if possible.
+			if ic.User != nil && ic.User.Login != "" {
+				us, err := fetch(ctx, h, fetchUser{ic.User.Login})
+				if err != nil {
+					return err
+				}
+				cr.SetUserID(us.ID)
+			}
+			return cr.
+				OnConflict().UpdateNewValues().
+				Exec(ctx)
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("fetchIssueComments(%q, %q, %d): %w", repoOwner, repoName, issueNumber, err)
+	}
+	return nil
 }
 
 // PULL REQUESTS

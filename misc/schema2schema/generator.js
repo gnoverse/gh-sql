@@ -36,7 +36,7 @@ for (const el of path) {
 const typeMap = {
   string: "String",
   boolean: "Bool",
-  integer: "Int",
+  integer: "Int64",
   array: "Strings",
 };
 const handledPropKeys = [

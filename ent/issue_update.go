@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -129,14 +130,14 @@ func (iu *IssueUpdate) SetNillableHTMLURL(s *string) *IssueUpdate {
 }
 
 // SetNumber sets the "number" field.
-func (iu *IssueUpdate) SetNumber(i int) *IssueUpdate {
+func (iu *IssueUpdate) SetNumber(i int64) *IssueUpdate {
 	iu.mutation.ResetNumber()
 	iu.mutation.SetNumber(i)
 	return iu
 }
 
 // SetNillableNumber sets the "number" field if the given value is not nil.
-func (iu *IssueUpdate) SetNillableNumber(i *int) *IssueUpdate {
+func (iu *IssueUpdate) SetNillableNumber(i *int64) *IssueUpdate {
 	if i != nil {
 		iu.SetNumber(*i)
 	}
@@ -144,7 +145,7 @@ func (iu *IssueUpdate) SetNillableNumber(i *int) *IssueUpdate {
 }
 
 // AddNumber adds i to the "number" field.
-func (iu *IssueUpdate) AddNumber(i int) *IssueUpdate {
+func (iu *IssueUpdate) AddNumber(i int64) *IssueUpdate {
 	iu.mutation.AddNumber(i)
 	return iu
 }
@@ -251,27 +252,6 @@ func (iu *IssueUpdate) ClearActiveLockReason() *IssueUpdate {
 	return iu
 }
 
-// SetComments sets the "comments" field.
-func (iu *IssueUpdate) SetComments(i int) *IssueUpdate {
-	iu.mutation.ResetComments()
-	iu.mutation.SetComments(i)
-	return iu
-}
-
-// SetNillableComments sets the "comments" field if the given value is not nil.
-func (iu *IssueUpdate) SetNillableComments(i *int) *IssueUpdate {
-	if i != nil {
-		iu.SetComments(*i)
-	}
-	return iu
-}
-
-// AddComments adds i to the "comments" field.
-func (iu *IssueUpdate) AddComments(i int) *IssueUpdate {
-	iu.mutation.AddComments(i)
-	return iu
-}
-
 // SetClosedAt sets the "closed_at" field.
 func (iu *IssueUpdate) SetClosedAt(t time.Time) *IssueUpdate {
 	iu.mutation.SetClosedAt(t)
@@ -335,7 +315,7 @@ func (iu *IssueUpdate) SetNillableDraft(b *bool) *IssueUpdate {
 }
 
 // SetRepositoryID sets the "repository" edge to the Repository entity by ID.
-func (iu *IssueUpdate) SetRepositoryID(id int) *IssueUpdate {
+func (iu *IssueUpdate) SetRepositoryID(id int64) *IssueUpdate {
 	iu.mutation.SetRepositoryID(id)
 	return iu
 }
@@ -346,13 +326,13 @@ func (iu *IssueUpdate) SetRepository(r *Repository) *IssueUpdate {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (iu *IssueUpdate) SetUserID(id int) *IssueUpdate {
+func (iu *IssueUpdate) SetUserID(id int64) *IssueUpdate {
 	iu.mutation.SetUserID(id)
 	return iu
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (iu *IssueUpdate) SetNillableUserID(id *int) *IssueUpdate {
+func (iu *IssueUpdate) SetNillableUserID(id *int64) *IssueUpdate {
 	if id != nil {
 		iu = iu.SetUserID(*id)
 	}
@@ -365,14 +345,14 @@ func (iu *IssueUpdate) SetUser(u *User) *IssueUpdate {
 }
 
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
-func (iu *IssueUpdate) AddAssigneeIDs(ids ...int) *IssueUpdate {
+func (iu *IssueUpdate) AddAssigneeIDs(ids ...int64) *IssueUpdate {
 	iu.mutation.AddAssigneeIDs(ids...)
 	return iu
 }
 
 // AddAssignees adds the "assignees" edges to the User entity.
 func (iu *IssueUpdate) AddAssignees(u ...*User) *IssueUpdate {
-	ids := make([]int, len(u))
+	ids := make([]int64, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -380,13 +360,13 @@ func (iu *IssueUpdate) AddAssignees(u ...*User) *IssueUpdate {
 }
 
 // SetClosedByID sets the "closed_by" edge to the User entity by ID.
-func (iu *IssueUpdate) SetClosedByID(id int) *IssueUpdate {
+func (iu *IssueUpdate) SetClosedByID(id int64) *IssueUpdate {
 	iu.mutation.SetClosedByID(id)
 	return iu
 }
 
 // SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
-func (iu *IssueUpdate) SetNillableClosedByID(id *int) *IssueUpdate {
+func (iu *IssueUpdate) SetNillableClosedByID(id *int64) *IssueUpdate {
 	if id != nil {
 		iu = iu.SetClosedByID(*id)
 	}
@@ -396,6 +376,21 @@ func (iu *IssueUpdate) SetNillableClosedByID(id *int) *IssueUpdate {
 // SetClosedBy sets the "closed_by" edge to the User entity.
 func (iu *IssueUpdate) SetClosedBy(u *User) *IssueUpdate {
 	return iu.SetClosedByID(u.ID)
+}
+
+// AddCommentIDs adds the "comments" edge to the IssueComment entity by IDs.
+func (iu *IssueUpdate) AddCommentIDs(ids ...int64) *IssueUpdate {
+	iu.mutation.AddCommentIDs(ids...)
+	return iu
+}
+
+// AddComments adds the "comments" edges to the IssueComment entity.
+func (iu *IssueUpdate) AddComments(i ...*IssueComment) *IssueUpdate {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return iu.AddCommentIDs(ids...)
 }
 
 // Mutation returns the IssueMutation object of the builder.
@@ -422,14 +417,14 @@ func (iu *IssueUpdate) ClearAssignees() *IssueUpdate {
 }
 
 // RemoveAssigneeIDs removes the "assignees" edge to User entities by IDs.
-func (iu *IssueUpdate) RemoveAssigneeIDs(ids ...int) *IssueUpdate {
+func (iu *IssueUpdate) RemoveAssigneeIDs(ids ...int64) *IssueUpdate {
 	iu.mutation.RemoveAssigneeIDs(ids...)
 	return iu
 }
 
 // RemoveAssignees removes "assignees" edges to User entities.
 func (iu *IssueUpdate) RemoveAssignees(u ...*User) *IssueUpdate {
-	ids := make([]int, len(u))
+	ids := make([]int64, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -440,6 +435,27 @@ func (iu *IssueUpdate) RemoveAssignees(u ...*User) *IssueUpdate {
 func (iu *IssueUpdate) ClearClosedBy() *IssueUpdate {
 	iu.mutation.ClearClosedBy()
 	return iu
+}
+
+// ClearComments clears all "comments" edges to the IssueComment entity.
+func (iu *IssueUpdate) ClearComments() *IssueUpdate {
+	iu.mutation.ClearComments()
+	return iu
+}
+
+// RemoveCommentIDs removes the "comments" edge to IssueComment entities by IDs.
+func (iu *IssueUpdate) RemoveCommentIDs(ids ...int64) *IssueUpdate {
+	iu.mutation.RemoveCommentIDs(ids...)
+	return iu
+}
+
+// RemoveComments removes "comments" edges to IssueComment entities.
+func (iu *IssueUpdate) RemoveComments(i ...*IssueComment) *IssueUpdate {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return iu.RemoveCommentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -486,7 +502,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if err := iu.check(); err != nil {
 		return n, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(issue.Table, issue.Columns, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(issue.Table, issue.Columns, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64))
 	if ps := iu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -516,10 +532,10 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.SetField(issue.FieldHTMLURL, field.TypeString, value)
 	}
 	if value, ok := iu.mutation.Number(); ok {
-		_spec.SetField(issue.FieldNumber, field.TypeInt, value)
+		_spec.SetField(issue.FieldNumber, field.TypeInt64, value)
 	}
 	if value, ok := iu.mutation.AddedNumber(); ok {
-		_spec.AddField(issue.FieldNumber, field.TypeInt, value)
+		_spec.AddField(issue.FieldNumber, field.TypeInt64, value)
 	}
 	if value, ok := iu.mutation.State(); ok {
 		_spec.SetField(issue.FieldState, field.TypeString, value)
@@ -548,12 +564,6 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if iu.mutation.ActiveLockReasonCleared() {
 		_spec.ClearField(issue.FieldActiveLockReason, field.TypeString)
 	}
-	if value, ok := iu.mutation.Comments(); ok {
-		_spec.SetField(issue.FieldComments, field.TypeInt, value)
-	}
-	if value, ok := iu.mutation.AddedComments(); ok {
-		_spec.AddField(issue.FieldComments, field.TypeInt, value)
-	}
 	if value, ok := iu.mutation.ClosedAt(); ok {
 		_spec.SetField(issue.FieldClosedAt, field.TypeTime, value)
 	}
@@ -577,7 +587,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -590,7 +600,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -606,7 +616,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -619,7 +629,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -635,7 +645,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: issue.AssigneesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -648,7 +658,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: issue.AssigneesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -664,7 +674,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: issue.AssigneesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -680,7 +690,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.ClosedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -693,7 +703,52 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.ClosedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if iu.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.CommentsTable,
+			Columns: []string{issue.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !iu.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.CommentsTable,
+			Columns: []string{issue.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.CommentsTable,
+			Columns: []string{issue.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -820,14 +875,14 @@ func (iuo *IssueUpdateOne) SetNillableHTMLURL(s *string) *IssueUpdateOne {
 }
 
 // SetNumber sets the "number" field.
-func (iuo *IssueUpdateOne) SetNumber(i int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) SetNumber(i int64) *IssueUpdateOne {
 	iuo.mutation.ResetNumber()
 	iuo.mutation.SetNumber(i)
 	return iuo
 }
 
 // SetNillableNumber sets the "number" field if the given value is not nil.
-func (iuo *IssueUpdateOne) SetNillableNumber(i *int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) SetNillableNumber(i *int64) *IssueUpdateOne {
 	if i != nil {
 		iuo.SetNumber(*i)
 	}
@@ -835,7 +890,7 @@ func (iuo *IssueUpdateOne) SetNillableNumber(i *int) *IssueUpdateOne {
 }
 
 // AddNumber adds i to the "number" field.
-func (iuo *IssueUpdateOne) AddNumber(i int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) AddNumber(i int64) *IssueUpdateOne {
 	iuo.mutation.AddNumber(i)
 	return iuo
 }
@@ -942,27 +997,6 @@ func (iuo *IssueUpdateOne) ClearActiveLockReason() *IssueUpdateOne {
 	return iuo
 }
 
-// SetComments sets the "comments" field.
-func (iuo *IssueUpdateOne) SetComments(i int) *IssueUpdateOne {
-	iuo.mutation.ResetComments()
-	iuo.mutation.SetComments(i)
-	return iuo
-}
-
-// SetNillableComments sets the "comments" field if the given value is not nil.
-func (iuo *IssueUpdateOne) SetNillableComments(i *int) *IssueUpdateOne {
-	if i != nil {
-		iuo.SetComments(*i)
-	}
-	return iuo
-}
-
-// AddComments adds i to the "comments" field.
-func (iuo *IssueUpdateOne) AddComments(i int) *IssueUpdateOne {
-	iuo.mutation.AddComments(i)
-	return iuo
-}
-
 // SetClosedAt sets the "closed_at" field.
 func (iuo *IssueUpdateOne) SetClosedAt(t time.Time) *IssueUpdateOne {
 	iuo.mutation.SetClosedAt(t)
@@ -1026,7 +1060,7 @@ func (iuo *IssueUpdateOne) SetNillableDraft(b *bool) *IssueUpdateOne {
 }
 
 // SetRepositoryID sets the "repository" edge to the Repository entity by ID.
-func (iuo *IssueUpdateOne) SetRepositoryID(id int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) SetRepositoryID(id int64) *IssueUpdateOne {
 	iuo.mutation.SetRepositoryID(id)
 	return iuo
 }
@@ -1037,13 +1071,13 @@ func (iuo *IssueUpdateOne) SetRepository(r *Repository) *IssueUpdateOne {
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
-func (iuo *IssueUpdateOne) SetUserID(id int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) SetUserID(id int64) *IssueUpdateOne {
 	iuo.mutation.SetUserID(id)
 	return iuo
 }
 
 // SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (iuo *IssueUpdateOne) SetNillableUserID(id *int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) SetNillableUserID(id *int64) *IssueUpdateOne {
 	if id != nil {
 		iuo = iuo.SetUserID(*id)
 	}
@@ -1056,14 +1090,14 @@ func (iuo *IssueUpdateOne) SetUser(u *User) *IssueUpdateOne {
 }
 
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
-func (iuo *IssueUpdateOne) AddAssigneeIDs(ids ...int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) AddAssigneeIDs(ids ...int64) *IssueUpdateOne {
 	iuo.mutation.AddAssigneeIDs(ids...)
 	return iuo
 }
 
 // AddAssignees adds the "assignees" edges to the User entity.
 func (iuo *IssueUpdateOne) AddAssignees(u ...*User) *IssueUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]int64, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -1071,13 +1105,13 @@ func (iuo *IssueUpdateOne) AddAssignees(u ...*User) *IssueUpdateOne {
 }
 
 // SetClosedByID sets the "closed_by" edge to the User entity by ID.
-func (iuo *IssueUpdateOne) SetClosedByID(id int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) SetClosedByID(id int64) *IssueUpdateOne {
 	iuo.mutation.SetClosedByID(id)
 	return iuo
 }
 
 // SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
-func (iuo *IssueUpdateOne) SetNillableClosedByID(id *int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) SetNillableClosedByID(id *int64) *IssueUpdateOne {
 	if id != nil {
 		iuo = iuo.SetClosedByID(*id)
 	}
@@ -1087,6 +1121,21 @@ func (iuo *IssueUpdateOne) SetNillableClosedByID(id *int) *IssueUpdateOne {
 // SetClosedBy sets the "closed_by" edge to the User entity.
 func (iuo *IssueUpdateOne) SetClosedBy(u *User) *IssueUpdateOne {
 	return iuo.SetClosedByID(u.ID)
+}
+
+// AddCommentIDs adds the "comments" edge to the IssueComment entity by IDs.
+func (iuo *IssueUpdateOne) AddCommentIDs(ids ...int64) *IssueUpdateOne {
+	iuo.mutation.AddCommentIDs(ids...)
+	return iuo
+}
+
+// AddComments adds the "comments" edges to the IssueComment entity.
+func (iuo *IssueUpdateOne) AddComments(i ...*IssueComment) *IssueUpdateOne {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return iuo.AddCommentIDs(ids...)
 }
 
 // Mutation returns the IssueMutation object of the builder.
@@ -1113,14 +1162,14 @@ func (iuo *IssueUpdateOne) ClearAssignees() *IssueUpdateOne {
 }
 
 // RemoveAssigneeIDs removes the "assignees" edge to User entities by IDs.
-func (iuo *IssueUpdateOne) RemoveAssigneeIDs(ids ...int) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) RemoveAssigneeIDs(ids ...int64) *IssueUpdateOne {
 	iuo.mutation.RemoveAssigneeIDs(ids...)
 	return iuo
 }
 
 // RemoveAssignees removes "assignees" edges to User entities.
 func (iuo *IssueUpdateOne) RemoveAssignees(u ...*User) *IssueUpdateOne {
-	ids := make([]int, len(u))
+	ids := make([]int64, len(u))
 	for i := range u {
 		ids[i] = u[i].ID
 	}
@@ -1131,6 +1180,27 @@ func (iuo *IssueUpdateOne) RemoveAssignees(u ...*User) *IssueUpdateOne {
 func (iuo *IssueUpdateOne) ClearClosedBy() *IssueUpdateOne {
 	iuo.mutation.ClearClosedBy()
 	return iuo
+}
+
+// ClearComments clears all "comments" edges to the IssueComment entity.
+func (iuo *IssueUpdateOne) ClearComments() *IssueUpdateOne {
+	iuo.mutation.ClearComments()
+	return iuo
+}
+
+// RemoveCommentIDs removes the "comments" edge to IssueComment entities by IDs.
+func (iuo *IssueUpdateOne) RemoveCommentIDs(ids ...int64) *IssueUpdateOne {
+	iuo.mutation.RemoveCommentIDs(ids...)
+	return iuo
+}
+
+// RemoveComments removes "comments" edges to IssueComment entities.
+func (iuo *IssueUpdateOne) RemoveComments(i ...*IssueComment) *IssueUpdateOne {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return iuo.RemoveCommentIDs(ids...)
 }
 
 // Where appends a list predicates to the IssueUpdate builder.
@@ -1190,7 +1260,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 	if err := iuo.check(); err != nil {
 		return _node, err
 	}
-	_spec := sqlgraph.NewUpdateSpec(issue.Table, issue.Columns, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewUpdateSpec(issue.Table, issue.Columns, sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64))
 	id, ok := iuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Issue.id" for update`)}
@@ -1237,10 +1307,10 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 		_spec.SetField(issue.FieldHTMLURL, field.TypeString, value)
 	}
 	if value, ok := iuo.mutation.Number(); ok {
-		_spec.SetField(issue.FieldNumber, field.TypeInt, value)
+		_spec.SetField(issue.FieldNumber, field.TypeInt64, value)
 	}
 	if value, ok := iuo.mutation.AddedNumber(); ok {
-		_spec.AddField(issue.FieldNumber, field.TypeInt, value)
+		_spec.AddField(issue.FieldNumber, field.TypeInt64, value)
 	}
 	if value, ok := iuo.mutation.State(); ok {
 		_spec.SetField(issue.FieldState, field.TypeString, value)
@@ -1269,12 +1339,6 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 	if iuo.mutation.ActiveLockReasonCleared() {
 		_spec.ClearField(issue.FieldActiveLockReason, field.TypeString)
 	}
-	if value, ok := iuo.mutation.Comments(); ok {
-		_spec.SetField(issue.FieldComments, field.TypeInt, value)
-	}
-	if value, ok := iuo.mutation.AddedComments(); ok {
-		_spec.AddField(issue.FieldComments, field.TypeInt, value)
-	}
 	if value, ok := iuo.mutation.ClosedAt(); ok {
 		_spec.SetField(issue.FieldClosedAt, field.TypeTime, value)
 	}
@@ -1298,7 +1362,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1311,7 +1375,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.RepositoryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1327,7 +1391,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1340,7 +1404,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1356,7 +1420,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: issue.AssigneesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1369,7 +1433,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: issue.AssigneesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1385,7 +1449,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: issue.AssigneesPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1401,7 +1465,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.ClosedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1414,7 +1478,52 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.ClosedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if iuo.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.CommentsTable,
+			Columns: []string{issue.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.RemovedCommentsIDs(); len(nodes) > 0 && !iuo.mutation.CommentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.CommentsTable,
+			Columns: []string{issue.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.CommentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.CommentsTable,
+			Columns: []string{issue.CommentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

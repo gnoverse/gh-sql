@@ -11,47 +11,47 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.User {
+func ID(id int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.User {
+func IDEQ(id int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.User {
+func IDNEQ(id int64) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.User {
+func IDIn(ids ...int64) predicate.User {
 	return predicate.User(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.User {
+func IDNotIn(ids ...int64) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.User {
+func IDGT(id int64) predicate.User {
 	return predicate.User(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.User {
+func IDGTE(id int64) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.User {
+func IDLT(id int64) predicate.User {
 	return predicate.User(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.User {
+func IDLTE(id int64) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldID, id))
 }
 
@@ -176,22 +176,22 @@ func Bio(v string) predicate.User {
 }
 
 // PublicRepos applies equality check predicate on the "public_repos" field. It's identical to PublicReposEQ.
-func PublicRepos(v int) predicate.User {
+func PublicRepos(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPublicRepos, v))
 }
 
 // PublicGists applies equality check predicate on the "public_gists" field. It's identical to PublicGistsEQ.
-func PublicGists(v int) predicate.User {
+func PublicGists(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPublicGists, v))
 }
 
 // Followers applies equality check predicate on the "followers" field. It's identical to FollowersEQ.
-func Followers(v int) predicate.User {
+func Followers(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldFollowers, v))
 }
 
 // Following applies equality check predicate on the "following" field. It's identical to FollowingEQ.
-func Following(v int) predicate.User {
+func Following(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldFollowing, v))
 }
 
@@ -1736,162 +1736,162 @@ func BioContainsFold(v string) predicate.User {
 }
 
 // PublicReposEQ applies the EQ predicate on the "public_repos" field.
-func PublicReposEQ(v int) predicate.User {
+func PublicReposEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPublicRepos, v))
 }
 
 // PublicReposNEQ applies the NEQ predicate on the "public_repos" field.
-func PublicReposNEQ(v int) predicate.User {
+func PublicReposNEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldPublicRepos, v))
 }
 
 // PublicReposIn applies the In predicate on the "public_repos" field.
-func PublicReposIn(vs ...int) predicate.User {
+func PublicReposIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldIn(FieldPublicRepos, vs...))
 }
 
 // PublicReposNotIn applies the NotIn predicate on the "public_repos" field.
-func PublicReposNotIn(vs ...int) predicate.User {
+func PublicReposNotIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldPublicRepos, vs...))
 }
 
 // PublicReposGT applies the GT predicate on the "public_repos" field.
-func PublicReposGT(v int) predicate.User {
+func PublicReposGT(v int64) predicate.User {
 	return predicate.User(sql.FieldGT(FieldPublicRepos, v))
 }
 
 // PublicReposGTE applies the GTE predicate on the "public_repos" field.
-func PublicReposGTE(v int) predicate.User {
+func PublicReposGTE(v int64) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldPublicRepos, v))
 }
 
 // PublicReposLT applies the LT predicate on the "public_repos" field.
-func PublicReposLT(v int) predicate.User {
+func PublicReposLT(v int64) predicate.User {
 	return predicate.User(sql.FieldLT(FieldPublicRepos, v))
 }
 
 // PublicReposLTE applies the LTE predicate on the "public_repos" field.
-func PublicReposLTE(v int) predicate.User {
+func PublicReposLTE(v int64) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldPublicRepos, v))
 }
 
 // PublicGistsEQ applies the EQ predicate on the "public_gists" field.
-func PublicGistsEQ(v int) predicate.User {
+func PublicGistsEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPublicGists, v))
 }
 
 // PublicGistsNEQ applies the NEQ predicate on the "public_gists" field.
-func PublicGistsNEQ(v int) predicate.User {
+func PublicGistsNEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldPublicGists, v))
 }
 
 // PublicGistsIn applies the In predicate on the "public_gists" field.
-func PublicGistsIn(vs ...int) predicate.User {
+func PublicGistsIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldIn(FieldPublicGists, vs...))
 }
 
 // PublicGistsNotIn applies the NotIn predicate on the "public_gists" field.
-func PublicGistsNotIn(vs ...int) predicate.User {
+func PublicGistsNotIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldPublicGists, vs...))
 }
 
 // PublicGistsGT applies the GT predicate on the "public_gists" field.
-func PublicGistsGT(v int) predicate.User {
+func PublicGistsGT(v int64) predicate.User {
 	return predicate.User(sql.FieldGT(FieldPublicGists, v))
 }
 
 // PublicGistsGTE applies the GTE predicate on the "public_gists" field.
-func PublicGistsGTE(v int) predicate.User {
+func PublicGistsGTE(v int64) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldPublicGists, v))
 }
 
 // PublicGistsLT applies the LT predicate on the "public_gists" field.
-func PublicGistsLT(v int) predicate.User {
+func PublicGistsLT(v int64) predicate.User {
 	return predicate.User(sql.FieldLT(FieldPublicGists, v))
 }
 
 // PublicGistsLTE applies the LTE predicate on the "public_gists" field.
-func PublicGistsLTE(v int) predicate.User {
+func PublicGistsLTE(v int64) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldPublicGists, v))
 }
 
 // FollowersEQ applies the EQ predicate on the "followers" field.
-func FollowersEQ(v int) predicate.User {
+func FollowersEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldFollowers, v))
 }
 
 // FollowersNEQ applies the NEQ predicate on the "followers" field.
-func FollowersNEQ(v int) predicate.User {
+func FollowersNEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldFollowers, v))
 }
 
 // FollowersIn applies the In predicate on the "followers" field.
-func FollowersIn(vs ...int) predicate.User {
+func FollowersIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldIn(FieldFollowers, vs...))
 }
 
 // FollowersNotIn applies the NotIn predicate on the "followers" field.
-func FollowersNotIn(vs ...int) predicate.User {
+func FollowersNotIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldFollowers, vs...))
 }
 
 // FollowersGT applies the GT predicate on the "followers" field.
-func FollowersGT(v int) predicate.User {
+func FollowersGT(v int64) predicate.User {
 	return predicate.User(sql.FieldGT(FieldFollowers, v))
 }
 
 // FollowersGTE applies the GTE predicate on the "followers" field.
-func FollowersGTE(v int) predicate.User {
+func FollowersGTE(v int64) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldFollowers, v))
 }
 
 // FollowersLT applies the LT predicate on the "followers" field.
-func FollowersLT(v int) predicate.User {
+func FollowersLT(v int64) predicate.User {
 	return predicate.User(sql.FieldLT(FieldFollowers, v))
 }
 
 // FollowersLTE applies the LTE predicate on the "followers" field.
-func FollowersLTE(v int) predicate.User {
+func FollowersLTE(v int64) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldFollowers, v))
 }
 
 // FollowingEQ applies the EQ predicate on the "following" field.
-func FollowingEQ(v int) predicate.User {
+func FollowingEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldFollowing, v))
 }
 
 // FollowingNEQ applies the NEQ predicate on the "following" field.
-func FollowingNEQ(v int) predicate.User {
+func FollowingNEQ(v int64) predicate.User {
 	return predicate.User(sql.FieldNEQ(FieldFollowing, v))
 }
 
 // FollowingIn applies the In predicate on the "following" field.
-func FollowingIn(vs ...int) predicate.User {
+func FollowingIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldIn(FieldFollowing, vs...))
 }
 
 // FollowingNotIn applies the NotIn predicate on the "following" field.
-func FollowingNotIn(vs ...int) predicate.User {
+func FollowingNotIn(vs ...int64) predicate.User {
 	return predicate.User(sql.FieldNotIn(FieldFollowing, vs...))
 }
 
 // FollowingGT applies the GT predicate on the "following" field.
-func FollowingGT(v int) predicate.User {
+func FollowingGT(v int64) predicate.User {
 	return predicate.User(sql.FieldGT(FieldFollowing, v))
 }
 
 // FollowingGTE applies the GTE predicate on the "following" field.
-func FollowingGTE(v int) predicate.User {
+func FollowingGTE(v int64) predicate.User {
 	return predicate.User(sql.FieldGTE(FieldFollowing, v))
 }
 
 // FollowingLT applies the LT predicate on the "following" field.
-func FollowingLT(v int) predicate.User {
+func FollowingLT(v int64) predicate.User {
 	return predicate.User(sql.FieldLT(FieldFollowing, v))
 }
 
 // FollowingLTE applies the LTE predicate on the "following" field.
-func FollowingLTE(v int) predicate.User {
+func FollowingLTE(v int64) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldFollowing, v))
 }
 
@@ -2013,6 +2013,29 @@ func HasIssuesCreated() predicate.User {
 func HasIssuesCreatedWith(preds ...predicate.Issue) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newIssuesCreatedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCommentsCreated applies the HasEdge predicate on the "comments_created" edge.
+func HasCommentsCreated() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, CommentsCreatedTable, CommentsCreatedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommentsCreatedWith applies the HasEdge predicate on the "comments_created" edge with a given conditions (other predicates).
+func HasCommentsCreatedWith(preds ...predicate.IssueComment) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newCommentsCreatedStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

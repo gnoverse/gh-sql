@@ -16,7 +16,7 @@ import (
 type User struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// Login holds the value of the "login" field.
 	Login string `json:"login,omitempty"`
 	// NodeID holds the value of the "node_id" field.
@@ -66,13 +66,13 @@ type User struct {
 	// Bio holds the value of the "bio" field.
 	Bio string `json:"bio,omitempty"`
 	// PublicRepos holds the value of the "public_repos" field.
-	PublicRepos int `json:"public_repos,omitempty"`
+	PublicRepos int64 `json:"public_repos,omitempty"`
 	// PublicGists holds the value of the "public_gists" field.
-	PublicGists int `json:"public_gists,omitempty"`
+	PublicGists int64 `json:"public_gists,omitempty"`
 	// Followers holds the value of the "followers" field.
-	Followers int `json:"followers,omitempty"`
+	Followers int64 `json:"followers,omitempty"`
 	// Following holds the value of the "following" field.
-	Following int `json:"following,omitempty"`
+	Following int64 `json:"following,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -89,13 +89,15 @@ type UserEdges struct {
 	Repositories []*Repository `json:"repositories,omitempty"`
 	// IssuesCreated holds the value of the issues_created edge.
 	IssuesCreated []*Issue `json:"issues_created,omitempty"`
+	// CommentsCreated holds the value of the comments_created edge.
+	CommentsCreated []*IssueComment `json:"comments_created,omitempty"`
 	// IssuesAssigned holds the value of the issues_assigned edge.
 	IssuesAssigned []*Issue `json:"issues_assigned,omitempty"`
 	// IssuesClosed holds the value of the issues_closed edge.
 	IssuesClosed []*Issue `json:"issues_closed,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // RepositoriesOrErr returns the Repositories value or an error if the edge
@@ -116,10 +118,19 @@ func (e UserEdges) IssuesCreatedOrErr() ([]*Issue, error) {
 	return nil, &NotLoadedError{edge: "issues_created"}
 }
 
+// CommentsCreatedOrErr returns the CommentsCreated value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CommentsCreatedOrErr() ([]*IssueComment, error) {
+	if e.loadedTypes[2] {
+		return e.CommentsCreated, nil
+	}
+	return nil, &NotLoadedError{edge: "comments_created"}
+}
+
 // IssuesAssignedOrErr returns the IssuesAssigned value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) IssuesAssignedOrErr() ([]*Issue, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.IssuesAssigned, nil
 	}
 	return nil, &NotLoadedError{edge: "issues_assigned"}
@@ -128,7 +139,7 @@ func (e UserEdges) IssuesAssignedOrErr() ([]*Issue, error) {
 // IssuesClosedOrErr returns the IssuesClosed value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) IssuesClosedOrErr() ([]*Issue, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.IssuesClosed, nil
 	}
 	return nil, &NotLoadedError{edge: "issues_closed"}
@@ -167,7 +178,7 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			u.ID = int(value.Int64)
+			u.ID = int64(value.Int64)
 		case user.FieldLogin:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field login", values[i])
@@ -316,25 +327,25 @@ func (u *User) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field public_repos", values[i])
 			} else if value.Valid {
-				u.PublicRepos = int(value.Int64)
+				u.PublicRepos = value.Int64
 			}
 		case user.FieldPublicGists:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field public_gists", values[i])
 			} else if value.Valid {
-				u.PublicGists = int(value.Int64)
+				u.PublicGists = value.Int64
 			}
 		case user.FieldFollowers:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field followers", values[i])
 			} else if value.Valid {
-				u.Followers = int(value.Int64)
+				u.Followers = value.Int64
 			}
 		case user.FieldFollowing:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field following", values[i])
 			} else if value.Valid {
-				u.Following = int(value.Int64)
+				u.Following = value.Int64
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -369,6 +380,11 @@ func (u *User) QueryRepositories() *RepositoryQuery {
 // QueryIssuesCreated queries the "issues_created" edge of the User entity.
 func (u *User) QueryIssuesCreated() *IssueQuery {
 	return NewUserClient(u.config).QueryIssuesCreated(u)
+}
+
+// QueryCommentsCreated queries the "comments_created" edge of the User entity.
+func (u *User) QueryCommentsCreated() *IssueCommentQuery {
+	return NewUserClient(u.config).QueryCommentsCreated(u)
 }
 
 // QueryIssuesAssigned queries the "issues_assigned" edge of the User entity.

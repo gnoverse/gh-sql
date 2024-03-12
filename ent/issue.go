@@ -18,7 +18,7 @@ import (
 type Issue struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// NodeID holds the value of the "node_id" field.
 	NodeID string `json:"node_id,omitempty"`
 	// URL for the issue
@@ -34,7 +34,7 @@ type Issue struct {
 	// HTMLURL holds the value of the "html_url" field.
 	HTMLURL string `json:"html_url,omitempty"`
 	// Number uniquely identifying the issue within its repository
-	Number int `json:"number,omitempty"`
+	Number int64 `json:"number,omitempty"`
 	// State of the issue; either 'open' or 'closed'
 	State string `json:"state,omitempty"`
 	// StateReason holds the value of the "state_reason" field.
@@ -47,8 +47,6 @@ type Issue struct {
 	Locked bool `json:"locked,omitempty"`
 	// ActiveLockReason holds the value of the "active_lock_reason" field.
 	ActiveLockReason *string `json:"active_lock_reason,omitempty"`
-	// Comments holds the value of the "comments" field.
-	Comments int `json:"comments,omitempty"`
 	// ClosedAt holds the value of the "closed_at" field.
 	ClosedAt *time.Time `json:"closed_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -60,9 +58,9 @@ type Issue struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IssueQuery when eager-loading is set.
 	Edges               IssueEdges `json:"edges"`
-	issue_closed_by     *int
-	repository_issues   *int
-	user_issues_created *int
+	issue_closed_by     *int64
+	repository_issues   *int64
+	user_issues_created *int64
 	selectValues        sql.SelectValues
 }
 
@@ -76,9 +74,11 @@ type IssueEdges struct {
 	Assignees []*User `json:"assignees,omitempty"`
 	// ClosedBy holds the value of the closed_by edge.
 	ClosedBy *User `json:"closed_by,omitempty"`
+	// Comments holds the value of the comments edge.
+	Comments []*IssueComment `json:"comments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // RepositoryOrErr returns the Repository value or an error if the edge
@@ -123,6 +123,15 @@ func (e IssueEdges) ClosedByOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "closed_by"}
 }
 
+// CommentsOrErr returns the Comments value or an error if the edge
+// was not loaded in eager-loading.
+func (e IssueEdges) CommentsOrErr() ([]*IssueComment, error) {
+	if e.loadedTypes[4] {
+		return e.Comments, nil
+	}
+	return nil, &NotLoadedError{edge: "comments"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Issue) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -130,7 +139,7 @@ func (*Issue) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case issue.FieldLocked, issue.FieldDraft:
 			values[i] = new(sql.NullBool)
-		case issue.FieldID, issue.FieldNumber, issue.FieldComments:
+		case issue.FieldID, issue.FieldNumber:
 			values[i] = new(sql.NullInt64)
 		case issue.FieldNodeID, issue.FieldURL, issue.FieldRepositoryURL, issue.FieldLabelsURL, issue.FieldCommentsURL, issue.FieldEventsURL, issue.FieldHTMLURL, issue.FieldState, issue.FieldStateReason, issue.FieldTitle, issue.FieldBody, issue.FieldActiveLockReason:
 			values[i] = new(sql.NullString)
@@ -162,7 +171,7 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			i.ID = int(value.Int64)
+			i.ID = int64(value.Int64)
 		case issue.FieldNodeID:
 			if value, ok := values[j].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field node_id", values[j])
@@ -209,7 +218,7 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 			if value, ok := values[j].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field number", values[j])
 			} else if value.Valid {
-				i.Number = int(value.Int64)
+				i.Number = value.Int64
 			}
 		case issue.FieldState:
 			if value, ok := values[j].(*sql.NullString); !ok {
@@ -250,12 +259,6 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 				i.ActiveLockReason = new(string)
 				*i.ActiveLockReason = value.String
 			}
-		case issue.FieldComments:
-			if value, ok := values[j].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field comments", values[j])
-			} else if value.Valid {
-				i.Comments = int(value.Int64)
-			}
 		case issue.FieldClosedAt:
 			if value, ok := values[j].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field closed_at", values[j])
@@ -285,22 +288,22 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 			if value, ok := values[j].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field issue_closed_by", value)
 			} else if value.Valid {
-				i.issue_closed_by = new(int)
-				*i.issue_closed_by = int(value.Int64)
+				i.issue_closed_by = new(int64)
+				*i.issue_closed_by = int64(value.Int64)
 			}
 		case issue.ForeignKeys[1]:
 			if value, ok := values[j].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field repository_issues", value)
 			} else if value.Valid {
-				i.repository_issues = new(int)
-				*i.repository_issues = int(value.Int64)
+				i.repository_issues = new(int64)
+				*i.repository_issues = int64(value.Int64)
 			}
 		case issue.ForeignKeys[2]:
 			if value, ok := values[j].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_issues_created", value)
 			} else if value.Valid {
-				i.user_issues_created = new(int)
-				*i.user_issues_created = int(value.Int64)
+				i.user_issues_created = new(int64)
+				*i.user_issues_created = int64(value.Int64)
 			}
 		default:
 			i.selectValues.Set(columns[j], values[j])
@@ -333,6 +336,11 @@ func (i *Issue) QueryAssignees() *UserQuery {
 // QueryClosedBy queries the "closed_by" edge of the Issue entity.
 func (i *Issue) QueryClosedBy() *UserQuery {
 	return NewIssueClient(i.config).QueryClosedBy(i)
+}
+
+// QueryComments queries the "comments" edge of the Issue entity.
+func (i *Issue) QueryComments() *IssueCommentQuery {
+	return NewIssueClient(i.config).QueryComments(i)
 }
 
 // Update returns a builder for updating this Issue.
@@ -405,9 +413,6 @@ func (i *Issue) String() string {
 		builder.WriteString("active_lock_reason=")
 		builder.WriteString(*v)
 	}
-	builder.WriteString(", ")
-	builder.WriteString("comments=")
-	builder.WriteString(fmt.Sprintf("%v", i.Comments))
 	builder.WriteString(", ")
 	if v := i.ClosedAt; v != nil {
 		builder.WriteString("closed_at=")

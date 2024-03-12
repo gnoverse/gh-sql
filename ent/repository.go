@@ -18,7 +18,7 @@ import (
 type Repository struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int `json:"id,omitempty"`
+	ID int64 `json:"id,omitempty"`
 	// NodeID holds the value of the "node_id" field.
 	NodeID string `json:"node_id,omitempty"`
 	// Name holds the value of the "name" field.
@@ -122,17 +122,17 @@ type Repository struct {
 	// Language holds the value of the "language" field.
 	Language string `json:"language,omitempty"`
 	// ForksCount holds the value of the "forks_count" field.
-	ForksCount int `json:"forks_count,omitempty"`
+	ForksCount int64 `json:"forks_count,omitempty"`
 	// StargazersCount holds the value of the "stargazers_count" field.
-	StargazersCount int `json:"stargazers_count,omitempty"`
+	StargazersCount int64 `json:"stargazers_count,omitempty"`
 	// WatchersCount holds the value of the "watchers_count" field.
-	WatchersCount int `json:"watchers_count,omitempty"`
+	WatchersCount int64 `json:"watchers_count,omitempty"`
 	// The size of the repository, in kilobytes. Size is calculated hourly. When a repository is initially created, the size is 0.
-	Size int `json:"size,omitempty"`
+	Size int64 `json:"size,omitempty"`
 	// DefaultBranch holds the value of the "default_branch" field.
 	DefaultBranch string `json:"default_branch,omitempty"`
 	// OpenIssuesCount holds the value of the "open_issues_count" field.
-	OpenIssuesCount int `json:"open_issues_count,omitempty"`
+	OpenIssuesCount int64 `json:"open_issues_count,omitempty"`
 	// IsTemplate holds the value of the "is_template" field.
 	IsTemplate bool `json:"is_template,omitempty"`
 	// Topics holds the value of the "topics" field.
@@ -162,19 +162,19 @@ type Repository struct {
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// SubscribersCount holds the value of the "subscribers_count" field.
-	SubscribersCount int `json:"subscribers_count,omitempty"`
+	SubscribersCount int64 `json:"subscribers_count,omitempty"`
 	// NetworkCount holds the value of the "network_count" field.
-	NetworkCount int `json:"network_count,omitempty"`
+	NetworkCount int64 `json:"network_count,omitempty"`
 	// Forks holds the value of the "forks" field.
-	Forks int `json:"forks,omitempty"`
+	Forks int64 `json:"forks,omitempty"`
 	// OpenIssues holds the value of the "open_issues" field.
-	OpenIssues int `json:"open_issues,omitempty"`
+	OpenIssues int64 `json:"open_issues,omitempty"`
 	// Watchers holds the value of the "watchers" field.
-	Watchers int `json:"watchers,omitempty"`
+	Watchers int64 `json:"watchers,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RepositoryQuery when eager-loading is set.
 	Edges             RepositoryEdges `json:"edges"`
-	user_repositories *int
+	user_repositories *int64
 	selectValues      sql.SelectValues
 }
 
@@ -246,7 +246,7 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			r.ID = int(value.Int64)
+			r.ID = int64(value.Int64)
 		case repository.FieldNodeID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field node_id", values[i])
@@ -557,25 +557,25 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field forks_count", values[i])
 			} else if value.Valid {
-				r.ForksCount = int(value.Int64)
+				r.ForksCount = value.Int64
 			}
 		case repository.FieldStargazersCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field stargazers_count", values[i])
 			} else if value.Valid {
-				r.StargazersCount = int(value.Int64)
+				r.StargazersCount = value.Int64
 			}
 		case repository.FieldWatchersCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field watchers_count", values[i])
 			} else if value.Valid {
-				r.WatchersCount = int(value.Int64)
+				r.WatchersCount = value.Int64
 			}
 		case repository.FieldSize:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field size", values[i])
 			} else if value.Valid {
-				r.Size = int(value.Int64)
+				r.Size = value.Int64
 			}
 		case repository.FieldDefaultBranch:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -587,7 +587,7 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field open_issues_count", values[i])
 			} else if value.Valid {
-				r.OpenIssuesCount = int(value.Int64)
+				r.OpenIssuesCount = value.Int64
 			}
 		case repository.FieldIsTemplate:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -680,38 +680,38 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field subscribers_count", values[i])
 			} else if value.Valid {
-				r.SubscribersCount = int(value.Int64)
+				r.SubscribersCount = value.Int64
 			}
 		case repository.FieldNetworkCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field network_count", values[i])
 			} else if value.Valid {
-				r.NetworkCount = int(value.Int64)
+				r.NetworkCount = value.Int64
 			}
 		case repository.FieldForks:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field forks", values[i])
 			} else if value.Valid {
-				r.Forks = int(value.Int64)
+				r.Forks = value.Int64
 			}
 		case repository.FieldOpenIssues:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field open_issues", values[i])
 			} else if value.Valid {
-				r.OpenIssues = int(value.Int64)
+				r.OpenIssues = value.Int64
 			}
 		case repository.FieldWatchers:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field watchers", values[i])
 			} else if value.Valid {
-				r.Watchers = int(value.Int64)
+				r.Watchers = value.Int64
 			}
 		case repository.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_repositories", value)
 			} else if value.Valid {
-				r.user_repositories = new(int)
-				*r.user_repositories = int(value.Int64)
+				r.user_repositories = new(int64)
+				*r.user_repositories = int64(value.Int64)
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])

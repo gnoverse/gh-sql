@@ -11,47 +11,47 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id int) predicate.Issue {
+func ID(id int64) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id int) predicate.Issue {
+func IDEQ(id int64) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id int) predicate.Issue {
+func IDNEQ(id int64) predicate.Issue {
 	return predicate.Issue(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...int) predicate.Issue {
+func IDIn(ids ...int64) predicate.Issue {
 	return predicate.Issue(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...int) predicate.Issue {
+func IDNotIn(ids ...int64) predicate.Issue {
 	return predicate.Issue(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id int) predicate.Issue {
+func IDGT(id int64) predicate.Issue {
 	return predicate.Issue(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id int) predicate.Issue {
+func IDGTE(id int64) predicate.Issue {
 	return predicate.Issue(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id int) predicate.Issue {
+func IDLT(id int64) predicate.Issue {
 	return predicate.Issue(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id int) predicate.Issue {
+func IDLTE(id int64) predicate.Issue {
 	return predicate.Issue(sql.FieldLTE(FieldID, id))
 }
 
@@ -91,7 +91,7 @@ func HTMLURL(v string) predicate.Issue {
 }
 
 // Number applies equality check predicate on the "number" field. It's identical to NumberEQ.
-func Number(v int) predicate.Issue {
+func Number(v int64) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldNumber, v))
 }
 
@@ -118,11 +118,6 @@ func Locked(v bool) predicate.Issue {
 // ActiveLockReason applies equality check predicate on the "active_lock_reason" field. It's identical to ActiveLockReasonEQ.
 func ActiveLockReason(v string) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldActiveLockReason, v))
-}
-
-// Comments applies equality check predicate on the "comments" field. It's identical to CommentsEQ.
-func Comments(v int) predicate.Issue {
-	return predicate.Issue(sql.FieldEQ(FieldComments, v))
 }
 
 // ClosedAt applies equality check predicate on the "closed_at" field. It's identical to ClosedAtEQ.
@@ -601,42 +596,42 @@ func HTMLURLContainsFold(v string) predicate.Issue {
 }
 
 // NumberEQ applies the EQ predicate on the "number" field.
-func NumberEQ(v int) predicate.Issue {
+func NumberEQ(v int64) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldNumber, v))
 }
 
 // NumberNEQ applies the NEQ predicate on the "number" field.
-func NumberNEQ(v int) predicate.Issue {
+func NumberNEQ(v int64) predicate.Issue {
 	return predicate.Issue(sql.FieldNEQ(FieldNumber, v))
 }
 
 // NumberIn applies the In predicate on the "number" field.
-func NumberIn(vs ...int) predicate.Issue {
+func NumberIn(vs ...int64) predicate.Issue {
 	return predicate.Issue(sql.FieldIn(FieldNumber, vs...))
 }
 
 // NumberNotIn applies the NotIn predicate on the "number" field.
-func NumberNotIn(vs ...int) predicate.Issue {
+func NumberNotIn(vs ...int64) predicate.Issue {
 	return predicate.Issue(sql.FieldNotIn(FieldNumber, vs...))
 }
 
 // NumberGT applies the GT predicate on the "number" field.
-func NumberGT(v int) predicate.Issue {
+func NumberGT(v int64) predicate.Issue {
 	return predicate.Issue(sql.FieldGT(FieldNumber, v))
 }
 
 // NumberGTE applies the GTE predicate on the "number" field.
-func NumberGTE(v int) predicate.Issue {
+func NumberGTE(v int64) predicate.Issue {
 	return predicate.Issue(sql.FieldGTE(FieldNumber, v))
 }
 
 // NumberLT applies the LT predicate on the "number" field.
-func NumberLT(v int) predicate.Issue {
+func NumberLT(v int64) predicate.Issue {
 	return predicate.Issue(sql.FieldLT(FieldNumber, v))
 }
 
 // NumberLTE applies the LTE predicate on the "number" field.
-func NumberLTE(v int) predicate.Issue {
+func NumberLTE(v int64) predicate.Issue {
 	return predicate.Issue(sql.FieldLTE(FieldNumber, v))
 }
 
@@ -960,46 +955,6 @@ func ActiveLockReasonContainsFold(v string) predicate.Issue {
 	return predicate.Issue(sql.FieldContainsFold(FieldActiveLockReason, v))
 }
 
-// CommentsEQ applies the EQ predicate on the "comments" field.
-func CommentsEQ(v int) predicate.Issue {
-	return predicate.Issue(sql.FieldEQ(FieldComments, v))
-}
-
-// CommentsNEQ applies the NEQ predicate on the "comments" field.
-func CommentsNEQ(v int) predicate.Issue {
-	return predicate.Issue(sql.FieldNEQ(FieldComments, v))
-}
-
-// CommentsIn applies the In predicate on the "comments" field.
-func CommentsIn(vs ...int) predicate.Issue {
-	return predicate.Issue(sql.FieldIn(FieldComments, vs...))
-}
-
-// CommentsNotIn applies the NotIn predicate on the "comments" field.
-func CommentsNotIn(vs ...int) predicate.Issue {
-	return predicate.Issue(sql.FieldNotIn(FieldComments, vs...))
-}
-
-// CommentsGT applies the GT predicate on the "comments" field.
-func CommentsGT(v int) predicate.Issue {
-	return predicate.Issue(sql.FieldGT(FieldComments, v))
-}
-
-// CommentsGTE applies the GTE predicate on the "comments" field.
-func CommentsGTE(v int) predicate.Issue {
-	return predicate.Issue(sql.FieldGTE(FieldComments, v))
-}
-
-// CommentsLT applies the LT predicate on the "comments" field.
-func CommentsLT(v int) predicate.Issue {
-	return predicate.Issue(sql.FieldLT(FieldComments, v))
-}
-
-// CommentsLTE applies the LTE predicate on the "comments" field.
-func CommentsLTE(v int) predicate.Issue {
-	return predicate.Issue(sql.FieldLTE(FieldComments, v))
-}
-
 // ClosedAtEQ applies the EQ predicate on the "closed_at" field.
 func ClosedAtEQ(v time.Time) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldClosedAt, v))
@@ -1224,6 +1179,29 @@ func HasClosedBy() predicate.Issue {
 func HasClosedByWith(preds ...predicate.User) predicate.Issue {
 	return predicate.Issue(func(s *sql.Selector) {
 		step := newClosedByStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasComments applies the HasEdge predicate on the "comments" edge.
+func HasComments() predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, CommentsTable, CommentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommentsWith applies the HasEdge predicate on the "comments" edge with a given conditions (other predicates).
+func HasCommentsWith(preds ...predicate.IssueComment) predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := newCommentsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

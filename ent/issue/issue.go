@@ -42,8 +42,6 @@ const (
 	FieldLocked = "locked"
 	// FieldActiveLockReason holds the string denoting the active_lock_reason field in the database.
 	FieldActiveLockReason = "active_lock_reason"
-	// FieldComments holds the string denoting the comments field in the database.
-	FieldComments = "comments"
 	// FieldClosedAt holds the string denoting the closed_at field in the database.
 	FieldClosedAt = "closed_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -60,6 +58,8 @@ const (
 	EdgeAssignees = "assignees"
 	// EdgeClosedBy holds the string denoting the closed_by edge name in mutations.
 	EdgeClosedBy = "closed_by"
+	// EdgeComments holds the string denoting the comments edge name in mutations.
+	EdgeComments = "comments"
 	// Table holds the table name of the issue in the database.
 	Table = "issues"
 	// RepositoryTable is the table that holds the repository relation/edge.
@@ -88,6 +88,13 @@ const (
 	ClosedByInverseTable = "users"
 	// ClosedByColumn is the table column denoting the closed_by relation/edge.
 	ClosedByColumn = "issue_closed_by"
+	// CommentsTable is the table that holds the comments relation/edge.
+	CommentsTable = "issue_comments"
+	// CommentsInverseTable is the table name for the IssueComment entity.
+	// It exists in this package in order to avoid circular dependency with the "issuecomment" package.
+	CommentsInverseTable = "issue_comments"
+	// CommentsColumn is the table column denoting the comments relation/edge.
+	CommentsColumn = "issue_comments"
 )
 
 // Columns holds all SQL columns for issue fields.
@@ -107,7 +114,6 @@ var Columns = []string{
 	FieldBody,
 	FieldLocked,
 	FieldActiveLockReason,
-	FieldComments,
 	FieldClosedAt,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -245,11 +251,6 @@ func ByActiveLockReason(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldActiveLockReason, opts...).ToFunc()
 }
 
-// ByComments orders the results by the comments field.
-func ByComments(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldComments, opts...).ToFunc()
-}
-
 // ByClosedAt orders the results by the closed_at field.
 func ByClosedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldClosedAt, opts...).ToFunc()
@@ -304,6 +305,20 @@ func ByClosedByField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newClosedByStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByCommentsCount orders the results by comments count.
+func ByCommentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCommentsStep(), opts...)
+	}
+}
+
+// ByComments orders the results by comments terms.
+func ByComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCommentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newRepositoryStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -330,5 +345,12 @@ func newClosedByStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ClosedByInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, ClosedByTable, ClosedByColumn),
+	)
+}
+func newCommentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CommentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CommentsTable, CommentsColumn),
 	)
 }

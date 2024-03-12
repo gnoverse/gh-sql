@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 )
@@ -233,25 +234,25 @@ func (uc *UserCreate) SetNillableBio(s *string) *UserCreate {
 }
 
 // SetPublicRepos sets the "public_repos" field.
-func (uc *UserCreate) SetPublicRepos(i int) *UserCreate {
+func (uc *UserCreate) SetPublicRepos(i int64) *UserCreate {
 	uc.mutation.SetPublicRepos(i)
 	return uc
 }
 
 // SetPublicGists sets the "public_gists" field.
-func (uc *UserCreate) SetPublicGists(i int) *UserCreate {
+func (uc *UserCreate) SetPublicGists(i int64) *UserCreate {
 	uc.mutation.SetPublicGists(i)
 	return uc
 }
 
 // SetFollowers sets the "followers" field.
-func (uc *UserCreate) SetFollowers(i int) *UserCreate {
+func (uc *UserCreate) SetFollowers(i int64) *UserCreate {
 	uc.mutation.SetFollowers(i)
 	return uc
 }
 
 // SetFollowing sets the "following" field.
-func (uc *UserCreate) SetFollowing(i int) *UserCreate {
+func (uc *UserCreate) SetFollowing(i int64) *UserCreate {
 	uc.mutation.SetFollowing(i)
 	return uc
 }
@@ -269,20 +270,20 @@ func (uc *UserCreate) SetUpdatedAt(t time.Time) *UserCreate {
 }
 
 // SetID sets the "id" field.
-func (uc *UserCreate) SetID(i int) *UserCreate {
+func (uc *UserCreate) SetID(i int64) *UserCreate {
 	uc.mutation.SetID(i)
 	return uc
 }
 
 // AddRepositoryIDs adds the "repositories" edge to the Repository entity by IDs.
-func (uc *UserCreate) AddRepositoryIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddRepositoryIDs(ids ...int64) *UserCreate {
 	uc.mutation.AddRepositoryIDs(ids...)
 	return uc
 }
 
 // AddRepositories adds the "repositories" edges to the Repository entity.
 func (uc *UserCreate) AddRepositories(r ...*Repository) *UserCreate {
-	ids := make([]int, len(r))
+	ids := make([]int64, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
@@ -290,29 +291,44 @@ func (uc *UserCreate) AddRepositories(r ...*Repository) *UserCreate {
 }
 
 // AddIssuesCreatedIDs adds the "issues_created" edge to the Issue entity by IDs.
-func (uc *UserCreate) AddIssuesCreatedIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddIssuesCreatedIDs(ids ...int64) *UserCreate {
 	uc.mutation.AddIssuesCreatedIDs(ids...)
 	return uc
 }
 
 // AddIssuesCreated adds the "issues_created" edges to the Issue entity.
 func (uc *UserCreate) AddIssuesCreated(i ...*Issue) *UserCreate {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
 	return uc.AddIssuesCreatedIDs(ids...)
 }
 
+// AddCommentsCreatedIDs adds the "comments_created" edge to the IssueComment entity by IDs.
+func (uc *UserCreate) AddCommentsCreatedIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddCommentsCreatedIDs(ids...)
+	return uc
+}
+
+// AddCommentsCreated adds the "comments_created" edges to the IssueComment entity.
+func (uc *UserCreate) AddCommentsCreated(i ...*IssueComment) *UserCreate {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uc.AddCommentsCreatedIDs(ids...)
+}
+
 // AddIssuesAssignedIDs adds the "issues_assigned" edge to the Issue entity by IDs.
-func (uc *UserCreate) AddIssuesAssignedIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddIssuesAssignedIDs(ids ...int64) *UserCreate {
 	uc.mutation.AddIssuesAssignedIDs(ids...)
 	return uc
 }
 
 // AddIssuesAssigned adds the "issues_assigned" edges to the Issue entity.
 func (uc *UserCreate) AddIssuesAssigned(i ...*Issue) *UserCreate {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -320,14 +336,14 @@ func (uc *UserCreate) AddIssuesAssigned(i ...*Issue) *UserCreate {
 }
 
 // AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
-func (uc *UserCreate) AddIssuesClosedIDs(ids ...int) *UserCreate {
+func (uc *UserCreate) AddIssuesClosedIDs(ids ...int64) *UserCreate {
 	uc.mutation.AddIssuesClosedIDs(ids...)
 	return uc
 }
 
 // AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
 func (uc *UserCreate) AddIssuesClosed(i ...*Issue) *UserCreate {
-	ids := make([]int, len(i))
+	ids := make([]int64, len(i))
 	for j := range i {
 		ids[j] = i[j].ID
 	}
@@ -450,7 +466,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 	}
 	if _spec.ID.Value != _node.ID {
 		id := _spec.ID.Value.(int64)
-		_node.ID = int(id)
+		_node.ID = int64(id)
 	}
 	uc.mutation.id = &_node.ID
 	uc.mutation.done = true
@@ -460,7 +476,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	var (
 		_node = &User{config: uc.config}
-		_spec = sqlgraph.NewCreateSpec(user.Table, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
+		_spec = sqlgraph.NewCreateSpec(user.Table, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = uc.conflict
 	if id, ok := uc.mutation.ID(); ok {
@@ -564,19 +580,19 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_node.Bio = value
 	}
 	if value, ok := uc.mutation.PublicRepos(); ok {
-		_spec.SetField(user.FieldPublicRepos, field.TypeInt, value)
+		_spec.SetField(user.FieldPublicRepos, field.TypeInt64, value)
 		_node.PublicRepos = value
 	}
 	if value, ok := uc.mutation.PublicGists(); ok {
-		_spec.SetField(user.FieldPublicGists, field.TypeInt, value)
+		_spec.SetField(user.FieldPublicGists, field.TypeInt64, value)
 		_node.PublicGists = value
 	}
 	if value, ok := uc.mutation.Followers(); ok {
-		_spec.SetField(user.FieldFollowers, field.TypeInt, value)
+		_spec.SetField(user.FieldFollowers, field.TypeInt64, value)
 		_node.Followers = value
 	}
 	if value, ok := uc.mutation.Following(); ok {
-		_spec.SetField(user.FieldFollowing, field.TypeInt, value)
+		_spec.SetField(user.FieldFollowing, field.TypeInt64, value)
 		_node.Following = value
 	}
 	if value, ok := uc.mutation.CreatedAt(); ok {
@@ -595,7 +611,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -611,7 +627,23 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: []string{user.IssuesCreatedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.CommentsCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommentsCreatedTable,
+			Columns: []string{user.CommentsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -627,7 +659,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: user.IssuesAssignedPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -643,7 +675,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: []string{user.IssuesClosedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1040,7 +1072,7 @@ func (u *UserUpsert) ClearBio() *UserUpsert {
 }
 
 // SetPublicRepos sets the "public_repos" field.
-func (u *UserUpsert) SetPublicRepos(v int) *UserUpsert {
+func (u *UserUpsert) SetPublicRepos(v int64) *UserUpsert {
 	u.Set(user.FieldPublicRepos, v)
 	return u
 }
@@ -1052,13 +1084,13 @@ func (u *UserUpsert) UpdatePublicRepos() *UserUpsert {
 }
 
 // AddPublicRepos adds v to the "public_repos" field.
-func (u *UserUpsert) AddPublicRepos(v int) *UserUpsert {
+func (u *UserUpsert) AddPublicRepos(v int64) *UserUpsert {
 	u.Add(user.FieldPublicRepos, v)
 	return u
 }
 
 // SetPublicGists sets the "public_gists" field.
-func (u *UserUpsert) SetPublicGists(v int) *UserUpsert {
+func (u *UserUpsert) SetPublicGists(v int64) *UserUpsert {
 	u.Set(user.FieldPublicGists, v)
 	return u
 }
@@ -1070,13 +1102,13 @@ func (u *UserUpsert) UpdatePublicGists() *UserUpsert {
 }
 
 // AddPublicGists adds v to the "public_gists" field.
-func (u *UserUpsert) AddPublicGists(v int) *UserUpsert {
+func (u *UserUpsert) AddPublicGists(v int64) *UserUpsert {
 	u.Add(user.FieldPublicGists, v)
 	return u
 }
 
 // SetFollowers sets the "followers" field.
-func (u *UserUpsert) SetFollowers(v int) *UserUpsert {
+func (u *UserUpsert) SetFollowers(v int64) *UserUpsert {
 	u.Set(user.FieldFollowers, v)
 	return u
 }
@@ -1088,13 +1120,13 @@ func (u *UserUpsert) UpdateFollowers() *UserUpsert {
 }
 
 // AddFollowers adds v to the "followers" field.
-func (u *UserUpsert) AddFollowers(v int) *UserUpsert {
+func (u *UserUpsert) AddFollowers(v int64) *UserUpsert {
 	u.Add(user.FieldFollowers, v)
 	return u
 }
 
 // SetFollowing sets the "following" field.
-func (u *UserUpsert) SetFollowing(v int) *UserUpsert {
+func (u *UserUpsert) SetFollowing(v int64) *UserUpsert {
 	u.Set(user.FieldFollowing, v)
 	return u
 }
@@ -1106,7 +1138,7 @@ func (u *UserUpsert) UpdateFollowing() *UserUpsert {
 }
 
 // AddFollowing adds v to the "following" field.
-func (u *UserUpsert) AddFollowing(v int) *UserUpsert {
+func (u *UserUpsert) AddFollowing(v int64) *UserUpsert {
 	u.Add(user.FieldFollowing, v)
 	return u
 }
@@ -1576,14 +1608,14 @@ func (u *UserUpsertOne) ClearBio() *UserUpsertOne {
 }
 
 // SetPublicRepos sets the "public_repos" field.
-func (u *UserUpsertOne) SetPublicRepos(v int) *UserUpsertOne {
+func (u *UserUpsertOne) SetPublicRepos(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.SetPublicRepos(v)
 	})
 }
 
 // AddPublicRepos adds v to the "public_repos" field.
-func (u *UserUpsertOne) AddPublicRepos(v int) *UserUpsertOne {
+func (u *UserUpsertOne) AddPublicRepos(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.AddPublicRepos(v)
 	})
@@ -1597,14 +1629,14 @@ func (u *UserUpsertOne) UpdatePublicRepos() *UserUpsertOne {
 }
 
 // SetPublicGists sets the "public_gists" field.
-func (u *UserUpsertOne) SetPublicGists(v int) *UserUpsertOne {
+func (u *UserUpsertOne) SetPublicGists(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.SetPublicGists(v)
 	})
 }
 
 // AddPublicGists adds v to the "public_gists" field.
-func (u *UserUpsertOne) AddPublicGists(v int) *UserUpsertOne {
+func (u *UserUpsertOne) AddPublicGists(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.AddPublicGists(v)
 	})
@@ -1618,14 +1650,14 @@ func (u *UserUpsertOne) UpdatePublicGists() *UserUpsertOne {
 }
 
 // SetFollowers sets the "followers" field.
-func (u *UserUpsertOne) SetFollowers(v int) *UserUpsertOne {
+func (u *UserUpsertOne) SetFollowers(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.SetFollowers(v)
 	})
 }
 
 // AddFollowers adds v to the "followers" field.
-func (u *UserUpsertOne) AddFollowers(v int) *UserUpsertOne {
+func (u *UserUpsertOne) AddFollowers(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.AddFollowers(v)
 	})
@@ -1639,14 +1671,14 @@ func (u *UserUpsertOne) UpdateFollowers() *UserUpsertOne {
 }
 
 // SetFollowing sets the "following" field.
-func (u *UserUpsertOne) SetFollowing(v int) *UserUpsertOne {
+func (u *UserUpsertOne) SetFollowing(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.SetFollowing(v)
 	})
 }
 
 // AddFollowing adds v to the "following" field.
-func (u *UserUpsertOne) AddFollowing(v int) *UserUpsertOne {
+func (u *UserUpsertOne) AddFollowing(v int64) *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.AddFollowing(v)
 	})
@@ -1703,7 +1735,7 @@ func (u *UserUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *UserUpsertOne) ID(ctx context.Context) (id int, err error) {
+func (u *UserUpsertOne) ID(ctx context.Context) (id int64, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -1712,7 +1744,7 @@ func (u *UserUpsertOne) ID(ctx context.Context) (id int, err error) {
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *UserUpsertOne) IDX(ctx context.Context) int {
+func (u *UserUpsertOne) IDX(ctx context.Context) int64 {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -1768,7 +1800,7 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 				mutation.id = &nodes[i].ID
 				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
-					nodes[i].ID = int(id)
+					nodes[i].ID = int64(id)
 				}
 				mutation.done = true
 				return nodes[i], nil
@@ -2293,14 +2325,14 @@ func (u *UserUpsertBulk) ClearBio() *UserUpsertBulk {
 }
 
 // SetPublicRepos sets the "public_repos" field.
-func (u *UserUpsertBulk) SetPublicRepos(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) SetPublicRepos(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.SetPublicRepos(v)
 	})
 }
 
 // AddPublicRepos adds v to the "public_repos" field.
-func (u *UserUpsertBulk) AddPublicRepos(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) AddPublicRepos(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.AddPublicRepos(v)
 	})
@@ -2314,14 +2346,14 @@ func (u *UserUpsertBulk) UpdatePublicRepos() *UserUpsertBulk {
 }
 
 // SetPublicGists sets the "public_gists" field.
-func (u *UserUpsertBulk) SetPublicGists(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) SetPublicGists(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.SetPublicGists(v)
 	})
 }
 
 // AddPublicGists adds v to the "public_gists" field.
-func (u *UserUpsertBulk) AddPublicGists(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) AddPublicGists(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.AddPublicGists(v)
 	})
@@ -2335,14 +2367,14 @@ func (u *UserUpsertBulk) UpdatePublicGists() *UserUpsertBulk {
 }
 
 // SetFollowers sets the "followers" field.
-func (u *UserUpsertBulk) SetFollowers(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) SetFollowers(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.SetFollowers(v)
 	})
 }
 
 // AddFollowers adds v to the "followers" field.
-func (u *UserUpsertBulk) AddFollowers(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) AddFollowers(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.AddFollowers(v)
 	})
@@ -2356,14 +2388,14 @@ func (u *UserUpsertBulk) UpdateFollowers() *UserUpsertBulk {
 }
 
 // SetFollowing sets the "following" field.
-func (u *UserUpsertBulk) SetFollowing(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) SetFollowing(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.SetFollowing(v)
 	})
 }
 
 // AddFollowing adds v to the "following" field.
-func (u *UserUpsertBulk) AddFollowing(v int) *UserUpsertBulk {
+func (u *UserUpsertBulk) AddFollowing(v int64) *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.AddFollowing(v)
 	})

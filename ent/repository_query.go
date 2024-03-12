@@ -131,8 +131,8 @@ func (rq *RepositoryQuery) FirstX(ctx context.Context) *Repository {
 
 // FirstID returns the first Repository ID from the query.
 // Returns a *NotFoundError when no Repository ID was found.
-func (rq *RepositoryQuery) FirstID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RepositoryQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = rq.Limit(1).IDs(setContextOp(ctx, rq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -144,7 +144,7 @@ func (rq *RepositoryQuery) FirstID(ctx context.Context) (id int, err error) {
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rq *RepositoryQuery) FirstIDX(ctx context.Context) int {
+func (rq *RepositoryQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := rq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -182,8 +182,8 @@ func (rq *RepositoryQuery) OnlyX(ctx context.Context) *Repository {
 // OnlyID is like Only, but returns the only Repository ID in the query.
 // Returns a *NotSingularError when more than one Repository ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rq *RepositoryQuery) OnlyID(ctx context.Context) (id int, err error) {
-	var ids []int
+func (rq *RepositoryQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = rq.Limit(2).IDs(setContextOp(ctx, rq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -199,7 +199,7 @@ func (rq *RepositoryQuery) OnlyID(ctx context.Context) (id int, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rq *RepositoryQuery) OnlyIDX(ctx context.Context) int {
+func (rq *RepositoryQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := rq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -227,7 +227,7 @@ func (rq *RepositoryQuery) AllX(ctx context.Context) []*Repository {
 }
 
 // IDs executes the query and returns a list of Repository IDs.
-func (rq *RepositoryQuery) IDs(ctx context.Context) (ids []int, err error) {
+func (rq *RepositoryQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if rq.ctx.Unique == nil && rq.path != nil {
 		rq.Unique(true)
 	}
@@ -239,7 +239,7 @@ func (rq *RepositoryQuery) IDs(ctx context.Context) (ids []int, err error) {
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rq *RepositoryQuery) IDsX(ctx context.Context) []int {
+func (rq *RepositoryQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := rq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -454,8 +454,8 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 }
 
 func (rq *RepositoryQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Repository, init func(*Repository), assign func(*Repository, *User)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*Repository)
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Repository)
 	for i := range nodes {
 		if nodes[i].user_repositories == nil {
 			continue
@@ -487,7 +487,7 @@ func (rq *RepositoryQuery) loadOwner(ctx context.Context, query *UserQuery, node
 }
 func (rq *RepositoryQuery) loadIssues(ctx context.Context, query *IssueQuery, nodes []*Repository, init func(*Repository), assign func(*Repository, *Issue)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Repository)
+	nodeids := make(map[int64]*Repository)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -527,7 +527,7 @@ func (rq *RepositoryQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (rq *RepositoryQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(repository.Table, repository.Columns, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt))
+	_spec := sqlgraph.NewQuerySpec(repository.Table, repository.Columns, sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt64))
 	_spec.From = rq.sql
 	if unique := rq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

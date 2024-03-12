@@ -231,6 +231,7 @@ var httpLinkHeaderRe = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"(?:,\s*|$)`
 
 func httpGetIterate[T any](ctx context.Context, h *hub, path string, fn func(item T) error) error {
 	uri := apiEndpoint + path
+Upper:
 	for {
 		resp, err := httpInternal(ctx, h, "GET", uri, nil)
 		if err != nil {
@@ -262,7 +263,7 @@ func httpGetIterate[T any](ctx context.Context, h *hub, path string, fn func(ite
 		for _, match := range matches {
 			if match[2] == "next" {
 				uri = match[1]
-				continue
+				continue Upper
 			}
 		}
 
@@ -302,7 +303,7 @@ func (h *hub) limiter(ctx context.Context) {
 
 		wait := time.Until(limits.reset) / (time.Duration(limits.remaining) + 1)
 		if h.DebugHTTP {
-			log.Printf("limiter values: %+v / %s; calculated: %v", limits, limits.reset.String(), wait)
+			log.Printf("rate limit delay: %v (resets %s)", wait, limits.reset.String())
 		}
 		wait = max(wait, 100*time.Millisecond)
 		select {
