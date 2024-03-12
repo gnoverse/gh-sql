@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gnolang/gh-sql/ent"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -191,7 +192,16 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
 
 func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 	err := httpGetIterate(ctx, h, fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName), func(i *ent.Issue) error {
-		fetchAsync(ctx, h, fetchIssue{repoOwner, repoName, i.Number})
+		iss, err := h.DB.Issue.Query().
+			Select(issue.FieldUpdatedAt).
+			Where(issue.ID(i.ID)).
+			Only(ctx)
+		if err != nil && !ent.IsNotFound(err) {
+			return err
+		}
+		if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
+			fetchAsync(ctx, h, fetchIssue{repoOwner, repoName, i.Number})
+		}
 		return nil
 	})
 	if err != nil {
