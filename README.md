@@ -17,8 +17,10 @@ The tool has the following focuses:
 	(for integration with existing tools that use the GitHub API, by only
 	changing the API endpoint.)
 
+<!--
 ## Notes
 
 - ffcli for flag parsing / configuration
 - ent for ORM
 - start out by syncing single Repository entity, and work from there
+-->
