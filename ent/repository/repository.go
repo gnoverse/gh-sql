@@ -132,8 +132,8 @@ const (
 	FieldIsTemplate = "is_template"
 	// FieldTopics holds the string denoting the topics field in the database.
 	FieldTopics = "topics"
-	// FieldHasIssues holds the string denoting the has_issues field in the database.
-	FieldHasIssues = "has_issues"
+	// FieldHasIssuesEnabled holds the string denoting the has_issues_enabled field in the database.
+	FieldHasIssuesEnabled = "has_issues_enabled"
 	// FieldHasProjects holds the string denoting the has_projects field in the database.
 	FieldHasProjects = "has_projects"
 	// FieldHasWiki holds the string denoting the has_wiki field in the database.
@@ -168,6 +168,8 @@ const (
 	FieldWatchers = "watchers"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
+	// EdgeIssues holds the string denoting the issues edge name in mutations.
+	EdgeIssues = "issues"
 	// Table holds the table name of the repository in the database.
 	Table = "repositories"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -176,7 +178,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	OwnerInverseTable = "users"
 	// OwnerColumn is the table column denoting the owner relation/edge.
-	OwnerColumn = "user_repos"
+	OwnerColumn = "user_repositories"
+	// IssuesTable is the table that holds the issues relation/edge.
+	IssuesTable = "issues"
+	// IssuesInverseTable is the table name for the Issue entity.
+	// It exists in this package in order to avoid circular dependency with the "issue" package.
+	IssuesInverseTable = "issues"
+	// IssuesColumn is the table column denoting the issues relation/edge.
+	IssuesColumn = "repository_issues"
 )
 
 // Columns holds all SQL columns for repository fields.
@@ -241,7 +250,7 @@ var Columns = []string{
 	FieldOpenIssuesCount,
 	FieldIsTemplate,
 	FieldTopics,
-	FieldHasIssues,
+	FieldHasIssuesEnabled,
 	FieldHasProjects,
 	FieldHasWiki,
 	FieldHasPages,
@@ -263,7 +272,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "repositories"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"user_repos",
+	"user_repositories",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -603,9 +612,9 @@ func ByIsTemplate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldIsTemplate, opts...).ToFunc()
 }
 
-// ByHasIssues orders the results by the has_issues field.
-func ByHasIssues(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHasIssues, opts...).ToFunc()
+// ByHasIssuesEnabled orders the results by the has_issues_enabled field.
+func ByHasIssuesEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHasIssuesEnabled, opts...).ToFunc()
 }
 
 // ByHasProjects orders the results by the has_projects field.
@@ -694,10 +703,31 @@ func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByIssuesCount orders the results by issues count.
+func ByIssuesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newIssuesStep(), opts...)
+	}
+}
+
+// ByIssues orders the results by issues terms.
+func ByIssues(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newIssuesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OwnerInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
+	)
+}
+func newIssuesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(IssuesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, IssuesTable, IssuesColumn),
 	)
 }

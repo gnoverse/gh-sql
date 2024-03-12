@@ -1975,21 +1975,90 @@ func UpdatedAtLTE(v time.Time) predicate.User {
 	return predicate.User(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
-// HasRepos applies the HasEdge predicate on the "repos" edge.
-func HasRepos() predicate.User {
+// HasRepositories applies the HasEdge predicate on the "repositories" edge.
+func HasRepositories() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, ReposTable, ReposColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, RepositoriesTable, RepositoriesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasReposWith applies the HasEdge predicate on the "repos" edge with a given conditions (other predicates).
-func HasReposWith(preds ...predicate.Repository) predicate.User {
+// HasRepositoriesWith applies the HasEdge predicate on the "repositories" edge with a given conditions (other predicates).
+func HasRepositoriesWith(preds ...predicate.Repository) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newReposStep()
+		step := newRepositoriesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasIssuesCreated applies the HasEdge predicate on the "issues_created" edge.
+func HasIssuesCreated() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, IssuesCreatedTable, IssuesCreatedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasIssuesCreatedWith applies the HasEdge predicate on the "issues_created" edge with a given conditions (other predicates).
+func HasIssuesCreatedWith(preds ...predicate.Issue) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newIssuesCreatedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasIssuesAssigned applies the HasEdge predicate on the "issues_assigned" edge.
+func HasIssuesAssigned() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, IssuesAssignedTable, IssuesAssignedPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasIssuesAssignedWith applies the HasEdge predicate on the "issues_assigned" edge with a given conditions (other predicates).
+func HasIssuesAssignedWith(preds ...predicate.Issue) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newIssuesAssignedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasIssuesClosed applies the HasEdge predicate on the "issues_closed" edge.
+func HasIssuesClosed() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, IssuesClosedTable, IssuesClosedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasIssuesClosedWith applies the HasEdge predicate on the "issues_closed" edge with a given conditions (other predicates).
+func HasIssuesClosedWith(preds ...predicate.Issue) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newIssuesClosedStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -8,6 +8,58 @@ import (
 )
 
 var (
+	// IssuesColumns holds the columns for the "issues" table.
+	IssuesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "node_id", Type: field.TypeString},
+		{Name: "url", Type: field.TypeString},
+		{Name: "repository_url", Type: field.TypeString},
+		{Name: "labels_url", Type: field.TypeString},
+		{Name: "comments_url", Type: field.TypeString},
+		{Name: "events_url", Type: field.TypeString},
+		{Name: "html_url", Type: field.TypeString},
+		{Name: "number", Type: field.TypeInt},
+		{Name: "state", Type: field.TypeString},
+		{Name: "state_reason", Type: field.TypeEnum, Nullable: true, Enums: []string{"completed", "reopened", "not_planned"}},
+		{Name: "title", Type: field.TypeString},
+		{Name: "body", Type: field.TypeString, Nullable: true},
+		{Name: "locked", Type: field.TypeBool},
+		{Name: "active_lock_reason", Type: field.TypeString, Nullable: true},
+		{Name: "comments", Type: field.TypeInt},
+		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "draft", Type: field.TypeBool},
+		{Name: "issue_closed_by", Type: field.TypeInt, Nullable: true},
+		{Name: "repository_issues", Type: field.TypeInt},
+		{Name: "user_issues_created", Type: field.TypeInt, Nullable: true},
+	}
+	// IssuesTable holds the schema information for the "issues" table.
+	IssuesTable = &schema.Table{
+		Name:       "issues",
+		Columns:    IssuesColumns,
+		PrimaryKey: []*schema.Column{IssuesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "issues_users_closed_by",
+				Columns:    []*schema.Column{IssuesColumns[20]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "issues_repositories_issues",
+				Columns:    []*schema.Column{IssuesColumns[21]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "issues_users_issues_created",
+				Columns:    []*schema.Column{IssuesColumns[22]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// RepositoriesColumns holds the columns for the "repositories" table.
 	RepositoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -70,7 +122,7 @@ var (
 		{Name: "open_issues_count", Type: field.TypeInt},
 		{Name: "is_template", Type: field.TypeBool},
 		{Name: "topics", Type: field.TypeJSON},
-		{Name: "has_issues", Type: field.TypeBool},
+		{Name: "has_issues_enabled", Type: field.TypeBool},
 		{Name: "has_projects", Type: field.TypeBool},
 		{Name: "has_wiki", Type: field.TypeBool},
 		{Name: "has_pages", Type: field.TypeBool},
@@ -78,7 +130,7 @@ var (
 		{Name: "has_discussions", Type: field.TypeBool},
 		{Name: "archived", Type: field.TypeBool},
 		{Name: "disabled", Type: field.TypeBool},
-		{Name: "visibility", Type: field.TypeEnum, Enums: []string{"public", "private", "internal"}},
+		{Name: "visibility", Type: field.TypeEnum, Nullable: true, Enums: []string{"public", "private", "internal"}},
 		{Name: "pushed_at", Type: field.TypeTime},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -87,7 +139,7 @@ var (
 		{Name: "forks", Type: field.TypeInt},
 		{Name: "open_issues", Type: field.TypeInt},
 		{Name: "watchers", Type: field.TypeInt},
-		{Name: "user_repos", Type: field.TypeInt, Nullable: true},
+		{Name: "user_repositories", Type: field.TypeInt, Nullable: true},
 	}
 	// RepositoriesTable holds the schema information for the "repositories" table.
 	RepositoriesTable = &schema.Table{
@@ -96,7 +148,7 @@ var (
 		PrimaryKey: []*schema.Column{RepositoriesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "repositories_users_repos",
+				Symbol:     "repositories_users_repositories",
 				Columns:    []*schema.Column{RepositoriesColumns[77]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
@@ -143,13 +195,45 @@ var (
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
 	}
+	// IssueAssigneesColumns holds the columns for the "issue_assignees" table.
+	IssueAssigneesColumns = []*schema.Column{
+		{Name: "issue_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// IssueAssigneesTable holds the schema information for the "issue_assignees" table.
+	IssueAssigneesTable = &schema.Table{
+		Name:       "issue_assignees",
+		Columns:    IssueAssigneesColumns,
+		PrimaryKey: []*schema.Column{IssueAssigneesColumns[0], IssueAssigneesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "issue_assignees_issue_id",
+				Columns:    []*schema.Column{IssueAssigneesColumns[0]},
+				RefColumns: []*schema.Column{IssuesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "issue_assignees_user_id",
+				Columns:    []*schema.Column{IssueAssigneesColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		IssuesTable,
 		RepositoriesTable,
 		UsersTable,
+		IssueAssigneesTable,
 	}
 )
 
 func init() {
+	IssuesTable.ForeignKeys[0].RefTable = UsersTable
+	IssuesTable.ForeignKeys[1].RefTable = RepositoriesTable
+	IssuesTable.ForeignKeys[2].RefTable = UsersTable
 	RepositoriesTable.ForeignKeys[0].RefTable = UsersTable
+	IssueAssigneesTable.ForeignKeys[0].RefTable = IssuesTable
+	IssueAssigneesTable.ForeignKeys[1].RefTable = UsersTable
 }

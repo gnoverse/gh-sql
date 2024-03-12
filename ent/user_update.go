@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -525,19 +526,64 @@ func (uu *UserUpdate) SetNillableUpdatedAt(t *time.Time) *UserUpdate {
 	return uu
 }
 
-// AddRepoIDs adds the "repos" edge to the Repository entity by IDs.
-func (uu *UserUpdate) AddRepoIDs(ids ...int) *UserUpdate {
-	uu.mutation.AddRepoIDs(ids...)
+// AddRepositoryIDs adds the "repositories" edge to the Repository entity by IDs.
+func (uu *UserUpdate) AddRepositoryIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddRepositoryIDs(ids...)
 	return uu
 }
 
-// AddRepos adds the "repos" edges to the Repository entity.
-func (uu *UserUpdate) AddRepos(r ...*Repository) *UserUpdate {
+// AddRepositories adds the "repositories" edges to the Repository entity.
+func (uu *UserUpdate) AddRepositories(r ...*Repository) *UserUpdate {
 	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
-	return uu.AddRepoIDs(ids...)
+	return uu.AddRepositoryIDs(ids...)
+}
+
+// AddIssuesCreatedIDs adds the "issues_created" edge to the Issue entity by IDs.
+func (uu *UserUpdate) AddIssuesCreatedIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddIssuesCreatedIDs(ids...)
+	return uu
+}
+
+// AddIssuesCreated adds the "issues_created" edges to the Issue entity.
+func (uu *UserUpdate) AddIssuesCreated(i ...*Issue) *UserUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.AddIssuesCreatedIDs(ids...)
+}
+
+// AddIssuesAssignedIDs adds the "issues_assigned" edge to the Issue entity by IDs.
+func (uu *UserUpdate) AddIssuesAssignedIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddIssuesAssignedIDs(ids...)
+	return uu
+}
+
+// AddIssuesAssigned adds the "issues_assigned" edges to the Issue entity.
+func (uu *UserUpdate) AddIssuesAssigned(i ...*Issue) *UserUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.AddIssuesAssignedIDs(ids...)
+}
+
+// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
+func (uu *UserUpdate) AddIssuesClosedIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddIssuesClosedIDs(ids...)
+	return uu
+}
+
+// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
+func (uu *UserUpdate) AddIssuesClosed(i ...*Issue) *UserUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.AddIssuesClosedIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -545,25 +591,88 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
-// ClearRepos clears all "repos" edges to the Repository entity.
-func (uu *UserUpdate) ClearRepos() *UserUpdate {
-	uu.mutation.ClearRepos()
+// ClearRepositories clears all "repositories" edges to the Repository entity.
+func (uu *UserUpdate) ClearRepositories() *UserUpdate {
+	uu.mutation.ClearRepositories()
 	return uu
 }
 
-// RemoveRepoIDs removes the "repos" edge to Repository entities by IDs.
-func (uu *UserUpdate) RemoveRepoIDs(ids ...int) *UserUpdate {
-	uu.mutation.RemoveRepoIDs(ids...)
+// RemoveRepositoryIDs removes the "repositories" edge to Repository entities by IDs.
+func (uu *UserUpdate) RemoveRepositoryIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveRepositoryIDs(ids...)
 	return uu
 }
 
-// RemoveRepos removes "repos" edges to Repository entities.
-func (uu *UserUpdate) RemoveRepos(r ...*Repository) *UserUpdate {
+// RemoveRepositories removes "repositories" edges to Repository entities.
+func (uu *UserUpdate) RemoveRepositories(r ...*Repository) *UserUpdate {
 	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
-	return uu.RemoveRepoIDs(ids...)
+	return uu.RemoveRepositoryIDs(ids...)
+}
+
+// ClearIssuesCreated clears all "issues_created" edges to the Issue entity.
+func (uu *UserUpdate) ClearIssuesCreated() *UserUpdate {
+	uu.mutation.ClearIssuesCreated()
+	return uu
+}
+
+// RemoveIssuesCreatedIDs removes the "issues_created" edge to Issue entities by IDs.
+func (uu *UserUpdate) RemoveIssuesCreatedIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveIssuesCreatedIDs(ids...)
+	return uu
+}
+
+// RemoveIssuesCreated removes "issues_created" edges to Issue entities.
+func (uu *UserUpdate) RemoveIssuesCreated(i ...*Issue) *UserUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.RemoveIssuesCreatedIDs(ids...)
+}
+
+// ClearIssuesAssigned clears all "issues_assigned" edges to the Issue entity.
+func (uu *UserUpdate) ClearIssuesAssigned() *UserUpdate {
+	uu.mutation.ClearIssuesAssigned()
+	return uu
+}
+
+// RemoveIssuesAssignedIDs removes the "issues_assigned" edge to Issue entities by IDs.
+func (uu *UserUpdate) RemoveIssuesAssignedIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveIssuesAssignedIDs(ids...)
+	return uu
+}
+
+// RemoveIssuesAssigned removes "issues_assigned" edges to Issue entities.
+func (uu *UserUpdate) RemoveIssuesAssigned(i ...*Issue) *UserUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.RemoveIssuesAssignedIDs(ids...)
+}
+
+// ClearIssuesClosed clears all "issues_closed" edges to the Issue entity.
+func (uu *UserUpdate) ClearIssuesClosed() *UserUpdate {
+	uu.mutation.ClearIssuesClosed()
+	return uu
+}
+
+// RemoveIssuesClosedIDs removes the "issues_closed" edge to Issue entities by IDs.
+func (uu *UserUpdate) RemoveIssuesClosedIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveIssuesClosedIDs(ids...)
+	return uu
+}
+
+// RemoveIssuesClosed removes "issues_closed" edges to Issue entities.
+func (uu *UserUpdate) RemoveIssuesClosed(i ...*Issue) *UserUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.RemoveIssuesClosedIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -728,12 +837,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if uu.mutation.ReposCleared() {
+	if uu.mutation.RepositoriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ReposTable,
-			Columns: []string{user.ReposColumn},
+			Table:   user.RepositoriesTable,
+			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
@@ -741,12 +850,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedReposIDs(); len(nodes) > 0 && !uu.mutation.ReposCleared() {
+	if nodes := uu.mutation.RemovedRepositoriesIDs(); len(nodes) > 0 && !uu.mutation.RepositoriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ReposTable,
-			Columns: []string{user.ReposColumn},
+			Table:   user.RepositoriesTable,
+			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
@@ -757,15 +866,150 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.ReposIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.RepositoriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ReposTable,
-			Columns: []string{user.ReposColumn},
+			Table:   user.RepositoriesTable,
+			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.IssuesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesCreatedTable,
+			Columns: []string{user.IssuesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedIssuesCreatedIDs(); len(nodes) > 0 && !uu.mutation.IssuesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesCreatedTable,
+			Columns: []string{user.IssuesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.IssuesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesCreatedTable,
+			Columns: []string{user.IssuesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.IssuesAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.IssuesAssignedTable,
+			Columns: user.IssuesAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedIssuesAssignedIDs(); len(nodes) > 0 && !uu.mutation.IssuesAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.IssuesAssignedTable,
+			Columns: user.IssuesAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.IssuesAssignedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.IssuesAssignedTable,
+			Columns: user.IssuesAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedIssuesClosedIDs(); len(nodes) > 0 && !uu.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.IssuesClosedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1289,19 +1533,64 @@ func (uuo *UserUpdateOne) SetNillableUpdatedAt(t *time.Time) *UserUpdateOne {
 	return uuo
 }
 
-// AddRepoIDs adds the "repos" edge to the Repository entity by IDs.
-func (uuo *UserUpdateOne) AddRepoIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.AddRepoIDs(ids...)
+// AddRepositoryIDs adds the "repositories" edge to the Repository entity by IDs.
+func (uuo *UserUpdateOne) AddRepositoryIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddRepositoryIDs(ids...)
 	return uuo
 }
 
-// AddRepos adds the "repos" edges to the Repository entity.
-func (uuo *UserUpdateOne) AddRepos(r ...*Repository) *UserUpdateOne {
+// AddRepositories adds the "repositories" edges to the Repository entity.
+func (uuo *UserUpdateOne) AddRepositories(r ...*Repository) *UserUpdateOne {
 	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
-	return uuo.AddRepoIDs(ids...)
+	return uuo.AddRepositoryIDs(ids...)
+}
+
+// AddIssuesCreatedIDs adds the "issues_created" edge to the Issue entity by IDs.
+func (uuo *UserUpdateOne) AddIssuesCreatedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddIssuesCreatedIDs(ids...)
+	return uuo
+}
+
+// AddIssuesCreated adds the "issues_created" edges to the Issue entity.
+func (uuo *UserUpdateOne) AddIssuesCreated(i ...*Issue) *UserUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.AddIssuesCreatedIDs(ids...)
+}
+
+// AddIssuesAssignedIDs adds the "issues_assigned" edge to the Issue entity by IDs.
+func (uuo *UserUpdateOne) AddIssuesAssignedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddIssuesAssignedIDs(ids...)
+	return uuo
+}
+
+// AddIssuesAssigned adds the "issues_assigned" edges to the Issue entity.
+func (uuo *UserUpdateOne) AddIssuesAssigned(i ...*Issue) *UserUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.AddIssuesAssignedIDs(ids...)
+}
+
+// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
+func (uuo *UserUpdateOne) AddIssuesClosedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddIssuesClosedIDs(ids...)
+	return uuo
+}
+
+// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
+func (uuo *UserUpdateOne) AddIssuesClosed(i ...*Issue) *UserUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.AddIssuesClosedIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -1309,25 +1598,88 @@ func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
 }
 
-// ClearRepos clears all "repos" edges to the Repository entity.
-func (uuo *UserUpdateOne) ClearRepos() *UserUpdateOne {
-	uuo.mutation.ClearRepos()
+// ClearRepositories clears all "repositories" edges to the Repository entity.
+func (uuo *UserUpdateOne) ClearRepositories() *UserUpdateOne {
+	uuo.mutation.ClearRepositories()
 	return uuo
 }
 
-// RemoveRepoIDs removes the "repos" edge to Repository entities by IDs.
-func (uuo *UserUpdateOne) RemoveRepoIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.RemoveRepoIDs(ids...)
+// RemoveRepositoryIDs removes the "repositories" edge to Repository entities by IDs.
+func (uuo *UserUpdateOne) RemoveRepositoryIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveRepositoryIDs(ids...)
 	return uuo
 }
 
-// RemoveRepos removes "repos" edges to Repository entities.
-func (uuo *UserUpdateOne) RemoveRepos(r ...*Repository) *UserUpdateOne {
+// RemoveRepositories removes "repositories" edges to Repository entities.
+func (uuo *UserUpdateOne) RemoveRepositories(r ...*Repository) *UserUpdateOne {
 	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
-	return uuo.RemoveRepoIDs(ids...)
+	return uuo.RemoveRepositoryIDs(ids...)
+}
+
+// ClearIssuesCreated clears all "issues_created" edges to the Issue entity.
+func (uuo *UserUpdateOne) ClearIssuesCreated() *UserUpdateOne {
+	uuo.mutation.ClearIssuesCreated()
+	return uuo
+}
+
+// RemoveIssuesCreatedIDs removes the "issues_created" edge to Issue entities by IDs.
+func (uuo *UserUpdateOne) RemoveIssuesCreatedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveIssuesCreatedIDs(ids...)
+	return uuo
+}
+
+// RemoveIssuesCreated removes "issues_created" edges to Issue entities.
+func (uuo *UserUpdateOne) RemoveIssuesCreated(i ...*Issue) *UserUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.RemoveIssuesCreatedIDs(ids...)
+}
+
+// ClearIssuesAssigned clears all "issues_assigned" edges to the Issue entity.
+func (uuo *UserUpdateOne) ClearIssuesAssigned() *UserUpdateOne {
+	uuo.mutation.ClearIssuesAssigned()
+	return uuo
+}
+
+// RemoveIssuesAssignedIDs removes the "issues_assigned" edge to Issue entities by IDs.
+func (uuo *UserUpdateOne) RemoveIssuesAssignedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveIssuesAssignedIDs(ids...)
+	return uuo
+}
+
+// RemoveIssuesAssigned removes "issues_assigned" edges to Issue entities.
+func (uuo *UserUpdateOne) RemoveIssuesAssigned(i ...*Issue) *UserUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.RemoveIssuesAssignedIDs(ids...)
+}
+
+// ClearIssuesClosed clears all "issues_closed" edges to the Issue entity.
+func (uuo *UserUpdateOne) ClearIssuesClosed() *UserUpdateOne {
+	uuo.mutation.ClearIssuesClosed()
+	return uuo
+}
+
+// RemoveIssuesClosedIDs removes the "issues_closed" edge to Issue entities by IDs.
+func (uuo *UserUpdateOne) RemoveIssuesClosedIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveIssuesClosedIDs(ids...)
+	return uuo
+}
+
+// RemoveIssuesClosed removes "issues_closed" edges to Issue entities.
+func (uuo *UserUpdateOne) RemoveIssuesClosed(i ...*Issue) *UserUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.RemoveIssuesClosedIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -1522,12 +1874,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if uuo.mutation.ReposCleared() {
+	if uuo.mutation.RepositoriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ReposTable,
-			Columns: []string{user.ReposColumn},
+			Table:   user.RepositoriesTable,
+			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
@@ -1535,12 +1887,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedReposIDs(); len(nodes) > 0 && !uuo.mutation.ReposCleared() {
+	if nodes := uuo.mutation.RemovedRepositoriesIDs(); len(nodes) > 0 && !uuo.mutation.RepositoriesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ReposTable,
-			Columns: []string{user.ReposColumn},
+			Table:   user.RepositoriesTable,
+			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
@@ -1551,15 +1903,150 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.ReposIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.RepositoriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ReposTable,
-			Columns: []string{user.ReposColumn},
+			Table:   user.RepositoriesTable,
+			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.IssuesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesCreatedTable,
+			Columns: []string{user.IssuesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedIssuesCreatedIDs(); len(nodes) > 0 && !uuo.mutation.IssuesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesCreatedTable,
+			Columns: []string{user.IssuesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.IssuesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesCreatedTable,
+			Columns: []string{user.IssuesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.IssuesAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.IssuesAssignedTable,
+			Columns: user.IssuesAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedIssuesAssignedIDs(); len(nodes) > 0 && !uuo.mutation.IssuesAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.IssuesAssignedTable,
+			Columns: user.IssuesAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.IssuesAssignedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.IssuesAssignedTable,
+			Columns: user.IssuesAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedIssuesClosedIDs(); len(nodes) > 0 && !uuo.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.IssuesClosedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

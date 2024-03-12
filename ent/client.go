@@ -15,6 +15,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 )
@@ -24,6 +25,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Issue is the client for interacting with the Issue builders.
+	Issue *IssueClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
 	// User is the client for interacting with the User builders.
@@ -39,6 +42,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Issue = NewIssueClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -133,6 +137,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:        ctx,
 		config:     cfg,
+		Issue:      NewIssueClient(cfg),
 		Repository: NewRepositoryClient(cfg),
 		User:       NewUserClient(cfg),
 	}, nil
@@ -154,6 +159,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:        ctx,
 		config:     cfg,
+		Issue:      NewIssueClient(cfg),
 		Repository: NewRepositoryClient(cfg),
 		User:       NewUserClient(cfg),
 	}, nil
@@ -162,7 +168,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Repository.
+//		Issue.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -184,6 +190,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Issue.Use(hooks...)
 	c.Repository.Use(hooks...)
 	c.User.Use(hooks...)
 }
@@ -191,6 +198,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Issue.Intercept(interceptors...)
 	c.Repository.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
@@ -198,12 +206,211 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *IssueMutation:
+		return c.Issue.mutate(ctx, m)
 	case *RepositoryMutation:
 		return c.Repository.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// IssueClient is a client for the Issue schema.
+type IssueClient struct {
+	config
+}
+
+// NewIssueClient returns a client for the Issue from the given config.
+func NewIssueClient(c config) *IssueClient {
+	return &IssueClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `issue.Hooks(f(g(h())))`.
+func (c *IssueClient) Use(hooks ...Hook) {
+	c.hooks.Issue = append(c.hooks.Issue, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `issue.Intercept(f(g(h())))`.
+func (c *IssueClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Issue = append(c.inters.Issue, interceptors...)
+}
+
+// Create returns a builder for creating a Issue entity.
+func (c *IssueClient) Create() *IssueCreate {
+	mutation := newIssueMutation(c.config, OpCreate)
+	return &IssueCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Issue entities.
+func (c *IssueClient) CreateBulk(builders ...*IssueCreate) *IssueCreateBulk {
+	return &IssueCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *IssueClient) MapCreateBulk(slice any, setFunc func(*IssueCreate, int)) *IssueCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &IssueCreateBulk{err: fmt.Errorf("calling to IssueClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*IssueCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &IssueCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Issue.
+func (c *IssueClient) Update() *IssueUpdate {
+	mutation := newIssueMutation(c.config, OpUpdate)
+	return &IssueUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *IssueClient) UpdateOne(i *Issue) *IssueUpdateOne {
+	mutation := newIssueMutation(c.config, OpUpdateOne, withIssue(i))
+	return &IssueUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *IssueClient) UpdateOneID(id int) *IssueUpdateOne {
+	mutation := newIssueMutation(c.config, OpUpdateOne, withIssueID(id))
+	return &IssueUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Issue.
+func (c *IssueClient) Delete() *IssueDelete {
+	mutation := newIssueMutation(c.config, OpDelete)
+	return &IssueDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *IssueClient) DeleteOne(i *Issue) *IssueDeleteOne {
+	return c.DeleteOneID(i.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *IssueClient) DeleteOneID(id int) *IssueDeleteOne {
+	builder := c.Delete().Where(issue.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &IssueDeleteOne{builder}
+}
+
+// Query returns a query builder for Issue.
+func (c *IssueClient) Query() *IssueQuery {
+	return &IssueQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeIssue},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Issue entity by its id.
+func (c *IssueClient) Get(ctx context.Context, id int) (*Issue, error) {
+	return c.Query().Where(issue.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *IssueClient) GetX(ctx context.Context, id int) *Issue {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryRepository queries the repository edge of a Issue.
+func (c *IssueClient) QueryRepository(i *Issue) *RepositoryQuery {
+	query := (&RepositoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, id),
+			sqlgraph.To(repository.Table, repository.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, issue.RepositoryTable, issue.RepositoryColumn),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a Issue.
+func (c *IssueClient) QueryUser(i *Issue) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, issue.UserTable, issue.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAssignees queries the assignees edge of a Issue.
+func (c *IssueClient) QueryAssignees(i *Issue) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, issue.AssigneesTable, issue.AssigneesPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryClosedBy queries the closed_by edge of a Issue.
+func (c *IssueClient) QueryClosedBy(i *Issue) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, issue.ClosedByTable, issue.ClosedByColumn),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *IssueClient) Hooks() []Hook {
+	return c.hooks.Issue
+}
+
+// Interceptors returns the client interceptors.
+func (c *IssueClient) Interceptors() []Interceptor {
+	return c.inters.Issue
+}
+
+func (c *IssueClient) mutate(ctx context.Context, m *IssueMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&IssueCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&IssueUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&IssueUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&IssueDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Issue mutation op: %q", m.Op())
 	}
 }
 
@@ -324,6 +531,22 @@ func (c *RepositoryClient) QueryOwner(r *Repository) *UserQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, repository.OwnerTable, repository.OwnerColumn),
+		)
+		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIssues queries the issues edge of a Repository.
+func (c *RepositoryClient) QueryIssues(r *Repository) *IssueQuery {
+	query := (&IssueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := r.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, id),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.IssuesTable, repository.IssuesColumn),
 		)
 		fromV = sqlgraph.Neighbors(r.driver.Dialect(), step)
 		return fromV, nil
@@ -464,15 +687,63 @@ func (c *UserClient) GetX(ctx context.Context, id int) *User {
 	return obj
 }
 
-// QueryRepos queries the repos edge of a User.
-func (c *UserClient) QueryRepos(u *User) *RepositoryQuery {
+// QueryRepositories queries the repositories edge of a User.
+func (c *UserClient) QueryRepositories(u *User) *RepositoryQuery {
 	query := (&RepositoryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := u.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(repository.Table, repository.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.ReposTable, user.ReposColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.RepositoriesTable, user.RepositoriesColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIssuesCreated queries the issues_created edge of a User.
+func (c *UserClient) QueryIssuesCreated(u *User) *IssueQuery {
+	query := (&IssueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.IssuesCreatedTable, user.IssuesCreatedColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIssuesAssigned queries the issues_assigned edge of a User.
+func (c *UserClient) QueryIssuesAssigned(u *User) *IssueQuery {
+	query := (&IssueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.IssuesAssignedTable, user.IssuesAssignedPrimaryKey...),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIssuesClosed queries the issues_closed edge of a User.
+func (c *UserClient) QueryIssuesClosed(u *User) *IssueQuery {
+	query := (&IssueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.IssuesClosedTable, user.IssuesClosedColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -508,9 +779,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Repository, User []ent.Hook
+		Issue, Repository, User []ent.Hook
 	}
 	inters struct {
-		Repository, User []ent.Interceptor
+		Issue, Repository, User []ent.Interceptor
 	}
 )

@@ -345,9 +345,9 @@ func IsTemplate(v bool) predicate.Repository {
 	return predicate.Repository(sql.FieldEQ(FieldIsTemplate, v))
 }
 
-// HasIssues applies equality check predicate on the "has_issues" field. It's identical to HasIssuesEQ.
-func HasIssues(v bool) predicate.Repository {
-	return predicate.Repository(sql.FieldEQ(FieldHasIssues, v))
+// HasIssuesEnabled applies equality check predicate on the "has_issues_enabled" field. It's identical to HasIssuesEnabledEQ.
+func HasIssuesEnabled(v bool) predicate.Repository {
+	return predicate.Repository(sql.FieldEQ(FieldHasIssuesEnabled, v))
 }
 
 // HasProjects applies equality check predicate on the "has_projects" field. It's identical to HasProjectsEQ.
@@ -3945,14 +3945,14 @@ func IsTemplateNEQ(v bool) predicate.Repository {
 	return predicate.Repository(sql.FieldNEQ(FieldIsTemplate, v))
 }
 
-// HasIssuesEQ applies the EQ predicate on the "has_issues" field.
-func HasIssuesEQ(v bool) predicate.Repository {
-	return predicate.Repository(sql.FieldEQ(FieldHasIssues, v))
+// HasIssuesEnabledEQ applies the EQ predicate on the "has_issues_enabled" field.
+func HasIssuesEnabledEQ(v bool) predicate.Repository {
+	return predicate.Repository(sql.FieldEQ(FieldHasIssuesEnabled, v))
 }
 
-// HasIssuesNEQ applies the NEQ predicate on the "has_issues" field.
-func HasIssuesNEQ(v bool) predicate.Repository {
-	return predicate.Repository(sql.FieldNEQ(FieldHasIssues, v))
+// HasIssuesEnabledNEQ applies the NEQ predicate on the "has_issues_enabled" field.
+func HasIssuesEnabledNEQ(v bool) predicate.Repository {
+	return predicate.Repository(sql.FieldNEQ(FieldHasIssuesEnabled, v))
 }
 
 // HasProjectsEQ applies the EQ predicate on the "has_projects" field.
@@ -4043,6 +4043,16 @@ func VisibilityIn(vs ...Visibility) predicate.Repository {
 // VisibilityNotIn applies the NotIn predicate on the "visibility" field.
 func VisibilityNotIn(vs ...Visibility) predicate.Repository {
 	return predicate.Repository(sql.FieldNotIn(FieldVisibility, vs...))
+}
+
+// VisibilityIsNil applies the IsNil predicate on the "visibility" field.
+func VisibilityIsNil() predicate.Repository {
+	return predicate.Repository(sql.FieldIsNull(FieldVisibility))
+}
+
+// VisibilityNotNil applies the NotNil predicate on the "visibility" field.
+func VisibilityNotNil() predicate.Repository {
+	return predicate.Repository(sql.FieldNotNull(FieldVisibility))
 }
 
 // PushedAtEQ applies the EQ predicate on the "pushed_at" field.
@@ -4380,6 +4390,29 @@ func HasOwner() predicate.Repository {
 func HasOwnerWith(preds ...predicate.User) predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {
 		step := newOwnerStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasIssues applies the HasEdge predicate on the "issues" edge.
+func HasIssues() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, IssuesTable, IssuesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasIssuesWith applies the HasEdge predicate on the "issues" edge with a given conditions (other predicates).
+func HasIssuesWith(preds ...predicate.Issue) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := newIssuesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

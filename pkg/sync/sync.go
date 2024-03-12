@@ -8,19 +8,18 @@ package sync
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gnolang/gh-sql/ent"
+	"golang.org/x/sync/errgroup"
 )
 
 // Options repsent the options to run Sync. These match the flags provided on
@@ -48,10 +47,12 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 		values.remaining = 5000
 	}
 
+	gr, ctx := errgroup.WithContext(ctx)
+
 	// set up hub
 	h := &hub{
 		Options:       opts,
-		running:       make(chan struct{}, 8),
+		Group:         gr,
 		requestBucket: make(chan struct{}, 8),
 		limits:        values,
 		updated:       make(map[string]any),
@@ -79,9 +80,7 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 	}
 
 	// wait for all goros to finish
-	h.wg.Wait()
-
-	return nil
+	return h.Wait()
 }
 
 // -----------------------------------------------------------------------------
@@ -90,17 +89,20 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 type hub struct {
 	Options
 
-	// synchronization/limiting channels
-	// number of running goroutines
-	running chan struct{}
-	wg      sync.WaitGroup
-	// channel used to space out requests to the GitHub API
-	requestBucket chan struct{}
+	// errgroup, for launching goroutines.
+	// NOTE: the errgroup should be used when launching goroutines to fetch
+	// indefinite numbers of resources, for instance, when iterating over a
+	// list returned by the GitHub API. If a resource needs to fetch its own
+	// fixed dependent resource, it may do so independently without using this
+	// Group to limit its goroutines.
+	*errgroup.Group
 
 	// rate limits in place
 	limits rateLimitValues
 	// only at most 1 reader, so RWMutex isn't needed
 	limitsMu sync.Mutex
+	// channel used to space out requests to the GitHub API
+	requestBucket chan struct{}
 
 	// list of updated resources, de-duplicating updates.
 	// Keys are the values of ID() of each [resource] being fetched.
@@ -120,8 +122,30 @@ type resource[T any] interface {
 }
 
 func fetch[T any](ctx context.Context, h *hub, res resource[T]) (T, error) {
+	fn, _ := fetchInternal(ctx, h, res)
+
+	return fn()
+}
+
+func fetchAsync[T any](ctx context.Context, h *hub, res resource[T]) {
+	fn, created := fetchInternal(ctx, h, res)
+
+	if created {
+		h.Go(func() error {
+			_, err := fn()
+			// TODO: configure (halt at first error or not)
+			if err != nil {
+				h.warn(err)
+			}
+			return nil
+		})
+	}
+}
+
+func fetchInternal[T any](ctx context.Context, h *hub, res resource[T]) (func() (T, error), bool) {
 	id := res.ID()
 
+	var created bool
 	h.updatedMu.Lock()
 	fn, ok := h.updated[id]
 	if !ok {
@@ -129,47 +153,16 @@ func fetch[T any](ctx context.Context, h *hub, res resource[T]) (T, error) {
 			return res.Fetch(ctx, h)
 		})
 		h.updated[id] = fn
+		created = true
 	}
 	h.updatedMu.Unlock()
 
-	return fn.(func() (T, error))()
+	return fn.(func() (T, error)), created
 }
 
-func fetchAsync[T any](ctx context.Context, h *hub, res resource[T]) {
-	// wait to run goroutine, and execute.
-	h.runWait()
-	go func() {
-		defer h.recover()
-		_, err := fetch(ctx, h, res)
-		if err != nil {
-			h.report(err)
-		}
-	}()
-}
-
-// runWait waits until a spot frees up in r.running, useful before
-// starting a new goroutine.
-func (h *hub) runWait() {
-	h.running <- struct{}{}
-	h.wg.Add(1)
-}
-
-// recover performs error recovery in h.fetch* functions,
-// as well as freeing up a space for running goroutines.
-// it should be ran as a deferred function in all fetch*
-// functions.
-func (h *hub) recover() {
-	if err := recover(); err != nil {
-		trace := debug.Stack()
-		h.report(fmt.Errorf("panic: %v\n%v", err, string(trace)))
-	}
-	h.wg.Done()
-	<-h.running
-}
-
-// report adds an error to h
-func (h *hub) report(err error) {
-	log.Println("error:", err)
+// warn prints the given error as a warning, without halting execution.
+func (h *hub) warn(err error) {
+	log.Println("warning:", err)
 }
 
 // -----------------------------------------------------------------------------
@@ -182,6 +175,9 @@ const (
 
 func httpGet(ctx context.Context, h *hub, path string, dst any) error {
 	resp, err := httpInternal(ctx, h, "GET", apiEndpoint+path, nil)
+	if err != nil {
+		return err
+	}
 
 	// unmarshal body into dst
 	defer resp.Body.Close()
@@ -305,6 +301,9 @@ func (h *hub) limiter(ctx context.Context) {
 		}
 
 		wait := time.Until(limits.reset) / (time.Duration(limits.remaining) + 1)
+		if h.DebugHTTP {
+			log.Printf("limiter values: %+v / %s; calculated: %v", limits, limits.reset.String(), wait)
+		}
 		wait = max(wait, 100*time.Millisecond)
 		select {
 		case <-time.After(wait):
@@ -326,7 +325,7 @@ func parseLimits(resp *http.Response) (vals rateLimitValues, err error) {
 		return
 	}
 	var reset int64
-	reset, err = strconv.ParseInt(h.Get("X-Ratelimit-Remaining"), 10, 64)
+	reset, err = strconv.ParseInt(h.Get("X-Ratelimit-Reset"), 10, 64)
 	if err != nil {
 		return
 	}

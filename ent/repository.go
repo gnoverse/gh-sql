@@ -137,8 +137,8 @@ type Repository struct {
 	IsTemplate bool `json:"is_template,omitempty"`
 	// Topics holds the value of the "topics" field.
 	Topics []string `json:"topics,omitempty"`
-	// HasIssues holds the value of the "has_issues" field.
-	HasIssues bool `json:"has_issues,omitempty"`
+	// HasIssuesEnabled holds the value of the "has_issues_enabled" field.
+	HasIssuesEnabled bool `json:"has_issues"`
 	// HasProjects holds the value of the "has_projects" field.
 	HasProjects bool `json:"has_projects,omitempty"`
 	// HasWiki holds the value of the "has_wiki" field.
@@ -154,7 +154,7 @@ type Repository struct {
 	// Returns whether or not this repository disabled.
 	Disabled bool `json:"disabled,omitempty"`
 	// Visibility holds the value of the "visibility" field.
-	Visibility repository.Visibility `json:"visibility,omitempty"`
+	Visibility *repository.Visibility `json:"visibility,omitempty"`
 	// PushedAt holds the value of the "pushed_at" field.
 	PushedAt time.Time `json:"pushed_at,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -173,18 +173,20 @@ type Repository struct {
 	Watchers int `json:"watchers,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RepositoryQuery when eager-loading is set.
-	Edges        RepositoryEdges `json:"edges"`
-	user_repos   *int
-	selectValues sql.SelectValues
+	Edges             RepositoryEdges `json:"edges"`
+	user_repositories *int
+	selectValues      sql.SelectValues
 }
 
 // RepositoryEdges holds the relations/edges for other nodes in the graph.
 type RepositoryEdges struct {
 	// Owner holds the value of the owner edge.
 	Owner *User `json:"owner,omitempty"`
+	// Issues holds the value of the issues edge.
+	Issues []*Issue `json:"issues,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -198,6 +200,15 @@ func (e RepositoryEdges) OwnerOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "owner"}
 }
 
+// IssuesOrErr returns the Issues value or an error if the edge
+// was not loaded in eager-loading.
+func (e RepositoryEdges) IssuesOrErr() ([]*Issue, error) {
+	if e.loadedTypes[1] {
+		return e.Issues, nil
+	}
+	return nil, &NotLoadedError{edge: "issues"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Repository) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -205,7 +216,7 @@ func (*Repository) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case repository.FieldTopics:
 			values[i] = new([]byte)
-		case repository.FieldPrivate, repository.FieldFork, repository.FieldIsTemplate, repository.FieldHasIssues, repository.FieldHasProjects, repository.FieldHasWiki, repository.FieldHasPages, repository.FieldHasDownloads, repository.FieldHasDiscussions, repository.FieldArchived, repository.FieldDisabled:
+		case repository.FieldPrivate, repository.FieldFork, repository.FieldIsTemplate, repository.FieldHasIssuesEnabled, repository.FieldHasProjects, repository.FieldHasWiki, repository.FieldHasPages, repository.FieldHasDownloads, repository.FieldHasDiscussions, repository.FieldArchived, repository.FieldDisabled:
 			values[i] = new(sql.NullBool)
 		case repository.FieldID, repository.FieldForksCount, repository.FieldStargazersCount, repository.FieldWatchersCount, repository.FieldSize, repository.FieldOpenIssuesCount, repository.FieldSubscribersCount, repository.FieldNetworkCount, repository.FieldForks, repository.FieldOpenIssues, repository.FieldWatchers:
 			values[i] = new(sql.NullInt64)
@@ -213,7 +224,7 @@ func (*Repository) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case repository.FieldPushedAt, repository.FieldCreatedAt, repository.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case repository.ForeignKeys[0]: // user_repos
+		case repository.ForeignKeys[0]: // user_repositories
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -592,11 +603,11 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field topics: %w", err)
 				}
 			}
-		case repository.FieldHasIssues:
+		case repository.FieldHasIssuesEnabled:
 			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field has_issues", values[i])
+				return fmt.Errorf("unexpected type %T for field has_issues_enabled", values[i])
 			} else if value.Valid {
-				r.HasIssues = value.Bool
+				r.HasIssuesEnabled = value.Bool
 			}
 		case repository.FieldHasProjects:
 			if value, ok := values[i].(*sql.NullBool); !ok {
@@ -644,7 +655,8 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field visibility", values[i])
 			} else if value.Valid {
-				r.Visibility = repository.Visibility(value.String)
+				r.Visibility = new(repository.Visibility)
+				*r.Visibility = repository.Visibility(value.String)
 			}
 		case repository.FieldPushedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -696,10 +708,10 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			}
 		case repository.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_repos", value)
+				return fmt.Errorf("unexpected type %T for edge-field user_repositories", value)
 			} else if value.Valid {
-				r.user_repos = new(int)
-				*r.user_repos = int(value.Int64)
+				r.user_repositories = new(int)
+				*r.user_repositories = int(value.Int64)
 			}
 		default:
 			r.selectValues.Set(columns[i], values[i])
@@ -717,6 +729,11 @@ func (r *Repository) Value(name string) (ent.Value, error) {
 // QueryOwner queries the "owner" edge of the Repository entity.
 func (r *Repository) QueryOwner() *UserQuery {
 	return NewRepositoryClient(r.config).QueryOwner(r)
+}
+
+// QueryIssues queries the "issues" edge of the Repository entity.
+func (r *Repository) QueryIssues() *IssueQuery {
+	return NewRepositoryClient(r.config).QueryIssues(r)
 }
 
 // Update returns a builder for updating this Repository.
@@ -919,8 +936,8 @@ func (r *Repository) String() string {
 	builder.WriteString("topics=")
 	builder.WriteString(fmt.Sprintf("%v", r.Topics))
 	builder.WriteString(", ")
-	builder.WriteString("has_issues=")
-	builder.WriteString(fmt.Sprintf("%v", r.HasIssues))
+	builder.WriteString("has_issues_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", r.HasIssuesEnabled))
 	builder.WriteString(", ")
 	builder.WriteString("has_projects=")
 	builder.WriteString(fmt.Sprintf("%v", r.HasProjects))
@@ -943,8 +960,10 @@ func (r *Repository) String() string {
 	builder.WriteString("disabled=")
 	builder.WriteString(fmt.Sprintf("%v", r.Disabled))
 	builder.WriteString(", ")
-	builder.WriteString("visibility=")
-	builder.WriteString(fmt.Sprintf("%v", r.Visibility))
+	if v := r.Visibility; v != nil {
+		builder.WriteString("visibility=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("pushed_at=")
 	builder.WriteString(r.PushedAt.Format(time.ANSIC))

@@ -59,6 +59,11 @@ func (User) Fields() []ent.Field {
 // Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("repos", Repository.Type),
+		edge.To("repositories", Repository.Type),
+		edge.To("issues_created", Issue.Type),
+		edge.From("issues_assigned", Issue.Type).
+			Ref("assignees"),
+		edge.From("issues_closed", Issue.Type).
+			Ref("closed_by"),
 	}
 }

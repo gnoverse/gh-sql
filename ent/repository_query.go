@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -23,6 +25,7 @@ type RepositoryQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Repository
 	withOwner  *UserQuery
+	withIssues *IssueQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -75,6 +78,28 @@ func (rq *RepositoryQuery) QueryOwner() *UserQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, repository.OwnerTable, repository.OwnerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryIssues chains the current query on the "issues" edge.
+func (rq *RepositoryQuery) QueryIssues() *IssueQuery {
+	query := (&IssueClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.IssuesTable, repository.IssuesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -275,6 +300,7 @@ func (rq *RepositoryQuery) Clone() *RepositoryQuery {
 		inters:     append([]Interceptor{}, rq.inters...),
 		predicates: append([]predicate.Repository{}, rq.predicates...),
 		withOwner:  rq.withOwner.Clone(),
+		withIssues: rq.withIssues.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -289,6 +315,17 @@ func (rq *RepositoryQuery) WithOwner(opts ...func(*UserQuery)) *RepositoryQuery 
 		opt(query)
 	}
 	rq.withOwner = query
+	return rq
+}
+
+// WithIssues tells the query-builder to eager-load the nodes that are connected to
+// the "issues" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithIssues(opts ...func(*IssueQuery)) *RepositoryQuery {
+	query := (&IssueClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withIssues = query
 	return rq
 }
 
@@ -371,8 +408,9 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 		nodes       = []*Repository{}
 		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			rq.withOwner != nil,
+			rq.withIssues != nil,
 		}
 	)
 	if rq.withOwner != nil {
@@ -405,6 +443,13 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 			return nil, err
 		}
 	}
+	if query := rq.withIssues; query != nil {
+		if err := rq.loadIssues(ctx, query, nodes,
+			func(n *Repository) { n.Edges.Issues = []*Issue{} },
+			func(n *Repository, e *Issue) { n.Edges.Issues = append(n.Edges.Issues, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -412,10 +457,10 @@ func (rq *RepositoryQuery) loadOwner(ctx context.Context, query *UserQuery, node
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Repository)
 	for i := range nodes {
-		if nodes[i].user_repos == nil {
+		if nodes[i].user_repositories == nil {
 			continue
 		}
-		fk := *nodes[i].user_repos
+		fk := *nodes[i].user_repositories
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -432,11 +477,42 @@ func (rq *RepositoryQuery) loadOwner(ctx context.Context, query *UserQuery, node
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_repos" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_repositories" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (rq *RepositoryQuery) loadIssues(ctx context.Context, query *IssueQuery, nodes []*Repository, init func(*Repository), assign func(*Repository, *Issue)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Repository)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Issue(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(repository.IssuesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.repository_issues
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "repository_issues" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "repository_issues" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gnolang/gh-sql/ent"
+	"golang.org/x/sync/errgroup"
 )
 
 // fetchRepository can be used to fetch a GitHub repository, knowing its
@@ -49,6 +50,11 @@ func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, er
 	}
 	savedRepo.Edges.Owner = u
 
+	h.Go(func() error {
+		fetchIssues(ctx, h, f.owner, f.repo)
+		return nil
+	})
+
 	return savedRepo, nil
 }
 
@@ -60,13 +66,13 @@ func fetchRepositories(ctx context.Context, h *hub, owner string, shouldFetch fu
 		return nil
 	})
 	if err != nil {
-		h.report(fmt.Errorf("fetchRepositories(%q): %w", owner, err))
+		h.warn(fmt.Errorf("fetchRepositories(%q): %w", owner, err))
 	}
 }
 
 // -----------------------------------------------------------------------------
 
-// fetchUser can be used to fetch a user, knowing its
+// fetchUser can be used to retrive a user, knowing its username.
 type fetchUser struct {
 	username string
 }
@@ -91,3 +97,99 @@ func (fu fetchUser) Fetch(ctx context.Context, h *hub) (*ent.User, error) {
 
 	return h.DB.User.Get(ctx, u.ID)
 }
+
+// -----------------------------------------------------------------------------
+
+// fetchIssue can be used to retrive an issue, knowing its repo and issue number.
+type fetchIssue struct {
+	owner       string
+	repo        string
+	issueNumber int
+}
+
+var _ resource[*ent.Issue] = fetchIssue{}
+
+func (fi fetchIssue) ID() string {
+	return fmt.Sprintf("/repos/%s/%s/issues/%d",
+		fi.owner, fi.repo, fi.issueNumber)
+}
+
+func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
+	var i struct {
+		ent.Issue
+		User *struct {
+			Login string `json:"login"`
+		} `json:"user"`
+		Assignees []struct {
+			Login string `json:"login"`
+		} `json:"assignees"`
+		ClosedBy *struct {
+			Login string `json:"login"`
+		} `json:"closed_by"`
+	}
+	if err := httpGet(ctx, h, fi.ID(), &i); err != nil {
+		return nil, fmt.Errorf("fetchIssue%+v get: %w", fi, err)
+	}
+
+	cr := h.DB.Issue.Create().CopyIssue(&i.Issue)
+
+	eg, egCtx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		// Fetch repository and set repo ID.
+		repo, err := fetch(egCtx, h, fetchRepository{fi.owner, fi.repo})
+		if err != nil {
+			return err
+		}
+		cr.SetRepositoryID(repo.ID)
+		return nil
+	})
+	localGetUser := func(login string, setter func(id int) *ent.IssueCreate) {
+		if login == "" {
+			return
+		}
+		eg.Go(func() error {
+			// Fetch creator
+			user, err := fetch(egCtx, h, fetchUser{login})
+			if err != nil {
+				return err
+			}
+			setter(user.ID)
+			return nil
+		})
+	}
+	if i.User != nil {
+		localGetUser(i.User.Login, cr.SetUserID)
+	}
+	for _, assignee := range i.Assignees {
+		login := assignee.Login
+		localGetUser(login, func(i int) *ent.IssueCreate { return cr.AddAssigneeIDs(i) })
+	}
+	if i.ClosedBy != nil {
+		localGetUser(i.ClosedBy.Login, cr.SetClosedByID)
+	}
+
+	err := eg.Wait()
+	if err != nil {
+		return nil, fmt.Errorf("fetchIssue%+v fetch deps: %w", fi, err)
+	}
+
+	err = cr.OnConflict().UpdateNewValues().
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fetchIssue%+v save: %w", fi, err)
+	}
+
+	return h.DB.Issue.Get(ctx, i.ID)
+}
+
+func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
+	err := httpGetIterate(ctx, h, fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName), func(i *ent.Issue) error {
+		fetchAsync(ctx, h, fetchIssue{repoOwner, repoName, i.Number})
+		return nil
+	})
+	if err != nil {
+		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, err))
+	}
+}
+
+// PULL REQUESTS

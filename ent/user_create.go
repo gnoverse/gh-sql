@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 )
@@ -273,19 +274,64 @@ func (uc *UserCreate) SetID(i int) *UserCreate {
 	return uc
 }
 
-// AddRepoIDs adds the "repos" edge to the Repository entity by IDs.
-func (uc *UserCreate) AddRepoIDs(ids ...int) *UserCreate {
-	uc.mutation.AddRepoIDs(ids...)
+// AddRepositoryIDs adds the "repositories" edge to the Repository entity by IDs.
+func (uc *UserCreate) AddRepositoryIDs(ids ...int) *UserCreate {
+	uc.mutation.AddRepositoryIDs(ids...)
 	return uc
 }
 
-// AddRepos adds the "repos" edges to the Repository entity.
-func (uc *UserCreate) AddRepos(r ...*Repository) *UserCreate {
+// AddRepositories adds the "repositories" edges to the Repository entity.
+func (uc *UserCreate) AddRepositories(r ...*Repository) *UserCreate {
 	ids := make([]int, len(r))
 	for i := range r {
 		ids[i] = r[i].ID
 	}
-	return uc.AddRepoIDs(ids...)
+	return uc.AddRepositoryIDs(ids...)
+}
+
+// AddIssuesCreatedIDs adds the "issues_created" edge to the Issue entity by IDs.
+func (uc *UserCreate) AddIssuesCreatedIDs(ids ...int) *UserCreate {
+	uc.mutation.AddIssuesCreatedIDs(ids...)
+	return uc
+}
+
+// AddIssuesCreated adds the "issues_created" edges to the Issue entity.
+func (uc *UserCreate) AddIssuesCreated(i ...*Issue) *UserCreate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uc.AddIssuesCreatedIDs(ids...)
+}
+
+// AddIssuesAssignedIDs adds the "issues_assigned" edge to the Issue entity by IDs.
+func (uc *UserCreate) AddIssuesAssignedIDs(ids ...int) *UserCreate {
+	uc.mutation.AddIssuesAssignedIDs(ids...)
+	return uc
+}
+
+// AddIssuesAssigned adds the "issues_assigned" edges to the Issue entity.
+func (uc *UserCreate) AddIssuesAssigned(i ...*Issue) *UserCreate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uc.AddIssuesAssignedIDs(ids...)
+}
+
+// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
+func (uc *UserCreate) AddIssuesClosedIDs(ids ...int) *UserCreate {
+	uc.mutation.AddIssuesClosedIDs(ids...)
+	return uc
+}
+
+// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
+func (uc *UserCreate) AddIssuesClosed(i ...*Issue) *UserCreate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uc.AddIssuesClosedIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -541,15 +587,63 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if nodes := uc.mutation.ReposIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.RepositoriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   user.ReposTable,
-			Columns: []string{user.ReposColumn},
+			Table:   user.RepositoriesTable,
+			Columns: []string{user.RepositoriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(repository.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.IssuesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesCreatedTable,
+			Columns: []string{user.IssuesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.IssuesAssignedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.IssuesAssignedTable,
+			Columns: user.IssuesAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.IssuesClosedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

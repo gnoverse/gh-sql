@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -913,16 +914,16 @@ func (ru *RepositoryUpdate) AppendTopics(s []string) *RepositoryUpdate {
 	return ru
 }
 
-// SetHasIssues sets the "has_issues" field.
-func (ru *RepositoryUpdate) SetHasIssues(b bool) *RepositoryUpdate {
-	ru.mutation.SetHasIssues(b)
+// SetHasIssuesEnabled sets the "has_issues_enabled" field.
+func (ru *RepositoryUpdate) SetHasIssuesEnabled(b bool) *RepositoryUpdate {
+	ru.mutation.SetHasIssuesEnabled(b)
 	return ru
 }
 
-// SetNillableHasIssues sets the "has_issues" field if the given value is not nil.
-func (ru *RepositoryUpdate) SetNillableHasIssues(b *bool) *RepositoryUpdate {
+// SetNillableHasIssuesEnabled sets the "has_issues_enabled" field if the given value is not nil.
+func (ru *RepositoryUpdate) SetNillableHasIssuesEnabled(b *bool) *RepositoryUpdate {
 	if b != nil {
-		ru.SetHasIssues(*b)
+		ru.SetHasIssuesEnabled(*b)
 	}
 	return ru
 }
@@ -1036,6 +1037,12 @@ func (ru *RepositoryUpdate) SetNillableVisibility(r *repository.Visibility) *Rep
 	if r != nil {
 		ru.SetVisibility(*r)
 	}
+	return ru
+}
+
+// ClearVisibility clears the value of the "visibility" field.
+func (ru *RepositoryUpdate) ClearVisibility() *RepositoryUpdate {
+	ru.mutation.ClearVisibility()
 	return ru
 }
 
@@ -1205,6 +1212,21 @@ func (ru *RepositoryUpdate) SetOwner(u *User) *RepositoryUpdate {
 	return ru.SetOwnerID(u.ID)
 }
 
+// AddIssueIDs adds the "issues" edge to the Issue entity by IDs.
+func (ru *RepositoryUpdate) AddIssueIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.AddIssueIDs(ids...)
+	return ru
+}
+
+// AddIssues adds the "issues" edges to the Issue entity.
+func (ru *RepositoryUpdate) AddIssues(i ...*Issue) *RepositoryUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ru.AddIssueIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ru *RepositoryUpdate) Mutation() *RepositoryMutation {
 	return ru.mutation
@@ -1214,6 +1236,27 @@ func (ru *RepositoryUpdate) Mutation() *RepositoryMutation {
 func (ru *RepositoryUpdate) ClearOwner() *RepositoryUpdate {
 	ru.mutation.ClearOwner()
 	return ru
+}
+
+// ClearIssues clears all "issues" edges to the Issue entity.
+func (ru *RepositoryUpdate) ClearIssues() *RepositoryUpdate {
+	ru.mutation.ClearIssues()
+	return ru
+}
+
+// RemoveIssueIDs removes the "issues" edge to Issue entities by IDs.
+func (ru *RepositoryUpdate) RemoveIssueIDs(ids ...int) *RepositoryUpdate {
+	ru.mutation.RemoveIssueIDs(ids...)
+	return ru
+}
+
+// RemoveIssues removes "issues" edges to Issue entities.
+func (ru *RepositoryUpdate) RemoveIssues(i ...*Issue) *RepositoryUpdate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ru.RemoveIssueIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1474,8 +1517,8 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			sqljson.Append(u, repository.FieldTopics, value)
 		})
 	}
-	if value, ok := ru.mutation.HasIssues(); ok {
-		_spec.SetField(repository.FieldHasIssues, field.TypeBool, value)
+	if value, ok := ru.mutation.HasIssuesEnabled(); ok {
+		_spec.SetField(repository.FieldHasIssuesEnabled, field.TypeBool, value)
 	}
 	if value, ok := ru.mutation.HasProjects(); ok {
 		_spec.SetField(repository.FieldHasProjects, field.TypeBool, value)
@@ -1500,6 +1543,9 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ru.mutation.Visibility(); ok {
 		_spec.SetField(repository.FieldVisibility, field.TypeEnum, value)
+	}
+	if ru.mutation.VisibilityCleared() {
+		_spec.ClearField(repository.FieldVisibility, field.TypeEnum)
 	}
 	if value, ok := ru.mutation.PushedAt(); ok {
 		_spec.SetField(repository.FieldPushedAt, field.TypeTime, value)
@@ -1562,6 +1608,51 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ru.mutation.IssuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.IssuesTable,
+			Columns: []string{repository.IssuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedIssuesIDs(); len(nodes) > 0 && !ru.mutation.IssuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.IssuesTable,
+			Columns: []string{repository.IssuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.IssuesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.IssuesTable,
+			Columns: []string{repository.IssuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -2472,16 +2563,16 @@ func (ruo *RepositoryUpdateOne) AppendTopics(s []string) *RepositoryUpdateOne {
 	return ruo
 }
 
-// SetHasIssues sets the "has_issues" field.
-func (ruo *RepositoryUpdateOne) SetHasIssues(b bool) *RepositoryUpdateOne {
-	ruo.mutation.SetHasIssues(b)
+// SetHasIssuesEnabled sets the "has_issues_enabled" field.
+func (ruo *RepositoryUpdateOne) SetHasIssuesEnabled(b bool) *RepositoryUpdateOne {
+	ruo.mutation.SetHasIssuesEnabled(b)
 	return ruo
 }
 
-// SetNillableHasIssues sets the "has_issues" field if the given value is not nil.
-func (ruo *RepositoryUpdateOne) SetNillableHasIssues(b *bool) *RepositoryUpdateOne {
+// SetNillableHasIssuesEnabled sets the "has_issues_enabled" field if the given value is not nil.
+func (ruo *RepositoryUpdateOne) SetNillableHasIssuesEnabled(b *bool) *RepositoryUpdateOne {
 	if b != nil {
-		ruo.SetHasIssues(*b)
+		ruo.SetHasIssuesEnabled(*b)
 	}
 	return ruo
 }
@@ -2595,6 +2686,12 @@ func (ruo *RepositoryUpdateOne) SetNillableVisibility(r *repository.Visibility) 
 	if r != nil {
 		ruo.SetVisibility(*r)
 	}
+	return ruo
+}
+
+// ClearVisibility clears the value of the "visibility" field.
+func (ruo *RepositoryUpdateOne) ClearVisibility() *RepositoryUpdateOne {
+	ruo.mutation.ClearVisibility()
 	return ruo
 }
 
@@ -2764,6 +2861,21 @@ func (ruo *RepositoryUpdateOne) SetOwner(u *User) *RepositoryUpdateOne {
 	return ruo.SetOwnerID(u.ID)
 }
 
+// AddIssueIDs adds the "issues" edge to the Issue entity by IDs.
+func (ruo *RepositoryUpdateOne) AddIssueIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.AddIssueIDs(ids...)
+	return ruo
+}
+
+// AddIssues adds the "issues" edges to the Issue entity.
+func (ruo *RepositoryUpdateOne) AddIssues(i ...*Issue) *RepositoryUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ruo.AddIssueIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ruo *RepositoryUpdateOne) Mutation() *RepositoryMutation {
 	return ruo.mutation
@@ -2773,6 +2885,27 @@ func (ruo *RepositoryUpdateOne) Mutation() *RepositoryMutation {
 func (ruo *RepositoryUpdateOne) ClearOwner() *RepositoryUpdateOne {
 	ruo.mutation.ClearOwner()
 	return ruo
+}
+
+// ClearIssues clears all "issues" edges to the Issue entity.
+func (ruo *RepositoryUpdateOne) ClearIssues() *RepositoryUpdateOne {
+	ruo.mutation.ClearIssues()
+	return ruo
+}
+
+// RemoveIssueIDs removes the "issues" edge to Issue entities by IDs.
+func (ruo *RepositoryUpdateOne) RemoveIssueIDs(ids ...int) *RepositoryUpdateOne {
+	ruo.mutation.RemoveIssueIDs(ids...)
+	return ruo
+}
+
+// RemoveIssues removes "issues" edges to Issue entities.
+func (ruo *RepositoryUpdateOne) RemoveIssues(i ...*Issue) *RepositoryUpdateOne {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return ruo.RemoveIssueIDs(ids...)
 }
 
 // Where appends a list predicates to the RepositoryUpdate builder.
@@ -3063,8 +3196,8 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			sqljson.Append(u, repository.FieldTopics, value)
 		})
 	}
-	if value, ok := ruo.mutation.HasIssues(); ok {
-		_spec.SetField(repository.FieldHasIssues, field.TypeBool, value)
+	if value, ok := ruo.mutation.HasIssuesEnabled(); ok {
+		_spec.SetField(repository.FieldHasIssuesEnabled, field.TypeBool, value)
 	}
 	if value, ok := ruo.mutation.HasProjects(); ok {
 		_spec.SetField(repository.FieldHasProjects, field.TypeBool, value)
@@ -3089,6 +3222,9 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 	}
 	if value, ok := ruo.mutation.Visibility(); ok {
 		_spec.SetField(repository.FieldVisibility, field.TypeEnum, value)
+	}
+	if ruo.mutation.VisibilityCleared() {
+		_spec.ClearField(repository.FieldVisibility, field.TypeEnum)
 	}
 	if value, ok := ruo.mutation.PushedAt(); ok {
 		_spec.SetField(repository.FieldPushedAt, field.TypeTime, value)
@@ -3151,6 +3287,51 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.IssuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.IssuesTable,
+			Columns: []string{repository.IssuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedIssuesIDs(); len(nodes) > 0 && !ruo.mutation.IssuesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.IssuesTable,
+			Columns: []string{repository.IssuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.IssuesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.IssuesTable,
+			Columns: []string{repository.IssuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

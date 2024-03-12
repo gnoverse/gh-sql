@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Issue is the predicate function for issue builders.
+type Issue func(*sql.Selector)
+
 // Repository is the predicate function for repository builders.
 type Repository func(*sql.Selector)
 

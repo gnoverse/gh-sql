@@ -85,20 +85,53 @@ type User struct {
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
-	// Repos holds the value of the repos edge.
-	Repos []*Repository `json:"repos,omitempty"`
+	// Repositories holds the value of the repositories edge.
+	Repositories []*Repository `json:"repositories,omitempty"`
+	// IssuesCreated holds the value of the issues_created edge.
+	IssuesCreated []*Issue `json:"issues_created,omitempty"`
+	// IssuesAssigned holds the value of the issues_assigned edge.
+	IssuesAssigned []*Issue `json:"issues_assigned,omitempty"`
+	// IssuesClosed holds the value of the issues_closed edge.
+	IssuesClosed []*Issue `json:"issues_closed,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [4]bool
 }
 
-// ReposOrErr returns the Repos value or an error if the edge
+// RepositoriesOrErr returns the Repositories value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) ReposOrErr() ([]*Repository, error) {
+func (e UserEdges) RepositoriesOrErr() ([]*Repository, error) {
 	if e.loadedTypes[0] {
-		return e.Repos, nil
+		return e.Repositories, nil
 	}
-	return nil, &NotLoadedError{edge: "repos"}
+	return nil, &NotLoadedError{edge: "repositories"}
+}
+
+// IssuesCreatedOrErr returns the IssuesCreated value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) IssuesCreatedOrErr() ([]*Issue, error) {
+	if e.loadedTypes[1] {
+		return e.IssuesCreated, nil
+	}
+	return nil, &NotLoadedError{edge: "issues_created"}
+}
+
+// IssuesAssignedOrErr returns the IssuesAssigned value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) IssuesAssignedOrErr() ([]*Issue, error) {
+	if e.loadedTypes[2] {
+		return e.IssuesAssigned, nil
+	}
+	return nil, &NotLoadedError{edge: "issues_assigned"}
+}
+
+// IssuesClosedOrErr returns the IssuesClosed value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) IssuesClosedOrErr() ([]*Issue, error) {
+	if e.loadedTypes[3] {
+		return e.IssuesClosed, nil
+	}
+	return nil, &NotLoadedError{edge: "issues_closed"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -328,9 +361,24 @@ func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
 }
 
-// QueryRepos queries the "repos" edge of the User entity.
-func (u *User) QueryRepos() *RepositoryQuery {
-	return NewUserClient(u.config).QueryRepos(u)
+// QueryRepositories queries the "repositories" edge of the User entity.
+func (u *User) QueryRepositories() *RepositoryQuery {
+	return NewUserClient(u.config).QueryRepositories(u)
+}
+
+// QueryIssuesCreated queries the "issues_created" edge of the User entity.
+func (u *User) QueryIssuesCreated() *IssueQuery {
+	return NewUserClient(u.config).QueryIssuesCreated(u)
+}
+
+// QueryIssuesAssigned queries the "issues_assigned" edge of the User entity.
+func (u *User) QueryIssuesAssigned() *IssueQuery {
+	return NewUserClient(u.config).QueryIssuesAssigned(u)
+}
+
+// QueryIssuesClosed queries the "issues_closed" edge of the User entity.
+func (u *User) QueryIssuesClosed() *IssueQuery {
+	return NewUserClient(u.config).QueryIssuesClosed(u)
 }
 
 // Update returns a builder for updating this User.

@@ -2,6 +2,73 @@
 
 package ent
 
+// CopyIssue allows to create a new Issue copying the existing
+// values of input.
+func (ic *IssueCreate) CopyIssue(input *Issue) *IssueCreate {
+	ic.SetID(input.ID)
+	ic.SetNodeID(input.NodeID)
+	ic.SetURL(input.URL)
+	ic.SetRepositoryURL(input.RepositoryURL)
+	ic.SetLabelsURL(input.LabelsURL)
+	ic.SetCommentsURL(input.CommentsURL)
+	ic.SetEventsURL(input.EventsURL)
+	ic.SetHTMLURL(input.HTMLURL)
+	ic.SetNumber(input.Number)
+	ic.SetState(input.State)
+	if input.StateReason != nil {
+		ic.SetStateReason(*input.StateReason)
+	}
+	ic.SetTitle(input.Title)
+	if input.Body != nil {
+		ic.SetBody(*input.Body)
+	}
+	ic.SetLocked(input.Locked)
+	if input.ActiveLockReason != nil {
+		ic.SetActiveLockReason(*input.ActiveLockReason)
+	}
+	ic.SetComments(input.Comments)
+	if input.ClosedAt != nil {
+		ic.SetClosedAt(*input.ClosedAt)
+	}
+	ic.SetCreatedAt(input.CreatedAt)
+	ic.SetUpdatedAt(input.UpdatedAt)
+	ic.SetDraft(input.Draft)
+	return ic
+}
+
+// CopyIssue allows to update a Issue copying the existing
+// values of input.
+func (iuo *IssueUpdateOne) CopyIssue(input *Issue) *IssueUpdateOne {
+	iuo.SetNodeID(input.NodeID)
+	iuo.SetURL(input.URL)
+	iuo.SetRepositoryURL(input.RepositoryURL)
+	iuo.SetLabelsURL(input.LabelsURL)
+	iuo.SetCommentsURL(input.CommentsURL)
+	iuo.SetEventsURL(input.EventsURL)
+	iuo.SetHTMLURL(input.HTMLURL)
+	iuo.SetNumber(input.Number)
+	iuo.SetState(input.State)
+	if input.StateReason != nil {
+		iuo.SetStateReason(*input.StateReason)
+	}
+	iuo.SetTitle(input.Title)
+	if input.Body != nil {
+		iuo.SetBody(*input.Body)
+	}
+	iuo.SetLocked(input.Locked)
+	if input.ActiveLockReason != nil {
+		iuo.SetActiveLockReason(*input.ActiveLockReason)
+	}
+	iuo.SetComments(input.Comments)
+	if input.ClosedAt != nil {
+		iuo.SetClosedAt(*input.ClosedAt)
+	}
+	iuo.SetCreatedAt(input.CreatedAt)
+	iuo.SetUpdatedAt(input.UpdatedAt)
+	iuo.SetDraft(input.Draft)
+	return iuo
+}
+
 // CopyRepository allows to create a new Repository copying the existing
 // values of input.
 func (rc *RepositoryCreate) CopyRepository(input *Repository) *RepositoryCreate {
@@ -65,7 +132,7 @@ func (rc *RepositoryCreate) CopyRepository(input *Repository) *RepositoryCreate 
 	rc.SetOpenIssuesCount(input.OpenIssuesCount)
 	rc.SetIsTemplate(input.IsTemplate)
 	rc.SetTopics(input.Topics)
-	rc.SetHasIssues(input.HasIssues)
+	rc.SetHasIssuesEnabled(input.HasIssuesEnabled)
 	rc.SetHasProjects(input.HasProjects)
 	rc.SetHasWiki(input.HasWiki)
 	rc.SetHasPages(input.HasPages)
@@ -73,7 +140,9 @@ func (rc *RepositoryCreate) CopyRepository(input *Repository) *RepositoryCreate 
 	rc.SetHasDiscussions(input.HasDiscussions)
 	rc.SetArchived(input.Archived)
 	rc.SetDisabled(input.Disabled)
-	rc.SetVisibility(input.Visibility)
+	if input.Visibility != nil {
+		rc.SetVisibility(*input.Visibility)
+	}
 	rc.SetPushedAt(input.PushedAt)
 	rc.SetCreatedAt(input.CreatedAt)
 	rc.SetUpdatedAt(input.UpdatedAt)
@@ -147,7 +216,7 @@ func (ruo *RepositoryUpdateOne) CopyRepository(input *Repository) *RepositoryUpd
 	ruo.SetOpenIssuesCount(input.OpenIssuesCount)
 	ruo.SetIsTemplate(input.IsTemplate)
 	ruo.SetTopics(input.Topics)
-	ruo.SetHasIssues(input.HasIssues)
+	ruo.SetHasIssuesEnabled(input.HasIssuesEnabled)
 	ruo.SetHasProjects(input.HasProjects)
 	ruo.SetHasWiki(input.HasWiki)
 	ruo.SetHasPages(input.HasPages)
@@ -155,7 +224,9 @@ func (ruo *RepositoryUpdateOne) CopyRepository(input *Repository) *RepositoryUpd
 	ruo.SetHasDiscussions(input.HasDiscussions)
 	ruo.SetArchived(input.Archived)
 	ruo.SetDisabled(input.Disabled)
-	ruo.SetVisibility(input.Visibility)
+	if input.Visibility != nil {
+		ruo.SetVisibility(*input.Visibility)
+	}
 	ruo.SetPushedAt(input.PushedAt)
 	ruo.SetCreatedAt(input.CreatedAt)
 	ruo.SetUpdatedAt(input.UpdatedAt)

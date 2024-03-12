@@ -1,3 +1,4 @@
 misc/schema2schema/schema.json
 *.sqlite
 config.txt
+*.vim

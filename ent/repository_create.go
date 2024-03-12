@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 )
@@ -409,9 +410,9 @@ func (rc *RepositoryCreate) SetTopics(s []string) *RepositoryCreate {
 	return rc
 }
 
-// SetHasIssues sets the "has_issues" field.
-func (rc *RepositoryCreate) SetHasIssues(b bool) *RepositoryCreate {
-	rc.mutation.SetHasIssues(b)
+// SetHasIssuesEnabled sets the "has_issues_enabled" field.
+func (rc *RepositoryCreate) SetHasIssuesEnabled(b bool) *RepositoryCreate {
+	rc.mutation.SetHasIssuesEnabled(b)
 	return rc
 }
 
@@ -460,6 +461,14 @@ func (rc *RepositoryCreate) SetDisabled(b bool) *RepositoryCreate {
 // SetVisibility sets the "visibility" field.
 func (rc *RepositoryCreate) SetVisibility(r repository.Visibility) *RepositoryCreate {
 	rc.mutation.SetVisibility(r)
+	return rc
+}
+
+// SetNillableVisibility sets the "visibility" field if the given value is not nil.
+func (rc *RepositoryCreate) SetNillableVisibility(r *repository.Visibility) *RepositoryCreate {
+	if r != nil {
+		rc.SetVisibility(*r)
+	}
 	return rc
 }
 
@@ -534,6 +543,21 @@ func (rc *RepositoryCreate) SetNillableOwnerID(id *int) *RepositoryCreate {
 // SetOwner sets the "owner" edge to the User entity.
 func (rc *RepositoryCreate) SetOwner(u *User) *RepositoryCreate {
 	return rc.SetOwnerID(u.ID)
+}
+
+// AddIssueIDs adds the "issues" edge to the Issue entity by IDs.
+func (rc *RepositoryCreate) AddIssueIDs(ids ...int) *RepositoryCreate {
+	rc.mutation.AddIssueIDs(ids...)
+	return rc
+}
+
+// AddIssues adds the "issues" edges to the Issue entity.
+func (rc *RepositoryCreate) AddIssues(i ...*Issue) *RepositoryCreate {
+	ids := make([]int, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return rc.AddIssueIDs(ids...)
 }
 
 // Mutation returns the RepositoryMutation object of the builder.
@@ -735,8 +759,8 @@ func (rc *RepositoryCreate) check() error {
 	if _, ok := rc.mutation.Topics(); !ok {
 		return &ValidationError{Name: "topics", err: errors.New(`ent: missing required field "Repository.topics"`)}
 	}
-	if _, ok := rc.mutation.HasIssues(); !ok {
-		return &ValidationError{Name: "has_issues", err: errors.New(`ent: missing required field "Repository.has_issues"`)}
+	if _, ok := rc.mutation.HasIssuesEnabled(); !ok {
+		return &ValidationError{Name: "has_issues_enabled", err: errors.New(`ent: missing required field "Repository.has_issues_enabled"`)}
 	}
 	if _, ok := rc.mutation.HasProjects(); !ok {
 		return &ValidationError{Name: "has_projects", err: errors.New(`ent: missing required field "Repository.has_projects"`)}
@@ -758,9 +782,6 @@ func (rc *RepositoryCreate) check() error {
 	}
 	if _, ok := rc.mutation.Disabled(); !ok {
 		return &ValidationError{Name: "disabled", err: errors.New(`ent: missing required field "Repository.disabled"`)}
-	}
-	if _, ok := rc.mutation.Visibility(); !ok {
-		return &ValidationError{Name: "visibility", err: errors.New(`ent: missing required field "Repository.visibility"`)}
 	}
 	if v, ok := rc.mutation.Visibility(); ok {
 		if err := repository.VisibilityValidator(v); err != nil {
@@ -1060,9 +1081,9 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		_spec.SetField(repository.FieldTopics, field.TypeJSON, value)
 		_node.Topics = value
 	}
-	if value, ok := rc.mutation.HasIssues(); ok {
-		_spec.SetField(repository.FieldHasIssues, field.TypeBool, value)
-		_node.HasIssues = value
+	if value, ok := rc.mutation.HasIssuesEnabled(); ok {
+		_spec.SetField(repository.FieldHasIssuesEnabled, field.TypeBool, value)
+		_node.HasIssuesEnabled = value
 	}
 	if value, ok := rc.mutation.HasProjects(); ok {
 		_spec.SetField(repository.FieldHasProjects, field.TypeBool, value)
@@ -1094,7 +1115,7 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := rc.mutation.Visibility(); ok {
 		_spec.SetField(repository.FieldVisibility, field.TypeEnum, value)
-		_node.Visibility = value
+		_node.Visibility = &value
 	}
 	if value, ok := rc.mutation.PushedAt(); ok {
 		_spec.SetField(repository.FieldPushedAt, field.TypeTime, value)
@@ -1142,7 +1163,23 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_repos = &nodes[0]
+		_node.user_repositories = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.IssuesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.IssuesTable,
+			Columns: []string{repository.IssuesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -1959,15 +1996,15 @@ func (u *RepositoryUpsert) UpdateTopics() *RepositoryUpsert {
 	return u
 }
 
-// SetHasIssues sets the "has_issues" field.
-func (u *RepositoryUpsert) SetHasIssues(v bool) *RepositoryUpsert {
-	u.Set(repository.FieldHasIssues, v)
+// SetHasIssuesEnabled sets the "has_issues_enabled" field.
+func (u *RepositoryUpsert) SetHasIssuesEnabled(v bool) *RepositoryUpsert {
+	u.Set(repository.FieldHasIssuesEnabled, v)
 	return u
 }
 
-// UpdateHasIssues sets the "has_issues" field to the value that was provided on create.
-func (u *RepositoryUpsert) UpdateHasIssues() *RepositoryUpsert {
-	u.SetExcluded(repository.FieldHasIssues)
+// UpdateHasIssuesEnabled sets the "has_issues_enabled" field to the value that was provided on create.
+func (u *RepositoryUpsert) UpdateHasIssuesEnabled() *RepositoryUpsert {
+	u.SetExcluded(repository.FieldHasIssuesEnabled)
 	return u
 }
 
@@ -2064,6 +2101,12 @@ func (u *RepositoryUpsert) SetVisibility(v repository.Visibility) *RepositoryUps
 // UpdateVisibility sets the "visibility" field to the value that was provided on create.
 func (u *RepositoryUpsert) UpdateVisibility() *RepositoryUpsert {
 	u.SetExcluded(repository.FieldVisibility)
+	return u
+}
+
+// ClearVisibility clears the value of the "visibility" field.
+func (u *RepositoryUpsert) ClearVisibility() *RepositoryUpsert {
+	u.SetNull(repository.FieldVisibility)
 	return u
 }
 
@@ -3130,17 +3173,17 @@ func (u *RepositoryUpsertOne) UpdateTopics() *RepositoryUpsertOne {
 	})
 }
 
-// SetHasIssues sets the "has_issues" field.
-func (u *RepositoryUpsertOne) SetHasIssues(v bool) *RepositoryUpsertOne {
+// SetHasIssuesEnabled sets the "has_issues_enabled" field.
+func (u *RepositoryUpsertOne) SetHasIssuesEnabled(v bool) *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
-		s.SetHasIssues(v)
+		s.SetHasIssuesEnabled(v)
 	})
 }
 
-// UpdateHasIssues sets the "has_issues" field to the value that was provided on create.
-func (u *RepositoryUpsertOne) UpdateHasIssues() *RepositoryUpsertOne {
+// UpdateHasIssuesEnabled sets the "has_issues_enabled" field to the value that was provided on create.
+func (u *RepositoryUpsertOne) UpdateHasIssuesEnabled() *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
-		s.UpdateHasIssues()
+		s.UpdateHasIssuesEnabled()
 	})
 }
 
@@ -3253,6 +3296,13 @@ func (u *RepositoryUpsertOne) SetVisibility(v repository.Visibility) *Repository
 func (u *RepositoryUpsertOne) UpdateVisibility() *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.UpdateVisibility()
+	})
+}
+
+// ClearVisibility clears the value of the "visibility" field.
+func (u *RepositoryUpsertOne) ClearVisibility() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearVisibility()
 	})
 }
 
@@ -4505,17 +4555,17 @@ func (u *RepositoryUpsertBulk) UpdateTopics() *RepositoryUpsertBulk {
 	})
 }
 
-// SetHasIssues sets the "has_issues" field.
-func (u *RepositoryUpsertBulk) SetHasIssues(v bool) *RepositoryUpsertBulk {
+// SetHasIssuesEnabled sets the "has_issues_enabled" field.
+func (u *RepositoryUpsertBulk) SetHasIssuesEnabled(v bool) *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
-		s.SetHasIssues(v)
+		s.SetHasIssuesEnabled(v)
 	})
 }
 
-// UpdateHasIssues sets the "has_issues" field to the value that was provided on create.
-func (u *RepositoryUpsertBulk) UpdateHasIssues() *RepositoryUpsertBulk {
+// UpdateHasIssuesEnabled sets the "has_issues_enabled" field to the value that was provided on create.
+func (u *RepositoryUpsertBulk) UpdateHasIssuesEnabled() *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
-		s.UpdateHasIssues()
+		s.UpdateHasIssuesEnabled()
 	})
 }
 
@@ -4628,6 +4678,13 @@ func (u *RepositoryUpsertBulk) SetVisibility(v repository.Visibility) *Repositor
 func (u *RepositoryUpsertBulk) UpdateVisibility() *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.UpdateVisibility()
+	})
+}
+
+// ClearVisibility clears the value of the "visibility" field.
+func (u *RepositoryUpsertBulk) ClearVisibility() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearVisibility()
 	})
 }
 

@@ -83,7 +83,7 @@ func (Repository) Fields() []ent.Field {
 		field.Int("open_issues_count"),
 		field.Bool("is_template"),
 		field.Strings("topics"),
-		field.Bool("has_issues"),
+		field.Bool("has_issues_enabled").StructTag(`json:"has_issues"`),
 		field.Bool("has_projects"),
 		field.Bool("has_wiki"),
 		field.Bool("has_pages"),
@@ -92,7 +92,7 @@ func (Repository) Fields() []ent.Field {
 		field.Bool("archived"),
 		field.Bool("disabled").
 			Comment("Returns whether or not this repository disabled."),
-		field.Enum("visibility").Values("public", "private", "internal"),
+		field.Enum("visibility").Nillable().Optional().Values("public", "private", "internal"),
 		field.Time("pushed_at"),
 		field.Time("created_at"),
 		field.Time("updated_at"),
@@ -126,8 +126,9 @@ func (Repository) Fields() []ent.Field {
 func (Repository) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("owner", User.Type).
-			Ref("repos").
+			Ref("repositories").
 			Unique(),
+		edge.To("issues", Issue.Type),
 		// edge: template_repository (#/components/schemas/nullable-repository)
 		// edge: license (#/components/schemas/nullable-license-simple)
 		// edge: organization (#/components/schemas/nullable-simple-user)

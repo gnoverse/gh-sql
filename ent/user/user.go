@@ -72,17 +72,42 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// EdgeRepos holds the string denoting the repos edge name in mutations.
-	EdgeRepos = "repos"
+	// EdgeRepositories holds the string denoting the repositories edge name in mutations.
+	EdgeRepositories = "repositories"
+	// EdgeIssuesCreated holds the string denoting the issues_created edge name in mutations.
+	EdgeIssuesCreated = "issues_created"
+	// EdgeIssuesAssigned holds the string denoting the issues_assigned edge name in mutations.
+	EdgeIssuesAssigned = "issues_assigned"
+	// EdgeIssuesClosed holds the string denoting the issues_closed edge name in mutations.
+	EdgeIssuesClosed = "issues_closed"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// ReposTable is the table that holds the repos relation/edge.
-	ReposTable = "repositories"
-	// ReposInverseTable is the table name for the Repository entity.
+	// RepositoriesTable is the table that holds the repositories relation/edge.
+	RepositoriesTable = "repositories"
+	// RepositoriesInverseTable is the table name for the Repository entity.
 	// It exists in this package in order to avoid circular dependency with the "repository" package.
-	ReposInverseTable = "repositories"
-	// ReposColumn is the table column denoting the repos relation/edge.
-	ReposColumn = "user_repos"
+	RepositoriesInverseTable = "repositories"
+	// RepositoriesColumn is the table column denoting the repositories relation/edge.
+	RepositoriesColumn = "user_repositories"
+	// IssuesCreatedTable is the table that holds the issues_created relation/edge.
+	IssuesCreatedTable = "issues"
+	// IssuesCreatedInverseTable is the table name for the Issue entity.
+	// It exists in this package in order to avoid circular dependency with the "issue" package.
+	IssuesCreatedInverseTable = "issues"
+	// IssuesCreatedColumn is the table column denoting the issues_created relation/edge.
+	IssuesCreatedColumn = "user_issues_created"
+	// IssuesAssignedTable is the table that holds the issues_assigned relation/edge. The primary key declared below.
+	IssuesAssignedTable = "issue_assignees"
+	// IssuesAssignedInverseTable is the table name for the Issue entity.
+	// It exists in this package in order to avoid circular dependency with the "issue" package.
+	IssuesAssignedInverseTable = "issues"
+	// IssuesClosedTable is the table that holds the issues_closed relation/edge.
+	IssuesClosedTable = "issues"
+	// IssuesClosedInverseTable is the table name for the Issue entity.
+	// It exists in this package in order to avoid circular dependency with the "issue" package.
+	IssuesClosedInverseTable = "issues"
+	// IssuesClosedColumn is the table column denoting the issues_closed relation/edge.
+	IssuesClosedColumn = "issue_closed_by"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -119,6 +144,12 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
+
+var (
+	// IssuesAssignedPrimaryKey and IssuesAssignedColumn2 are the table columns denoting the
+	// primary key for the issues_assigned relation (M2M).
+	IssuesAssignedPrimaryKey = []string{"issue_id", "user_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -288,23 +319,86 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByReposCount orders the results by repos count.
-func ByReposCount(opts ...sql.OrderTermOption) OrderOption {
+// ByRepositoriesCount orders the results by repositories count.
+func ByRepositoriesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newReposStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newRepositoriesStep(), opts...)
 	}
 }
 
-// ByRepos orders the results by repos terms.
-func ByRepos(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByRepositories orders the results by repositories terms.
+func ByRepositories(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newReposStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newRepositoriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newReposStep() *sqlgraph.Step {
+
+// ByIssuesCreatedCount orders the results by issues_created count.
+func ByIssuesCreatedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newIssuesCreatedStep(), opts...)
+	}
+}
+
+// ByIssuesCreated orders the results by issues_created terms.
+func ByIssuesCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newIssuesCreatedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByIssuesAssignedCount orders the results by issues_assigned count.
+func ByIssuesAssignedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newIssuesAssignedStep(), opts...)
+	}
+}
+
+// ByIssuesAssigned orders the results by issues_assigned terms.
+func ByIssuesAssigned(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newIssuesAssignedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByIssuesClosedCount orders the results by issues_closed count.
+func ByIssuesClosedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newIssuesClosedStep(), opts...)
+	}
+}
+
+// ByIssuesClosed orders the results by issues_closed terms.
+func ByIssuesClosed(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newIssuesClosedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newRepositoriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ReposInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, ReposTable, ReposColumn),
+		sqlgraph.To(RepositoriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RepositoriesTable, RepositoriesColumn),
+	)
+}
+func newIssuesCreatedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(IssuesCreatedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, IssuesCreatedTable, IssuesCreatedColumn),
+	)
+}
+func newIssuesAssignedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(IssuesAssignedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, IssuesAssignedTable, IssuesAssignedPrimaryKey...),
+	)
+}
+func newIssuesClosedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(IssuesClosedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, IssuesClosedTable, IssuesClosedColumn),
 	)
 }

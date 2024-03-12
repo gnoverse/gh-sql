@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -19,11 +20,14 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx        *QueryContext
-	order      []user.OrderOption
-	inters     []Interceptor
-	predicates []predicate.User
-	withRepos  *RepositoryQuery
+	ctx                *QueryContext
+	order              []user.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.User
+	withRepositories   *RepositoryQuery
+	withIssuesCreated  *IssueQuery
+	withIssuesAssigned *IssueQuery
+	withIssuesClosed   *IssueQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -60,8 +64,8 @@ func (uq *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	return uq
 }
 
-// QueryRepos chains the current query on the "repos" edge.
-func (uq *UserQuery) QueryRepos() *RepositoryQuery {
+// QueryRepositories chains the current query on the "repositories" edge.
+func (uq *UserQuery) QueryRepositories() *RepositoryQuery {
 	query := (&RepositoryClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
@@ -74,7 +78,73 @@ func (uq *UserQuery) QueryRepos() *RepositoryQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(repository.Table, repository.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.ReposTable, user.ReposColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.RepositoriesTable, user.RepositoriesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryIssuesCreated chains the current query on the "issues_created" edge.
+func (uq *UserQuery) QueryIssuesCreated() *IssueQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.IssuesCreatedTable, user.IssuesCreatedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryIssuesAssigned chains the current query on the "issues_assigned" edge.
+func (uq *UserQuery) QueryIssuesAssigned() *IssueQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.IssuesAssignedTable, user.IssuesAssignedPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryIssuesClosed chains the current query on the "issues_closed" edge.
+func (uq *UserQuery) QueryIssuesClosed() *IssueQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.IssuesClosedTable, user.IssuesClosedColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -269,26 +339,62 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:     uq.config,
-		ctx:        uq.ctx.Clone(),
-		order:      append([]user.OrderOption{}, uq.order...),
-		inters:     append([]Interceptor{}, uq.inters...),
-		predicates: append([]predicate.User{}, uq.predicates...),
-		withRepos:  uq.withRepos.Clone(),
+		config:             uq.config,
+		ctx:                uq.ctx.Clone(),
+		order:              append([]user.OrderOption{}, uq.order...),
+		inters:             append([]Interceptor{}, uq.inters...),
+		predicates:         append([]predicate.User{}, uq.predicates...),
+		withRepositories:   uq.withRepositories.Clone(),
+		withIssuesCreated:  uq.withIssuesCreated.Clone(),
+		withIssuesAssigned: uq.withIssuesAssigned.Clone(),
+		withIssuesClosed:   uq.withIssuesClosed.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
 	}
 }
 
-// WithRepos tells the query-builder to eager-load the nodes that are connected to
-// the "repos" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithRepos(opts ...func(*RepositoryQuery)) *UserQuery {
+// WithRepositories tells the query-builder to eager-load the nodes that are connected to
+// the "repositories" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithRepositories(opts ...func(*RepositoryQuery)) *UserQuery {
 	query := (&RepositoryClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withRepos = query
+	uq.withRepositories = query
+	return uq
+}
+
+// WithIssuesCreated tells the query-builder to eager-load the nodes that are connected to
+// the "issues_created" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithIssuesCreated(opts ...func(*IssueQuery)) *UserQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withIssuesCreated = query
+	return uq
+}
+
+// WithIssuesAssigned tells the query-builder to eager-load the nodes that are connected to
+// the "issues_assigned" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithIssuesAssigned(opts ...func(*IssueQuery)) *UserQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withIssuesAssigned = query
+	return uq
+}
+
+// WithIssuesClosed tells the query-builder to eager-load the nodes that are connected to
+// the "issues_closed" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithIssuesClosed(opts ...func(*IssueQuery)) *UserQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withIssuesClosed = query
 	return uq
 }
 
@@ -370,8 +476,11 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [1]bool{
-			uq.withRepos != nil,
+		loadedTypes = [4]bool{
+			uq.withRepositories != nil,
+			uq.withIssuesCreated != nil,
+			uq.withIssuesAssigned != nil,
+			uq.withIssuesClosed != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -392,17 +501,38 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := uq.withRepos; query != nil {
-		if err := uq.loadRepos(ctx, query, nodes,
-			func(n *User) { n.Edges.Repos = []*Repository{} },
-			func(n *User, e *Repository) { n.Edges.Repos = append(n.Edges.Repos, e) }); err != nil {
+	if query := uq.withRepositories; query != nil {
+		if err := uq.loadRepositories(ctx, query, nodes,
+			func(n *User) { n.Edges.Repositories = []*Repository{} },
+			func(n *User, e *Repository) { n.Edges.Repositories = append(n.Edges.Repositories, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withIssuesCreated; query != nil {
+		if err := uq.loadIssuesCreated(ctx, query, nodes,
+			func(n *User) { n.Edges.IssuesCreated = []*Issue{} },
+			func(n *User, e *Issue) { n.Edges.IssuesCreated = append(n.Edges.IssuesCreated, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withIssuesAssigned; query != nil {
+		if err := uq.loadIssuesAssigned(ctx, query, nodes,
+			func(n *User) { n.Edges.IssuesAssigned = []*Issue{} },
+			func(n *User, e *Issue) { n.Edges.IssuesAssigned = append(n.Edges.IssuesAssigned, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withIssuesClosed; query != nil {
+		if err := uq.loadIssuesClosed(ctx, query, nodes,
+			func(n *User) { n.Edges.IssuesClosed = []*Issue{} },
+			func(n *User, e *Issue) { n.Edges.IssuesClosed = append(n.Edges.IssuesClosed, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (uq *UserQuery) loadRepos(ctx context.Context, query *RepositoryQuery, nodes []*User, init func(*User), assign func(*User, *Repository)) error {
+func (uq *UserQuery) loadRepositories(ctx context.Context, query *RepositoryQuery, nodes []*User, init func(*User), assign func(*User, *Repository)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*User)
 	for i := range nodes {
@@ -414,20 +544,143 @@ func (uq *UserQuery) loadRepos(ctx context.Context, query *RepositoryQuery, node
 	}
 	query.withFKs = true
 	query.Where(predicate.Repository(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.ReposColumn), fks...))
+		s.Where(sql.InValues(s.C(user.RepositoriesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_repos
+		fk := n.user_repositories
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_repos" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_repositories" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_repos" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_repositories" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadIssuesCreated(ctx context.Context, query *IssueQuery, nodes []*User, init func(*User), assign func(*User, *Issue)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Issue(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.IssuesCreatedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_issues_created
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_issues_created" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_issues_created" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadIssuesAssigned(ctx context.Context, query *IssueQuery, nodes []*User, init func(*User), assign func(*User, *Issue)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*User)
+	nids := make(map[int]map[*User]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(user.IssuesAssignedTable)
+		s.Join(joinT).On(s.C(issue.FieldID), joinT.C(user.IssuesAssignedPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(user.IssuesAssignedPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(user.IssuesAssignedPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Issue](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "issues_assigned" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uq *UserQuery) loadIssuesClosed(ctx context.Context, query *IssueQuery, nodes []*User, init func(*User), assign func(*User, *Issue)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Issue(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.IssuesClosedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.issue_closed_by
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "issue_closed_by" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "issue_closed_by" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
