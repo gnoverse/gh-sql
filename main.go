@@ -6,11 +6,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/gnolang/gh-sql/ent"
 	"github.com/gnolang/gh-sql/ent/migrate"
+	"github.com/gnolang/gh-sql/pkg/rest"
 	"github.com/gnolang/gh-sql/pkg/sync"
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
@@ -44,9 +47,9 @@ func run() error {
 		Flags:     globalFS,
 		Subcommands: []*ff.Command{
 			newSyncCmd(globalFS, ctx),
+			newServeCmd(globalFS, ctx),
 
 			// gh-sql query       # simple readonly query interface/CLI to get info from the database, json/csv/msgpack output.
-			// gh-sql serve       # runs API server similar to GitHub API.
 		},
 		Exec: func(context.Context, []string) error { return ff.ErrHelp },
 	}
@@ -126,6 +129,29 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 				Token:     *token,
 				DebugHTTP: *debugHTTP,
 			})
+		},
+	}
+}
+
+func newServeCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
+	var (
+		fset = ff.NewFlagSet("gh-sql serve").SetParent(fs)
+		addr = fset.StringLong("addr", ":31415", "listening address for web server")
+	)
+	return &ff.Command{
+		Name:      "serve",
+		Usage:     "gh-sql serve [--addr :31345] [FLAGS...]",
+		ShortHelp: "listen for requests on the given address, mimicking the GitHub REST API",
+		Flags:     fset,
+		Exec: func(ctx context.Context, args []string) error {
+			if len(args) > 0 {
+				return ff.ErrHelp
+			}
+			srv := rest.New(rest.Options{
+				DB: ec.db,
+			})
+			log.Printf("Listening on %s", *addr)
+			return http.ListenAndServe(*addr, srv)
 		},
 	}
 }
