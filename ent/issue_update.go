@@ -314,6 +314,26 @@ func (iu *IssueUpdate) SetNillableDraft(b *bool) *IssueUpdate {
 	return iu
 }
 
+// SetAuthorAssociation sets the "author_association" field.
+func (iu *IssueUpdate) SetAuthorAssociation(ia issue.AuthorAssociation) *IssueUpdate {
+	iu.mutation.SetAuthorAssociation(ia)
+	return iu
+}
+
+// SetNillableAuthorAssociation sets the "author_association" field if the given value is not nil.
+func (iu *IssueUpdate) SetNillableAuthorAssociation(ia *issue.AuthorAssociation) *IssueUpdate {
+	if ia != nil {
+		iu.SetAuthorAssociation(*ia)
+	}
+	return iu
+}
+
+// SetReactions sets the "reactions" field.
+func (iu *IssueUpdate) SetReactions(m map[string]interface{}) *IssueUpdate {
+	iu.mutation.SetReactions(m)
+	return iu
+}
+
 // SetRepositoryID sets the "repository" edge to the Repository entity by ID.
 func (iu *IssueUpdate) SetRepositoryID(id int64) *IssueUpdate {
 	iu.mutation.SetRepositoryID(id)
@@ -492,6 +512,11 @@ func (iu *IssueUpdate) check() error {
 			return &ValidationError{Name: "state_reason", err: fmt.Errorf(`ent: validator failed for field "Issue.state_reason": %w`, err)}
 		}
 	}
+	if v, ok := iu.mutation.AuthorAssociation(); ok {
+		if err := issue.AuthorAssociationValidator(v); err != nil {
+			return &ValidationError{Name: "author_association", err: fmt.Errorf(`ent: validator failed for field "Issue.author_association": %w`, err)}
+		}
+	}
 	if _, ok := iu.mutation.RepositoryID(); iu.mutation.RepositoryCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Issue.repository"`)
 	}
@@ -578,6 +603,12 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := iu.mutation.Draft(); ok {
 		_spec.SetField(issue.FieldDraft, field.TypeBool, value)
+	}
+	if value, ok := iu.mutation.AuthorAssociation(); ok {
+		_spec.SetField(issue.FieldAuthorAssociation, field.TypeEnum, value)
+	}
+	if value, ok := iu.mutation.Reactions(); ok {
+		_spec.SetField(issue.FieldReactions, field.TypeJSON, value)
 	}
 	if iu.mutation.RepositoryCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1059,6 +1090,26 @@ func (iuo *IssueUpdateOne) SetNillableDraft(b *bool) *IssueUpdateOne {
 	return iuo
 }
 
+// SetAuthorAssociation sets the "author_association" field.
+func (iuo *IssueUpdateOne) SetAuthorAssociation(ia issue.AuthorAssociation) *IssueUpdateOne {
+	iuo.mutation.SetAuthorAssociation(ia)
+	return iuo
+}
+
+// SetNillableAuthorAssociation sets the "author_association" field if the given value is not nil.
+func (iuo *IssueUpdateOne) SetNillableAuthorAssociation(ia *issue.AuthorAssociation) *IssueUpdateOne {
+	if ia != nil {
+		iuo.SetAuthorAssociation(*ia)
+	}
+	return iuo
+}
+
+// SetReactions sets the "reactions" field.
+func (iuo *IssueUpdateOne) SetReactions(m map[string]interface{}) *IssueUpdateOne {
+	iuo.mutation.SetReactions(m)
+	return iuo
+}
+
 // SetRepositoryID sets the "repository" edge to the Repository entity by ID.
 func (iuo *IssueUpdateOne) SetRepositoryID(id int64) *IssueUpdateOne {
 	iuo.mutation.SetRepositoryID(id)
@@ -1250,6 +1301,11 @@ func (iuo *IssueUpdateOne) check() error {
 			return &ValidationError{Name: "state_reason", err: fmt.Errorf(`ent: validator failed for field "Issue.state_reason": %w`, err)}
 		}
 	}
+	if v, ok := iuo.mutation.AuthorAssociation(); ok {
+		if err := issue.AuthorAssociationValidator(v); err != nil {
+			return &ValidationError{Name: "author_association", err: fmt.Errorf(`ent: validator failed for field "Issue.author_association": %w`, err)}
+		}
+	}
 	if _, ok := iuo.mutation.RepositoryID(); iuo.mutation.RepositoryCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Issue.repository"`)
 	}
@@ -1353,6 +1409,12 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 	}
 	if value, ok := iuo.mutation.Draft(); ok {
 		_spec.SetField(issue.FieldDraft, field.TypeBool, value)
+	}
+	if value, ok := iuo.mutation.AuthorAssociation(); ok {
+		_spec.SetField(issue.FieldAuthorAssociation, field.TypeEnum, value)
+	}
+	if value, ok := iuo.mutation.Reactions(); ok {
+		_spec.SetField(issue.FieldReactions, field.TypeJSON, value)
 	}
 	if iuo.mutation.RepositoryCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -165,6 +165,18 @@ func (ic *IssueCreate) SetDraft(b bool) *IssueCreate {
 	return ic
 }
 
+// SetAuthorAssociation sets the "author_association" field.
+func (ic *IssueCreate) SetAuthorAssociation(ia issue.AuthorAssociation) *IssueCreate {
+	ic.mutation.SetAuthorAssociation(ia)
+	return ic
+}
+
+// SetReactions sets the "reactions" field.
+func (ic *IssueCreate) SetReactions(m map[string]interface{}) *IssueCreate {
+	ic.mutation.SetReactions(m)
+	return ic
+}
+
 // SetID sets the "id" field.
 func (ic *IssueCreate) SetID(i int64) *IssueCreate {
 	ic.mutation.SetID(i)
@@ -331,6 +343,17 @@ func (ic *IssueCreate) check() error {
 	if _, ok := ic.mutation.Draft(); !ok {
 		return &ValidationError{Name: "draft", err: errors.New(`ent: missing required field "Issue.draft"`)}
 	}
+	if _, ok := ic.mutation.AuthorAssociation(); !ok {
+		return &ValidationError{Name: "author_association", err: errors.New(`ent: missing required field "Issue.author_association"`)}
+	}
+	if v, ok := ic.mutation.AuthorAssociation(); ok {
+		if err := issue.AuthorAssociationValidator(v); err != nil {
+			return &ValidationError{Name: "author_association", err: fmt.Errorf(`ent: validator failed for field "Issue.author_association": %w`, err)}
+		}
+	}
+	if _, ok := ic.mutation.Reactions(); !ok {
+		return &ValidationError{Name: "reactions", err: errors.New(`ent: missing required field "Issue.reactions"`)}
+	}
 	if _, ok := ic.mutation.RepositoryID(); !ok {
 		return &ValidationError{Name: "repository", err: errors.New(`ent: missing required edge "Issue.repository"`)}
 	}
@@ -438,6 +461,14 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 	if value, ok := ic.mutation.Draft(); ok {
 		_spec.SetField(issue.FieldDraft, field.TypeBool, value)
 		_node.Draft = value
+	}
+	if value, ok := ic.mutation.AuthorAssociation(); ok {
+		_spec.SetField(issue.FieldAuthorAssociation, field.TypeEnum, value)
+		_node.AuthorAssociation = value
+	}
+	if value, ok := ic.mutation.Reactions(); ok {
+		_spec.SetField(issue.FieldReactions, field.TypeJSON, value)
+		_node.Reactions = value
 	}
 	if nodes := ic.mutation.RepositoryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -820,6 +851,30 @@ func (u *IssueUpsert) UpdateDraft() *IssueUpsert {
 	return u
 }
 
+// SetAuthorAssociation sets the "author_association" field.
+func (u *IssueUpsert) SetAuthorAssociation(v issue.AuthorAssociation) *IssueUpsert {
+	u.Set(issue.FieldAuthorAssociation, v)
+	return u
+}
+
+// UpdateAuthorAssociation sets the "author_association" field to the value that was provided on create.
+func (u *IssueUpsert) UpdateAuthorAssociation() *IssueUpsert {
+	u.SetExcluded(issue.FieldAuthorAssociation)
+	return u
+}
+
+// SetReactions sets the "reactions" field.
+func (u *IssueUpsert) SetReactions(v map[string]interface{}) *IssueUpsert {
+	u.Set(issue.FieldReactions, v)
+	return u
+}
+
+// UpdateReactions sets the "reactions" field to the value that was provided on create.
+func (u *IssueUpsert) UpdateReactions() *IssueUpsert {
+	u.SetExcluded(issue.FieldReactions)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1152,6 +1207,34 @@ func (u *IssueUpsertOne) SetDraft(v bool) *IssueUpsertOne {
 func (u *IssueUpsertOne) UpdateDraft() *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
 		s.UpdateDraft()
+	})
+}
+
+// SetAuthorAssociation sets the "author_association" field.
+func (u *IssueUpsertOne) SetAuthorAssociation(v issue.AuthorAssociation) *IssueUpsertOne {
+	return u.Update(func(s *IssueUpsert) {
+		s.SetAuthorAssociation(v)
+	})
+}
+
+// UpdateAuthorAssociation sets the "author_association" field to the value that was provided on create.
+func (u *IssueUpsertOne) UpdateAuthorAssociation() *IssueUpsertOne {
+	return u.Update(func(s *IssueUpsert) {
+		s.UpdateAuthorAssociation()
+	})
+}
+
+// SetReactions sets the "reactions" field.
+func (u *IssueUpsertOne) SetReactions(v map[string]interface{}) *IssueUpsertOne {
+	return u.Update(func(s *IssueUpsert) {
+		s.SetReactions(v)
+	})
+}
+
+// UpdateReactions sets the "reactions" field to the value that was provided on create.
+func (u *IssueUpsertOne) UpdateReactions() *IssueUpsertOne {
+	return u.Update(func(s *IssueUpsert) {
+		s.UpdateReactions()
 	})
 }
 
@@ -1652,6 +1735,34 @@ func (u *IssueUpsertBulk) SetDraft(v bool) *IssueUpsertBulk {
 func (u *IssueUpsertBulk) UpdateDraft() *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.UpdateDraft()
+	})
+}
+
+// SetAuthorAssociation sets the "author_association" field.
+func (u *IssueUpsertBulk) SetAuthorAssociation(v issue.AuthorAssociation) *IssueUpsertBulk {
+	return u.Update(func(s *IssueUpsert) {
+		s.SetAuthorAssociation(v)
+	})
+}
+
+// UpdateAuthorAssociation sets the "author_association" field to the value that was provided on create.
+func (u *IssueUpsertBulk) UpdateAuthorAssociation() *IssueUpsertBulk {
+	return u.Update(func(s *IssueUpsert) {
+		s.UpdateAuthorAssociation()
+	})
+}
+
+// SetReactions sets the "reactions" field.
+func (u *IssueUpsertBulk) SetReactions(v map[string]interface{}) *IssueUpsertBulk {
+	return u.Update(func(s *IssueUpsert) {
+		s.SetReactions(v)
+	})
+}
+
+// UpdateReactions sets the "reactions" field to the value that was provided on create.
+func (u *IssueUpsertBulk) UpdateReactions() *IssueUpsertBulk {
+	return u.Update(func(s *IssueUpsert) {
+		s.UpdateReactions()
 	})
 }
 

@@ -47,6 +47,19 @@ func (Issue) Fields() []ent.Field {
 		field.Time("created_at"),
 		field.Time("updated_at"),
 		field.Bool("draft"),
+		// TODO: unify with IssueComment
+		field.Enum("author_association").Values(
+			"COLLABORATOR",
+			"CONTRIBUTOR",
+			"FIRST_TIMER",
+			"FIRST_TIME_CONTRIBUTOR",
+			"MANNEQUIN",
+			"MEMBER",
+			"NONE",
+			"OWNER",
+		),
+		// TODO: better type
+		field.JSON("reactions", map[string]any{}),
 	}
 }
 
@@ -56,8 +69,6 @@ func (Issue) Edges() []ent.Edge {
 	// edge: pull_request
 	// edge: milestone (#/components/schemas/nullable-milestone)
 	// edge: performed_via_github_app (#/components/schemas/nullable-integration)
-	// edge: author_association (#/components/schemas/author-association)
-	// edge: reactions (#/components/schemas/reaction-rollup)
 	return []ent.Edge{
 		edge.From("repository", Repository.Type).
 			Ref("issues").

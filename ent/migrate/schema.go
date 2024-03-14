@@ -29,6 +29,8 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "draft", Type: field.TypeBool},
+		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "NONE", "OWNER"}},
+		{Name: "reactions", Type: field.TypeJSON},
 		{Name: "issue_closed_by", Type: field.TypeInt64, Nullable: true},
 		{Name: "repository_issues", Type: field.TypeInt64},
 		{Name: "user_issues_created", Type: field.TypeInt64, Nullable: true},
@@ -41,19 +43,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "issues_users_closed_by",
-				Columns:    []*schema.Column{IssuesColumns[19]},
+				Columns:    []*schema.Column{IssuesColumns[21]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "issues_repositories_issues",
-				Columns:    []*schema.Column{IssuesColumns[20]},
+				Columns:    []*schema.Column{IssuesColumns[22]},
 				RefColumns: []*schema.Column{RepositoriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "issues_users_issues_created",
-				Columns:    []*schema.Column{IssuesColumns[21]},
+				Columns:    []*schema.Column{IssuesColumns[23]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

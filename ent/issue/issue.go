@@ -50,6 +50,10 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// FieldDraft holds the string denoting the draft field in the database.
 	FieldDraft = "draft"
+	// FieldAuthorAssociation holds the string denoting the author_association field in the database.
+	FieldAuthorAssociation = "author_association"
+	// FieldReactions holds the string denoting the reactions field in the database.
+	FieldReactions = "reactions"
 	// EdgeRepository holds the string denoting the repository edge name in mutations.
 	EdgeRepository = "repository"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -118,6 +122,8 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldDraft,
+	FieldAuthorAssociation,
+	FieldReactions,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "issues"
@@ -170,6 +176,35 @@ func StateReasonValidator(sr StateReason) error {
 		return nil
 	default:
 		return fmt.Errorf("issue: invalid enum value for state_reason field: %q", sr)
+	}
+}
+
+// AuthorAssociation defines the type for the "author_association" enum field.
+type AuthorAssociation string
+
+// AuthorAssociation values.
+const (
+	AuthorAssociationCOLLABORATOR           AuthorAssociation = "COLLABORATOR"
+	AuthorAssociationCONTRIBUTOR            AuthorAssociation = "CONTRIBUTOR"
+	AuthorAssociationFIRST_TIMER            AuthorAssociation = "FIRST_TIMER"
+	AuthorAssociationFIRST_TIME_CONTRIBUTOR AuthorAssociation = "FIRST_TIME_CONTRIBUTOR"
+	AuthorAssociationMANNEQUIN              AuthorAssociation = "MANNEQUIN"
+	AuthorAssociationMEMBER                 AuthorAssociation = "MEMBER"
+	AuthorAssociationNONE                   AuthorAssociation = "NONE"
+	AuthorAssociationOWNER                  AuthorAssociation = "OWNER"
+)
+
+func (aa AuthorAssociation) String() string {
+	return string(aa)
+}
+
+// AuthorAssociationValidator is a validator for the "author_association" field enum values. It is called by the builders before save.
+func AuthorAssociationValidator(aa AuthorAssociation) error {
+	switch aa {
+	case AuthorAssociationCOLLABORATOR, AuthorAssociationCONTRIBUTOR, AuthorAssociationFIRST_TIMER, AuthorAssociationFIRST_TIME_CONTRIBUTOR, AuthorAssociationMANNEQUIN, AuthorAssociationMEMBER, AuthorAssociationNONE, AuthorAssociationOWNER:
+		return nil
+	default:
+		return fmt.Errorf("issue: invalid enum value for author_association field: %q", aa)
 	}
 }
 
@@ -269,6 +304,11 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByDraft orders the results by the draft field.
 func ByDraft(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDraft, opts...).ToFunc()
+}
+
+// ByAuthorAssociation orders the results by the author_association field.
+func ByAuthorAssociation(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAuthorAssociation, opts...).ToFunc()
 }
 
 // ByRepositoryField orders the results by repository field.

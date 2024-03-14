@@ -199,6 +199,10 @@ func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 		if err != nil && !ent.IsNotFound(err) {
 			return err
 		}
+		// TODO: instead of double-fetching, we could save the issue here.
+		// fields that we want to make sure that are the same in the two:
+		// state_reason, body, labels, draft, assignees, active_lock_reason
+		// pull_request (existance), reactions.
 		if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
 			fetchAsync(ctx, h, fetchIssue{repoOwner, repoName, i.Number})
 		}

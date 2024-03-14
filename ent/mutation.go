@@ -58,6 +58,8 @@ type IssueMutation struct {
 	created_at         *time.Time
 	updated_at         *time.Time
 	draft              *bool
+	author_association *issue.AuthorAssociation
+	reactions          *map[string]interface{}
 	clearedFields      map[string]struct{}
 	repository         *int64
 	clearedrepository  bool
@@ -900,6 +902,78 @@ func (m *IssueMutation) ResetDraft() {
 	m.draft = nil
 }
 
+// SetAuthorAssociation sets the "author_association" field.
+func (m *IssueMutation) SetAuthorAssociation(ia issue.AuthorAssociation) {
+	m.author_association = &ia
+}
+
+// AuthorAssociation returns the value of the "author_association" field in the mutation.
+func (m *IssueMutation) AuthorAssociation() (r issue.AuthorAssociation, exists bool) {
+	v := m.author_association
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAuthorAssociation returns the old "author_association" field's value of the Issue entity.
+// If the Issue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IssueMutation) OldAuthorAssociation(ctx context.Context) (v issue.AuthorAssociation, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthorAssociation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthorAssociation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthorAssociation: %w", err)
+	}
+	return oldValue.AuthorAssociation, nil
+}
+
+// ResetAuthorAssociation resets all changes to the "author_association" field.
+func (m *IssueMutation) ResetAuthorAssociation() {
+	m.author_association = nil
+}
+
+// SetReactions sets the "reactions" field.
+func (m *IssueMutation) SetReactions(value map[string]interface{}) {
+	m.reactions = &value
+}
+
+// Reactions returns the value of the "reactions" field in the mutation.
+func (m *IssueMutation) Reactions() (r map[string]interface{}, exists bool) {
+	v := m.reactions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReactions returns the old "reactions" field's value of the Issue entity.
+// If the Issue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IssueMutation) OldReactions(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReactions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReactions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReactions: %w", err)
+	}
+	return oldValue.Reactions, nil
+}
+
+// ResetReactions resets all changes to the "reactions" field.
+func (m *IssueMutation) ResetReactions() {
+	m.reactions = nil
+}
+
 // SetRepositoryID sets the "repository" edge to the Repository entity by id.
 func (m *IssueMutation) SetRepositoryID(id int64) {
 	m.repository = &id
@@ -1159,7 +1233,7 @@ func (m *IssueMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *IssueMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 20)
 	if m.node_id != nil {
 		fields = append(fields, issue.FieldNodeID)
 	}
@@ -1214,6 +1288,12 @@ func (m *IssueMutation) Fields() []string {
 	if m.draft != nil {
 		fields = append(fields, issue.FieldDraft)
 	}
+	if m.author_association != nil {
+		fields = append(fields, issue.FieldAuthorAssociation)
+	}
+	if m.reactions != nil {
+		fields = append(fields, issue.FieldReactions)
+	}
 	return fields
 }
 
@@ -1258,6 +1338,10 @@ func (m *IssueMutation) Field(name string) (ent.Value, bool) {
 		return m.UpdatedAt()
 	case issue.FieldDraft:
 		return m.Draft()
+	case issue.FieldAuthorAssociation:
+		return m.AuthorAssociation()
+	case issue.FieldReactions:
+		return m.Reactions()
 	}
 	return nil, false
 }
@@ -1303,6 +1387,10 @@ func (m *IssueMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldUpdatedAt(ctx)
 	case issue.FieldDraft:
 		return m.OldDraft(ctx)
+	case issue.FieldAuthorAssociation:
+		return m.OldAuthorAssociation(ctx)
+	case issue.FieldReactions:
+		return m.OldReactions(ctx)
 	}
 	return nil, fmt.Errorf("unknown Issue field %s", name)
 }
@@ -1437,6 +1525,20 @@ func (m *IssueMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDraft(v)
+		return nil
+	case issue.FieldAuthorAssociation:
+		v, ok := value.(issue.AuthorAssociation)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthorAssociation(v)
+		return nil
+	case issue.FieldReactions:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReactions(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Issue field %s", name)
@@ -1582,6 +1684,12 @@ func (m *IssueMutation) ResetField(name string) error {
 		return nil
 	case issue.FieldDraft:
 		m.ResetDraft()
+		return nil
+	case issue.FieldAuthorAssociation:
+		m.ResetAuthorAssociation()
+		return nil
+	case issue.FieldReactions:
+		m.ResetReactions()
 		return nil
 	}
 	return fmt.Errorf("unknown Issue field %s", name)

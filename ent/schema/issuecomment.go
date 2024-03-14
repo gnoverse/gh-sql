@@ -24,6 +24,7 @@ func (IssueComment) Fields() []ent.Field {
 		field.String("created_at"),
 		field.String("updated_at"),
 		field.String("issue_url"),
+		// TODO: unify with IssueComment
 		field.Enum("author_association").Values(
 			"COLLABORATOR",
 			"CONTRIBUTOR",

@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -55,6 +56,10 @@ type Issue struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Draft holds the value of the "draft" field.
 	Draft bool `json:"draft,omitempty"`
+	// AuthorAssociation holds the value of the "author_association" field.
+	AuthorAssociation issue.AuthorAssociation `json:"author_association,omitempty"`
+	// Reactions holds the value of the "reactions" field.
+	Reactions map[string]interface{} `json:"reactions,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IssueQuery when eager-loading is set.
 	Edges               IssueEdges `json:"edges"`
@@ -137,11 +142,13 @@ func (*Issue) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case issue.FieldReactions:
+			values[i] = new([]byte)
 		case issue.FieldLocked, issue.FieldDraft:
 			values[i] = new(sql.NullBool)
 		case issue.FieldID, issue.FieldNumber:
 			values[i] = new(sql.NullInt64)
-		case issue.FieldNodeID, issue.FieldURL, issue.FieldRepositoryURL, issue.FieldLabelsURL, issue.FieldCommentsURL, issue.FieldEventsURL, issue.FieldHTMLURL, issue.FieldState, issue.FieldStateReason, issue.FieldTitle, issue.FieldBody, issue.FieldActiveLockReason:
+		case issue.FieldNodeID, issue.FieldURL, issue.FieldRepositoryURL, issue.FieldLabelsURL, issue.FieldCommentsURL, issue.FieldEventsURL, issue.FieldHTMLURL, issue.FieldState, issue.FieldStateReason, issue.FieldTitle, issue.FieldBody, issue.FieldActiveLockReason, issue.FieldAuthorAssociation:
 			values[i] = new(sql.NullString)
 		case issue.FieldClosedAt, issue.FieldCreatedAt, issue.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -283,6 +290,20 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field draft", values[j])
 			} else if value.Valid {
 				i.Draft = value.Bool
+			}
+		case issue.FieldAuthorAssociation:
+			if value, ok := values[j].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field author_association", values[j])
+			} else if value.Valid {
+				i.AuthorAssociation = issue.AuthorAssociation(value.String)
+			}
+		case issue.FieldReactions:
+			if value, ok := values[j].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field reactions", values[j])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &i.Reactions); err != nil {
+					return fmt.Errorf("unmarshal field reactions: %w", err)
+				}
 			}
 		case issue.ForeignKeys[0]:
 			if value, ok := values[j].(*sql.NullInt64); !ok {
@@ -427,6 +448,12 @@ func (i *Issue) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("draft=")
 	builder.WriteString(fmt.Sprintf("%v", i.Draft))
+	builder.WriteString(", ")
+	builder.WriteString("author_association=")
+	builder.WriteString(fmt.Sprintf("%v", i.AuthorAssociation))
+	builder.WriteString(", ")
+	builder.WriteString("reactions=")
+	builder.WriteString(fmt.Sprintf("%v", i.Reactions))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -32,6 +32,8 @@ func (ic *IssueCreate) CopyIssue(input *Issue) *IssueCreate {
 	ic.SetCreatedAt(input.CreatedAt)
 	ic.SetUpdatedAt(input.UpdatedAt)
 	ic.SetDraft(input.Draft)
+	ic.SetAuthorAssociation(input.AuthorAssociation)
+	ic.SetReactions(input.Reactions)
 	return ic
 }
 
@@ -64,6 +66,8 @@ func (iuo *IssueUpdateOne) CopyIssue(input *Issue) *IssueUpdateOne {
 	iuo.SetCreatedAt(input.CreatedAt)
 	iuo.SetUpdatedAt(input.UpdatedAt)
 	iuo.SetDraft(input.Draft)
+	iuo.SetAuthorAssociation(input.AuthorAssociation)
+	iuo.SetReactions(input.Reactions)
 	return iuo
 }
 

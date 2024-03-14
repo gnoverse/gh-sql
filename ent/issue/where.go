@@ -1095,6 +1095,26 @@ func DraftNEQ(v bool) predicate.Issue {
 	return predicate.Issue(sql.FieldNEQ(FieldDraft, v))
 }
 
+// AuthorAssociationEQ applies the EQ predicate on the "author_association" field.
+func AuthorAssociationEQ(v AuthorAssociation) predicate.Issue {
+	return predicate.Issue(sql.FieldEQ(FieldAuthorAssociation, v))
+}
+
+// AuthorAssociationNEQ applies the NEQ predicate on the "author_association" field.
+func AuthorAssociationNEQ(v AuthorAssociation) predicate.Issue {
+	return predicate.Issue(sql.FieldNEQ(FieldAuthorAssociation, v))
+}
+
+// AuthorAssociationIn applies the In predicate on the "author_association" field.
+func AuthorAssociationIn(vs ...AuthorAssociation) predicate.Issue {
+	return predicate.Issue(sql.FieldIn(FieldAuthorAssociation, vs...))
+}
+
+// AuthorAssociationNotIn applies the NotIn predicate on the "author_association" field.
+func AuthorAssociationNotIn(vs ...AuthorAssociation) predicate.Issue {
+	return predicate.Issue(sql.FieldNotIn(FieldAuthorAssociation, vs...))
+}
+
 // HasRepository applies the HasEdge predicate on the "repository" edge.
 func HasRepository() predicate.Issue {
 	return predicate.Issue(func(s *sql.Selector) {
