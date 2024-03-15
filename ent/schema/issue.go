@@ -40,7 +40,7 @@ func (Issue) Fields() []ent.Field {
 		field.String("active_lock_reason").
 			Optional().
 			Nillable(),
-		// field.Int64("comments"), removed in favour of comments edge
+		field.Int64("comments_count").StructTag(`json:"comments"`),
 		field.Time("closed_at").
 			Optional().
 			Nillable(),
@@ -68,6 +68,7 @@ func (Issue) Edges() []ent.Edge {
 	// edge: labels
 	// edge: pull_request
 	// edge: milestone (#/components/schemas/nullable-milestone)
+	// edge: closed_by (#/components/schemas/nullable-user) (redundant with timeline)
 	// edge: performed_via_github_app (#/components/schemas/nullable-integration)
 	return []ent.Edge{
 		edge.From("repository", Repository.Type).
@@ -78,8 +79,6 @@ func (Issue) Edges() []ent.Edge {
 			Ref("issues_created").
 			Unique(),
 		edge.To("assignees", User.Type),
-		edge.To("closed_by", User.Type).
-			Unique(),
 		edge.To("comments", IssueComment.Type),
 	}
 }

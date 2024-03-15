@@ -2067,29 +2067,6 @@ func HasIssuesAssignedWith(preds ...predicate.Issue) predicate.User {
 	})
 }
 
-// HasIssuesClosed applies the HasEdge predicate on the "issues_closed" edge.
-func HasIssuesClosed() predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, IssuesClosedTable, IssuesClosedColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasIssuesClosedWith applies the HasEdge predicate on the "issues_closed" edge with a given conditions (other predicates).
-func HasIssuesClosedWith(preds ...predicate.Issue) predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := newIssuesClosedStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

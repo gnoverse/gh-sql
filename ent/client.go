@@ -383,22 +383,6 @@ func (c *IssueClient) QueryAssignees(i *Issue) *UserQuery {
 	return query
 }
 
-// QueryClosedBy queries the closed_by edge of a Issue.
-func (c *IssueClient) QueryClosedBy(i *Issue) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := i.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(issue.Table, issue.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, issue.ClosedByTable, issue.ClosedByColumn),
-		)
-		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryComments queries the comments edge of a Issue.
 func (c *IssueClient) QueryComments(i *Issue) *IssueCommentQuery {
 	query := (&IssueCommentClient{config: c.config}).Query()
@@ -935,22 +919,6 @@ func (c *UserClient) QueryIssuesAssigned(u *User) *IssueQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(issue.Table, issue.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, user.IssuesAssignedTable, user.IssuesAssignedPrimaryKey...),
-		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryIssuesClosed queries the issues_closed edge of a User.
-func (c *UserClient) QueryIssuesClosed(u *User) *IssueQuery {
-	query := (&IssueClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, id),
-			sqlgraph.To(issue.Table, issue.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.IssuesClosedTable, user.IssuesClosedColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

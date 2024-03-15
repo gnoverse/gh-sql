@@ -28,7 +28,6 @@ type IssueQuery struct {
 	withRepository *RepositoryQuery
 	withUser       *UserQuery
 	withAssignees  *UserQuery
-	withClosedBy   *UserQuery
 	withComments   *IssueCommentQuery
 	withFKs        bool
 	// intermediate query (i.e. traversal path).
@@ -126,28 +125,6 @@ func (iq *IssueQuery) QueryAssignees() *UserQuery {
 			sqlgraph.From(issue.Table, issue.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, issue.AssigneesTable, issue.AssigneesPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryClosedBy chains the current query on the "closed_by" edge.
-func (iq *IssueQuery) QueryClosedBy() *UserQuery {
-	query := (&UserClient{config: iq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := iq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := iq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(issue.Table, issue.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, issue.ClosedByTable, issue.ClosedByColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
 		return fromU, nil
@@ -372,7 +349,6 @@ func (iq *IssueQuery) Clone() *IssueQuery {
 		withRepository: iq.withRepository.Clone(),
 		withUser:       iq.withUser.Clone(),
 		withAssignees:  iq.withAssignees.Clone(),
-		withClosedBy:   iq.withClosedBy.Clone(),
 		withComments:   iq.withComments.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
@@ -410,17 +386,6 @@ func (iq *IssueQuery) WithAssignees(opts ...func(*UserQuery)) *IssueQuery {
 		opt(query)
 	}
 	iq.withAssignees = query
-	return iq
-}
-
-// WithClosedBy tells the query-builder to eager-load the nodes that are connected to
-// the "closed_by" edge. The optional arguments are used to configure the query builder of the edge.
-func (iq *IssueQuery) WithClosedBy(opts ...func(*UserQuery)) *IssueQuery {
-	query := (&UserClient{config: iq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	iq.withClosedBy = query
 	return iq
 }
 
@@ -514,15 +479,14 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 		nodes       = []*Issue{}
 		withFKs     = iq.withFKs
 		_spec       = iq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [4]bool{
 			iq.withRepository != nil,
 			iq.withUser != nil,
 			iq.withAssignees != nil,
-			iq.withClosedBy != nil,
 			iq.withComments != nil,
 		}
 	)
-	if iq.withRepository != nil || iq.withUser != nil || iq.withClosedBy != nil {
+	if iq.withRepository != nil || iq.withUser != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -562,12 +526,6 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 		if err := iq.loadAssignees(ctx, query, nodes,
 			func(n *Issue) { n.Edges.Assignees = []*User{} },
 			func(n *Issue, e *User) { n.Edges.Assignees = append(n.Edges.Assignees, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := iq.withClosedBy; query != nil {
-		if err := iq.loadClosedBy(ctx, query, nodes, nil,
-			func(n *Issue, e *User) { n.Edges.ClosedBy = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -702,38 +660,6 @@ func (iq *IssueQuery) loadAssignees(ctx context.Context, query *UserQuery, nodes
 		}
 		for kn := range nodes {
 			assign(kn, n)
-		}
-	}
-	return nil
-}
-func (iq *IssueQuery) loadClosedBy(ctx context.Context, query *UserQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *User)) error {
-	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*Issue)
-	for i := range nodes {
-		if nodes[i].issue_closed_by == nil {
-			continue
-		}
-		fk := *nodes[i].issue_closed_by
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "issue_closed_by" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
 		}
 	}
 	return nil

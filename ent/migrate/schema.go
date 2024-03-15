@@ -25,13 +25,13 @@ var (
 		{Name: "body", Type: field.TypeString, Nullable: true},
 		{Name: "locked", Type: field.TypeBool},
 		{Name: "active_lock_reason", Type: field.TypeString, Nullable: true},
+		{Name: "comments_count", Type: field.TypeInt64},
 		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "draft", Type: field.TypeBool},
 		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "NONE", "OWNER"}},
 		{Name: "reactions", Type: field.TypeJSON},
-		{Name: "issue_closed_by", Type: field.TypeInt64, Nullable: true},
 		{Name: "repository_issues", Type: field.TypeInt64},
 		{Name: "user_issues_created", Type: field.TypeInt64, Nullable: true},
 	}
@@ -41,12 +41,6 @@ var (
 		Columns:    IssuesColumns,
 		PrimaryKey: []*schema.Column{IssuesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "issues_users_closed_by",
-				Columns:    []*schema.Column{IssuesColumns[21]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
 			{
 				Symbol:     "issues_repositories_issues",
 				Columns:    []*schema.Column{IssuesColumns[22]},
@@ -268,9 +262,8 @@ var (
 )
 
 func init() {
-	IssuesTable.ForeignKeys[0].RefTable = UsersTable
-	IssuesTable.ForeignKeys[1].RefTable = RepositoriesTable
-	IssuesTable.ForeignKeys[2].RefTable = UsersTable
+	IssuesTable.ForeignKeys[0].RefTable = RepositoriesTable
+	IssuesTable.ForeignKeys[1].RefTable = UsersTable
 	IssueCommentsTable.ForeignKeys[0].RefTable = IssuesTable
 	IssueCommentsTable.ForeignKeys[1].RefTable = UsersTable
 	RepositoriesTable.ForeignKeys[0].RefTable = UsersTable

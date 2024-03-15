@@ -55,6 +55,8 @@ type IssueMutation struct {
 	body               *string
 	locked             *bool
 	active_lock_reason *string
+	comments_count     *int64
+	addcomments_count  *int64
 	closed_at          *time.Time
 	created_at         *time.Time
 	updated_at         *time.Time
@@ -69,8 +71,6 @@ type IssueMutation struct {
 	assignees          map[int64]struct{}
 	removedassignees   map[int64]struct{}
 	clearedassignees   bool
-	closed_by          *int64
-	clearedclosed_by   bool
 	comments           map[int64]struct{}
 	removedcomments    map[int64]struct{}
 	clearedcomments    bool
@@ -746,6 +746,62 @@ func (m *IssueMutation) ResetActiveLockReason() {
 	delete(m.clearedFields, issue.FieldActiveLockReason)
 }
 
+// SetCommentsCount sets the "comments_count" field.
+func (m *IssueMutation) SetCommentsCount(i int64) {
+	m.comments_count = &i
+	m.addcomments_count = nil
+}
+
+// CommentsCount returns the value of the "comments_count" field in the mutation.
+func (m *IssueMutation) CommentsCount() (r int64, exists bool) {
+	v := m.comments_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommentsCount returns the old "comments_count" field's value of the Issue entity.
+// If the Issue object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *IssueMutation) OldCommentsCount(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommentsCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommentsCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommentsCount: %w", err)
+	}
+	return oldValue.CommentsCount, nil
+}
+
+// AddCommentsCount adds i to the "comments_count" field.
+func (m *IssueMutation) AddCommentsCount(i int64) {
+	if m.addcomments_count != nil {
+		*m.addcomments_count += i
+	} else {
+		m.addcomments_count = &i
+	}
+}
+
+// AddedCommentsCount returns the value that was added to the "comments_count" field in this mutation.
+func (m *IssueMutation) AddedCommentsCount() (r int64, exists bool) {
+	v := m.addcomments_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCommentsCount resets all changes to the "comments_count" field.
+func (m *IssueMutation) ResetCommentsCount() {
+	m.comments_count = nil
+	m.addcomments_count = nil
+}
+
 // SetClosedAt sets the "closed_at" field.
 func (m *IssueMutation) SetClosedAt(t time.Time) {
 	m.closed_at = &t
@@ -1107,45 +1163,6 @@ func (m *IssueMutation) ResetAssignees() {
 	m.removedassignees = nil
 }
 
-// SetClosedByID sets the "closed_by" edge to the User entity by id.
-func (m *IssueMutation) SetClosedByID(id int64) {
-	m.closed_by = &id
-}
-
-// ClearClosedBy clears the "closed_by" edge to the User entity.
-func (m *IssueMutation) ClearClosedBy() {
-	m.clearedclosed_by = true
-}
-
-// ClosedByCleared reports if the "closed_by" edge to the User entity was cleared.
-func (m *IssueMutation) ClosedByCleared() bool {
-	return m.clearedclosed_by
-}
-
-// ClosedByID returns the "closed_by" edge ID in the mutation.
-func (m *IssueMutation) ClosedByID() (id int64, exists bool) {
-	if m.closed_by != nil {
-		return *m.closed_by, true
-	}
-	return
-}
-
-// ClosedByIDs returns the "closed_by" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// ClosedByID instead. It exists only for internal usage by the builders.
-func (m *IssueMutation) ClosedByIDs() (ids []int64) {
-	if id := m.closed_by; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetClosedBy resets all changes to the "closed_by" edge.
-func (m *IssueMutation) ResetClosedBy() {
-	m.closed_by = nil
-	m.clearedclosed_by = false
-}
-
 // AddCommentIDs adds the "comments" edge to the IssueComment entity by ids.
 func (m *IssueMutation) AddCommentIDs(ids ...int64) {
 	if m.comments == nil {
@@ -1234,7 +1251,7 @@ func (m *IssueMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *IssueMutation) Fields() []string {
-	fields := make([]string, 0, 20)
+	fields := make([]string, 0, 21)
 	if m.node_id != nil {
 		fields = append(fields, issue.FieldNodeID)
 	}
@@ -1276,6 +1293,9 @@ func (m *IssueMutation) Fields() []string {
 	}
 	if m.active_lock_reason != nil {
 		fields = append(fields, issue.FieldActiveLockReason)
+	}
+	if m.comments_count != nil {
+		fields = append(fields, issue.FieldCommentsCount)
 	}
 	if m.closed_at != nil {
 		fields = append(fields, issue.FieldClosedAt)
@@ -1331,6 +1351,8 @@ func (m *IssueMutation) Field(name string) (ent.Value, bool) {
 		return m.Locked()
 	case issue.FieldActiveLockReason:
 		return m.ActiveLockReason()
+	case issue.FieldCommentsCount:
+		return m.CommentsCount()
 	case issue.FieldClosedAt:
 		return m.ClosedAt()
 	case issue.FieldCreatedAt:
@@ -1380,6 +1402,8 @@ func (m *IssueMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLocked(ctx)
 	case issue.FieldActiveLockReason:
 		return m.OldActiveLockReason(ctx)
+	case issue.FieldCommentsCount:
+		return m.OldCommentsCount(ctx)
 	case issue.FieldClosedAt:
 		return m.OldClosedAt(ctx)
 	case issue.FieldCreatedAt:
@@ -1499,6 +1523,13 @@ func (m *IssueMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetActiveLockReason(v)
 		return nil
+	case issue.FieldCommentsCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommentsCount(v)
+		return nil
 	case issue.FieldClosedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -1552,6 +1583,9 @@ func (m *IssueMutation) AddedFields() []string {
 	if m.addnumber != nil {
 		fields = append(fields, issue.FieldNumber)
 	}
+	if m.addcomments_count != nil {
+		fields = append(fields, issue.FieldCommentsCount)
+	}
 	return fields
 }
 
@@ -1562,6 +1596,8 @@ func (m *IssueMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case issue.FieldNumber:
 		return m.AddedNumber()
+	case issue.FieldCommentsCount:
+		return m.AddedCommentsCount()
 	}
 	return nil, false
 }
@@ -1577,6 +1613,13 @@ func (m *IssueMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddNumber(v)
+		return nil
+	case issue.FieldCommentsCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCommentsCount(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Issue numeric field %s", name)
@@ -1674,6 +1717,9 @@ func (m *IssueMutation) ResetField(name string) error {
 	case issue.FieldActiveLockReason:
 		m.ResetActiveLockReason()
 		return nil
+	case issue.FieldCommentsCount:
+		m.ResetCommentsCount()
+		return nil
 	case issue.FieldClosedAt:
 		m.ResetClosedAt()
 		return nil
@@ -1698,7 +1744,7 @@ func (m *IssueMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *IssueMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.repository != nil {
 		edges = append(edges, issue.EdgeRepository)
 	}
@@ -1707,9 +1753,6 @@ func (m *IssueMutation) AddedEdges() []string {
 	}
 	if m.assignees != nil {
 		edges = append(edges, issue.EdgeAssignees)
-	}
-	if m.closed_by != nil {
-		edges = append(edges, issue.EdgeClosedBy)
 	}
 	if m.comments != nil {
 		edges = append(edges, issue.EdgeComments)
@@ -1735,10 +1778,6 @@ func (m *IssueMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case issue.EdgeClosedBy:
-		if id := m.closed_by; id != nil {
-			return []ent.Value{*id}
-		}
 	case issue.EdgeComments:
 		ids := make([]ent.Value, 0, len(m.comments))
 		for id := range m.comments {
@@ -1751,7 +1790,7 @@ func (m *IssueMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *IssueMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.removedassignees != nil {
 		edges = append(edges, issue.EdgeAssignees)
 	}
@@ -1783,7 +1822,7 @@ func (m *IssueMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *IssueMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.clearedrepository {
 		edges = append(edges, issue.EdgeRepository)
 	}
@@ -1792,9 +1831,6 @@ func (m *IssueMutation) ClearedEdges() []string {
 	}
 	if m.clearedassignees {
 		edges = append(edges, issue.EdgeAssignees)
-	}
-	if m.clearedclosed_by {
-		edges = append(edges, issue.EdgeClosedBy)
 	}
 	if m.clearedcomments {
 		edges = append(edges, issue.EdgeComments)
@@ -1812,8 +1848,6 @@ func (m *IssueMutation) EdgeCleared(name string) bool {
 		return m.cleareduser
 	case issue.EdgeAssignees:
 		return m.clearedassignees
-	case issue.EdgeClosedBy:
-		return m.clearedclosed_by
 	case issue.EdgeComments:
 		return m.clearedcomments
 	}
@@ -1829,9 +1863,6 @@ func (m *IssueMutation) ClearEdge(name string) error {
 		return nil
 	case issue.EdgeUser:
 		m.ClearUser()
-		return nil
-	case issue.EdgeClosedBy:
-		m.ClearClosedBy()
 		return nil
 	}
 	return fmt.Errorf("unknown Issue unique edge %s", name)
@@ -1849,9 +1880,6 @@ func (m *IssueMutation) ResetEdge(name string) error {
 		return nil
 	case issue.EdgeAssignees:
 		m.ResetAssignees()
-		return nil
-	case issue.EdgeClosedBy:
-		m.ResetClosedBy()
 		return nil
 	case issue.EdgeComments:
 		m.ResetComments()
@@ -7857,9 +7885,6 @@ type UserMutation struct {
 	issues_assigned         map[int64]struct{}
 	removedissues_assigned  map[int64]struct{}
 	clearedissues_assigned  bool
-	issues_closed           map[int64]struct{}
-	removedissues_closed    map[int64]struct{}
-	clearedissues_closed    bool
 	done                    bool
 	oldValue                func(context.Context) (*User, error)
 	predicates              []predicate.User
@@ -9449,60 +9474,6 @@ func (m *UserMutation) ResetIssuesAssigned() {
 	m.removedissues_assigned = nil
 }
 
-// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by ids.
-func (m *UserMutation) AddIssuesClosedIDs(ids ...int64) {
-	if m.issues_closed == nil {
-		m.issues_closed = make(map[int64]struct{})
-	}
-	for i := range ids {
-		m.issues_closed[ids[i]] = struct{}{}
-	}
-}
-
-// ClearIssuesClosed clears the "issues_closed" edge to the Issue entity.
-func (m *UserMutation) ClearIssuesClosed() {
-	m.clearedissues_closed = true
-}
-
-// IssuesClosedCleared reports if the "issues_closed" edge to the Issue entity was cleared.
-func (m *UserMutation) IssuesClosedCleared() bool {
-	return m.clearedissues_closed
-}
-
-// RemoveIssuesClosedIDs removes the "issues_closed" edge to the Issue entity by IDs.
-func (m *UserMutation) RemoveIssuesClosedIDs(ids ...int64) {
-	if m.removedissues_closed == nil {
-		m.removedissues_closed = make(map[int64]struct{})
-	}
-	for i := range ids {
-		delete(m.issues_closed, ids[i])
-		m.removedissues_closed[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedIssuesClosed returns the removed IDs of the "issues_closed" edge to the Issue entity.
-func (m *UserMutation) RemovedIssuesClosedIDs() (ids []int64) {
-	for id := range m.removedissues_closed {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// IssuesClosedIDs returns the "issues_closed" edge IDs in the mutation.
-func (m *UserMutation) IssuesClosedIDs() (ids []int64) {
-	for id := range m.issues_closed {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetIssuesClosed resets all changes to the "issues_closed" edge.
-func (m *UserMutation) ResetIssuesClosed() {
-	m.issues_closed = nil
-	m.clearedissues_closed = false
-	m.removedissues_closed = nil
-}
-
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -10231,7 +10202,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.repositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -10243,9 +10214,6 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.issues_assigned != nil {
 		edges = append(edges, user.EdgeIssuesAssigned)
-	}
-	if m.issues_closed != nil {
-		edges = append(edges, user.EdgeIssuesClosed)
 	}
 	return edges
 }
@@ -10278,19 +10246,13 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case user.EdgeIssuesClosed:
-		ids := make([]ent.Value, 0, len(m.issues_closed))
-		for id := range m.issues_closed {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.removedrepositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -10302,9 +10264,6 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedissues_assigned != nil {
 		edges = append(edges, user.EdgeIssuesAssigned)
-	}
-	if m.removedissues_closed != nil {
-		edges = append(edges, user.EdgeIssuesClosed)
 	}
 	return edges
 }
@@ -10337,19 +10296,13 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case user.EdgeIssuesClosed:
-		ids := make([]ent.Value, 0, len(m.removedissues_closed))
-		for id := range m.removedissues_closed {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 4)
 	if m.clearedrepositories {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -10361,9 +10314,6 @@ func (m *UserMutation) ClearedEdges() []string {
 	}
 	if m.clearedissues_assigned {
 		edges = append(edges, user.EdgeIssuesAssigned)
-	}
-	if m.clearedissues_closed {
-		edges = append(edges, user.EdgeIssuesClosed)
 	}
 	return edges
 }
@@ -10380,8 +10330,6 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedcomments_created
 	case user.EdgeIssuesAssigned:
 		return m.clearedissues_assigned
-	case user.EdgeIssuesClosed:
-		return m.clearedissues_closed
 	}
 	return false
 }
@@ -10409,9 +10357,6 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeIssuesAssigned:
 		m.ResetIssuesAssigned()
-		return nil
-	case user.EdgeIssuesClosed:
-		m.ResetIssuesClosed()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

@@ -94,11 +94,9 @@ type UserEdges struct {
 	CommentsCreated []*IssueComment `json:"comments_created,omitempty"`
 	// IssuesAssigned holds the value of the issues_assigned edge.
 	IssuesAssigned []*Issue `json:"issues_assigned,omitempty"`
-	// IssuesClosed holds the value of the issues_closed edge.
-	IssuesClosed []*Issue `json:"issues_closed,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [4]bool
 }
 
 // RepositoriesOrErr returns the Repositories value or an error if the edge
@@ -135,15 +133,6 @@ func (e UserEdges) IssuesAssignedOrErr() ([]*Issue, error) {
 		return e.IssuesAssigned, nil
 	}
 	return nil, &NotLoadedError{edge: "issues_assigned"}
-}
-
-// IssuesClosedOrErr returns the IssuesClosed value or an error if the edge
-// was not loaded in eager-loading.
-func (e UserEdges) IssuesClosedOrErr() ([]*Issue, error) {
-	if e.loadedTypes[4] {
-		return e.IssuesClosed, nil
-	}
-	return nil, &NotLoadedError{edge: "issues_closed"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -391,11 +380,6 @@ func (u *User) QueryCommentsCreated() *IssueCommentQuery {
 // QueryIssuesAssigned queries the "issues_assigned" edge of the User entity.
 func (u *User) QueryIssuesAssigned() *IssueQuery {
 	return NewUserClient(u.config).QueryIssuesAssigned(u)
-}
-
-// QueryIssuesClosed queries the "issues_closed" edge of the User entity.
-func (u *User) QueryIssuesClosed() *IssueQuery {
-	return NewUserClient(u.config).QueryIssuesClosed(u)
 }
 
 // Update returns a builder for updating this User.

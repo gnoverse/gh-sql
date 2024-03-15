@@ -48,6 +48,8 @@ type Issue struct {
 	Locked bool `json:"locked"`
 	// ActiveLockReason holds the value of the "active_lock_reason" field.
 	ActiveLockReason *string `json:"active_lock_reason"`
+	// CommentsCount holds the value of the "comments_count" field.
+	CommentsCount int64 `json:"comments"`
 	// ClosedAt holds the value of the "closed_at" field.
 	ClosedAt *time.Time `json:"closed_at"`
 	// CreatedAt holds the value of the "created_at" field.
@@ -63,7 +65,6 @@ type Issue struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IssueQuery when eager-loading is set.
 	Edges               IssueEdges `json:"-"`
-	issue_closed_by     *int64
 	repository_issues   *int64
 	user_issues_created *int64
 	selectValues        sql.SelectValues
@@ -77,13 +78,11 @@ type IssueEdges struct {
 	User *User `json:"user,omitempty"`
 	// Assignees holds the value of the assignees edge.
 	Assignees []*User `json:"assignees,omitempty"`
-	// ClosedBy holds the value of the closed_by edge.
-	ClosedBy *User `json:"closed_by,omitempty"`
 	// Comments holds the value of the comments edge.
 	Comments []*IssueComment `json:"comments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [4]bool
 }
 
 // RepositoryOrErr returns the Repository value or an error if the edge
@@ -117,21 +116,10 @@ func (e IssueEdges) AssigneesOrErr() ([]*User, error) {
 	return nil, &NotLoadedError{edge: "assignees"}
 }
 
-// ClosedByOrErr returns the ClosedBy value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e IssueEdges) ClosedByOrErr() (*User, error) {
-	if e.ClosedBy != nil {
-		return e.ClosedBy, nil
-	} else if e.loadedTypes[3] {
-		return nil, &NotFoundError{label: user.Label}
-	}
-	return nil, &NotLoadedError{edge: "closed_by"}
-}
-
 // CommentsOrErr returns the Comments value or an error if the edge
 // was not loaded in eager-loading.
 func (e IssueEdges) CommentsOrErr() ([]*IssueComment, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[3] {
 		return e.Comments, nil
 	}
 	return nil, &NotLoadedError{edge: "comments"}
@@ -146,17 +134,15 @@ func (*Issue) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case issue.FieldLocked, issue.FieldDraft:
 			values[i] = new(sql.NullBool)
-		case issue.FieldID, issue.FieldNumber:
+		case issue.FieldID, issue.FieldNumber, issue.FieldCommentsCount:
 			values[i] = new(sql.NullInt64)
 		case issue.FieldNodeID, issue.FieldURL, issue.FieldRepositoryURL, issue.FieldLabelsURL, issue.FieldCommentsURL, issue.FieldEventsURL, issue.FieldHTMLURL, issue.FieldState, issue.FieldStateReason, issue.FieldTitle, issue.FieldBody, issue.FieldActiveLockReason, issue.FieldAuthorAssociation:
 			values[i] = new(sql.NullString)
 		case issue.FieldClosedAt, issue.FieldCreatedAt, issue.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case issue.ForeignKeys[0]: // issue_closed_by
+		case issue.ForeignKeys[0]: // repository_issues
 			values[i] = new(sql.NullInt64)
-		case issue.ForeignKeys[1]: // repository_issues
-			values[i] = new(sql.NullInt64)
-		case issue.ForeignKeys[2]: // user_issues_created
+		case issue.ForeignKeys[1]: // user_issues_created
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -266,6 +252,12 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 				i.ActiveLockReason = new(string)
 				*i.ActiveLockReason = value.String
 			}
+		case issue.FieldCommentsCount:
+			if value, ok := values[j].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field comments_count", values[j])
+			} else if value.Valid {
+				i.CommentsCount = value.Int64
+			}
 		case issue.FieldClosedAt:
 			if value, ok := values[j].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field closed_at", values[j])
@@ -307,19 +299,12 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 			}
 		case issue.ForeignKeys[0]:
 			if value, ok := values[j].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field issue_closed_by", value)
-			} else if value.Valid {
-				i.issue_closed_by = new(int64)
-				*i.issue_closed_by = int64(value.Int64)
-			}
-		case issue.ForeignKeys[1]:
-			if value, ok := values[j].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field repository_issues", value)
 			} else if value.Valid {
 				i.repository_issues = new(int64)
 				*i.repository_issues = int64(value.Int64)
 			}
-		case issue.ForeignKeys[2]:
+		case issue.ForeignKeys[1]:
 			if value, ok := values[j].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for edge-field user_issues_created", value)
 			} else if value.Valid {
@@ -352,11 +337,6 @@ func (i *Issue) QueryUser() *UserQuery {
 // QueryAssignees queries the "assignees" edge of the Issue entity.
 func (i *Issue) QueryAssignees() *UserQuery {
 	return NewIssueClient(i.config).QueryAssignees(i)
-}
-
-// QueryClosedBy queries the "closed_by" edge of the Issue entity.
-func (i *Issue) QueryClosedBy() *UserQuery {
-	return NewIssueClient(i.config).QueryClosedBy(i)
 }
 
 // QueryComments queries the "comments" edge of the Issue entity.
@@ -434,6 +414,9 @@ func (i *Issue) String() string {
 		builder.WriteString("active_lock_reason=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("comments_count=")
+	builder.WriteString(fmt.Sprintf("%v", i.CommentsCount))
 	builder.WriteString(", ")
 	if v := i.ClosedAt; v != nil {
 		builder.WriteString("closed_at=")

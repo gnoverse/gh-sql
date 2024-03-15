@@ -20,7 +20,7 @@ func main() {
 		),
 	}
 	err := entc.Generate("./schema", &gen.Config{
-		Hooks: []gen.Hook{TagFields("json")},
+		Hooks: []gen.Hook{RemoveOmitempty()},
 	}, opts...)
 	if err != nil {
 		log.Fatalf("running ent codegen: %v", err)
@@ -70,14 +70,14 @@ func (e *EncodeExtension) Hooks() []gen.Hook {
 	}
 }
 
-// TagFields tags all fields defined in the schema with the given struct-tag.
-func TagFields(name string) gen.Hook {
+// RemoveOmitempty changes all default struct tags in the schema to avoid using omitempty.
+func RemoveOmitempty() gen.Hook {
 	return func(next gen.Generator) gen.Generator {
 		return gen.GenerateFunc(func(g *gen.Graph) error {
 			for _, node := range g.Nodes {
 				for _, field := range node.Fields {
-					if field.StructTag == fmt.Sprintf("%s:%q", name, field.Name+",omitempty") {
-						field.StructTag = fmt.Sprintf("%s:%q", name, field.Name)
+					if field.StructTag == fmt.Sprintf("json:%q", field.Name+",omitempty") {
+						field.StructTag = fmt.Sprintf("json:%q", field.Name)
 					}
 				}
 			}

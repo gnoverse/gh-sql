@@ -335,21 +335,6 @@ func (uc *UserCreate) AddIssuesAssigned(i ...*Issue) *UserCreate {
 	return uc.AddIssuesAssignedIDs(ids...)
 }
 
-// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
-func (uc *UserCreate) AddIssuesClosedIDs(ids ...int64) *UserCreate {
-	uc.mutation.AddIssuesClosedIDs(ids...)
-	return uc
-}
-
-// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
-func (uc *UserCreate) AddIssuesClosed(i ...*Issue) *UserCreate {
-	ids := make([]int64, len(i))
-	for j := range i {
-		ids[j] = i[j].ID
-	}
-	return uc.AddIssuesClosedIDs(ids...)
-}
-
 // Mutation returns the UserMutation object of the builder.
 func (uc *UserCreate) Mutation() *UserMutation {
 	return uc.mutation
@@ -657,22 +642,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Inverse: true,
 			Table:   user.IssuesAssignedTable,
 			Columns: user.IssuesAssignedPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := uc.mutation.IssuesClosedIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.IssuesClosedTable,
-			Columns: []string{user.IssuesClosedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),

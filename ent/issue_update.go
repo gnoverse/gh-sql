@@ -252,6 +252,27 @@ func (iu *IssueUpdate) ClearActiveLockReason() *IssueUpdate {
 	return iu
 }
 
+// SetCommentsCount sets the "comments_count" field.
+func (iu *IssueUpdate) SetCommentsCount(i int64) *IssueUpdate {
+	iu.mutation.ResetCommentsCount()
+	iu.mutation.SetCommentsCount(i)
+	return iu
+}
+
+// SetNillableCommentsCount sets the "comments_count" field if the given value is not nil.
+func (iu *IssueUpdate) SetNillableCommentsCount(i *int64) *IssueUpdate {
+	if i != nil {
+		iu.SetCommentsCount(*i)
+	}
+	return iu
+}
+
+// AddCommentsCount adds i to the "comments_count" field.
+func (iu *IssueUpdate) AddCommentsCount(i int64) *IssueUpdate {
+	iu.mutation.AddCommentsCount(i)
+	return iu
+}
+
 // SetClosedAt sets the "closed_at" field.
 func (iu *IssueUpdate) SetClosedAt(t time.Time) *IssueUpdate {
 	iu.mutation.SetClosedAt(t)
@@ -379,25 +400,6 @@ func (iu *IssueUpdate) AddAssignees(u ...*User) *IssueUpdate {
 	return iu.AddAssigneeIDs(ids...)
 }
 
-// SetClosedByID sets the "closed_by" edge to the User entity by ID.
-func (iu *IssueUpdate) SetClosedByID(id int64) *IssueUpdate {
-	iu.mutation.SetClosedByID(id)
-	return iu
-}
-
-// SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
-func (iu *IssueUpdate) SetNillableClosedByID(id *int64) *IssueUpdate {
-	if id != nil {
-		iu = iu.SetClosedByID(*id)
-	}
-	return iu
-}
-
-// SetClosedBy sets the "closed_by" edge to the User entity.
-func (iu *IssueUpdate) SetClosedBy(u *User) *IssueUpdate {
-	return iu.SetClosedByID(u.ID)
-}
-
 // AddCommentIDs adds the "comments" edge to the IssueComment entity by IDs.
 func (iu *IssueUpdate) AddCommentIDs(ids ...int64) *IssueUpdate {
 	iu.mutation.AddCommentIDs(ids...)
@@ -449,12 +451,6 @@ func (iu *IssueUpdate) RemoveAssignees(u ...*User) *IssueUpdate {
 		ids[i] = u[i].ID
 	}
 	return iu.RemoveAssigneeIDs(ids...)
-}
-
-// ClearClosedBy clears the "closed_by" edge to the User entity.
-func (iu *IssueUpdate) ClearClosedBy() *IssueUpdate {
-	iu.mutation.ClearClosedBy()
-	return iu
 }
 
 // ClearComments clears all "comments" edges to the IssueComment entity.
@@ -589,6 +585,12 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if iu.mutation.ActiveLockReasonCleared() {
 		_spec.ClearField(issue.FieldActiveLockReason, field.TypeString)
 	}
+	if value, ok := iu.mutation.CommentsCount(); ok {
+		_spec.SetField(issue.FieldCommentsCount, field.TypeInt64, value)
+	}
+	if value, ok := iu.mutation.AddedCommentsCount(); ok {
+		_spec.AddField(issue.FieldCommentsCount, field.TypeInt64, value)
+	}
 	if value, ok := iu.mutation.ClosedAt(); ok {
 		_spec.SetField(issue.FieldClosedAt, field.TypeTime, value)
 	}
@@ -703,35 +705,6 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Inverse: false,
 			Table:   issue.AssigneesTable,
 			Columns: issue.AssigneesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if iu.mutation.ClosedByCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   issue.ClosedByTable,
-			Columns: []string{issue.ClosedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := iu.mutation.ClosedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   issue.ClosedByTable,
-			Columns: []string{issue.ClosedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
@@ -1028,6 +1001,27 @@ func (iuo *IssueUpdateOne) ClearActiveLockReason() *IssueUpdateOne {
 	return iuo
 }
 
+// SetCommentsCount sets the "comments_count" field.
+func (iuo *IssueUpdateOne) SetCommentsCount(i int64) *IssueUpdateOne {
+	iuo.mutation.ResetCommentsCount()
+	iuo.mutation.SetCommentsCount(i)
+	return iuo
+}
+
+// SetNillableCommentsCount sets the "comments_count" field if the given value is not nil.
+func (iuo *IssueUpdateOne) SetNillableCommentsCount(i *int64) *IssueUpdateOne {
+	if i != nil {
+		iuo.SetCommentsCount(*i)
+	}
+	return iuo
+}
+
+// AddCommentsCount adds i to the "comments_count" field.
+func (iuo *IssueUpdateOne) AddCommentsCount(i int64) *IssueUpdateOne {
+	iuo.mutation.AddCommentsCount(i)
+	return iuo
+}
+
 // SetClosedAt sets the "closed_at" field.
 func (iuo *IssueUpdateOne) SetClosedAt(t time.Time) *IssueUpdateOne {
 	iuo.mutation.SetClosedAt(t)
@@ -1155,25 +1149,6 @@ func (iuo *IssueUpdateOne) AddAssignees(u ...*User) *IssueUpdateOne {
 	return iuo.AddAssigneeIDs(ids...)
 }
 
-// SetClosedByID sets the "closed_by" edge to the User entity by ID.
-func (iuo *IssueUpdateOne) SetClosedByID(id int64) *IssueUpdateOne {
-	iuo.mutation.SetClosedByID(id)
-	return iuo
-}
-
-// SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
-func (iuo *IssueUpdateOne) SetNillableClosedByID(id *int64) *IssueUpdateOne {
-	if id != nil {
-		iuo = iuo.SetClosedByID(*id)
-	}
-	return iuo
-}
-
-// SetClosedBy sets the "closed_by" edge to the User entity.
-func (iuo *IssueUpdateOne) SetClosedBy(u *User) *IssueUpdateOne {
-	return iuo.SetClosedByID(u.ID)
-}
-
 // AddCommentIDs adds the "comments" edge to the IssueComment entity by IDs.
 func (iuo *IssueUpdateOne) AddCommentIDs(ids ...int64) *IssueUpdateOne {
 	iuo.mutation.AddCommentIDs(ids...)
@@ -1225,12 +1200,6 @@ func (iuo *IssueUpdateOne) RemoveAssignees(u ...*User) *IssueUpdateOne {
 		ids[i] = u[i].ID
 	}
 	return iuo.RemoveAssigneeIDs(ids...)
-}
-
-// ClearClosedBy clears the "closed_by" edge to the User entity.
-func (iuo *IssueUpdateOne) ClearClosedBy() *IssueUpdateOne {
-	iuo.mutation.ClearClosedBy()
-	return iuo
 }
 
 // ClearComments clears all "comments" edges to the IssueComment entity.
@@ -1395,6 +1364,12 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 	if iuo.mutation.ActiveLockReasonCleared() {
 		_spec.ClearField(issue.FieldActiveLockReason, field.TypeString)
 	}
+	if value, ok := iuo.mutation.CommentsCount(); ok {
+		_spec.SetField(issue.FieldCommentsCount, field.TypeInt64, value)
+	}
+	if value, ok := iuo.mutation.AddedCommentsCount(); ok {
+		_spec.AddField(issue.FieldCommentsCount, field.TypeInt64, value)
+	}
 	if value, ok := iuo.mutation.ClosedAt(); ok {
 		_spec.SetField(issue.FieldClosedAt, field.TypeTime, value)
 	}
@@ -1509,35 +1484,6 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Inverse: false,
 			Table:   issue.AssigneesTable,
 			Columns: issue.AssigneesPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if iuo.mutation.ClosedByCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   issue.ClosedByTable,
-			Columns: []string{issue.ClosedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := iuo.mutation.ClosedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   issue.ClosedByTable,
-			Columns: []string{issue.ClosedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),

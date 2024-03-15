@@ -29,7 +29,6 @@ type UserQuery struct {
 	withIssuesCreated   *IssueQuery
 	withCommentsCreated *IssueCommentQuery
 	withIssuesAssigned  *IssueQuery
-	withIssuesClosed    *IssueQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -147,28 +146,6 @@ func (uq *UserQuery) QueryIssuesAssigned() *IssueQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(issue.Table, issue.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, user.IssuesAssignedTable, user.IssuesAssignedPrimaryKey...),
-		)
-		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryIssuesClosed chains the current query on the "issues_closed" edge.
-func (uq *UserQuery) QueryIssuesClosed() *IssueQuery {
-	query := (&IssueClient{config: uq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := uq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := uq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(issue.Table, issue.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.IssuesClosedTable, user.IssuesClosedColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -372,7 +349,6 @@ func (uq *UserQuery) Clone() *UserQuery {
 		withIssuesCreated:   uq.withIssuesCreated.Clone(),
 		withCommentsCreated: uq.withCommentsCreated.Clone(),
 		withIssuesAssigned:  uq.withIssuesAssigned.Clone(),
-		withIssuesClosed:    uq.withIssuesClosed.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -420,17 +396,6 @@ func (uq *UserQuery) WithIssuesAssigned(opts ...func(*IssueQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withIssuesAssigned = query
-	return uq
-}
-
-// WithIssuesClosed tells the query-builder to eager-load the nodes that are connected to
-// the "issues_closed" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithIssuesClosed(opts ...func(*IssueQuery)) *UserQuery {
-	query := (&IssueClient{config: uq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	uq.withIssuesClosed = query
 	return uq
 }
 
@@ -512,12 +477,11 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [4]bool{
 			uq.withRepositories != nil,
 			uq.withIssuesCreated != nil,
 			uq.withCommentsCreated != nil,
 			uq.withIssuesAssigned != nil,
-			uq.withIssuesClosed != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -563,13 +527,6 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadIssuesAssigned(ctx, query, nodes,
 			func(n *User) { n.Edges.IssuesAssigned = []*Issue{} },
 			func(n *User, e *Issue) { n.Edges.IssuesAssigned = append(n.Edges.IssuesAssigned, e) }); err != nil {
-			return nil, err
-		}
-	}
-	if query := uq.withIssuesClosed; query != nil {
-		if err := uq.loadIssuesClosed(ctx, query, nodes,
-			func(n *User) { n.Edges.IssuesClosed = []*Issue{} },
-			func(n *User, e *Issue) { n.Edges.IssuesClosed = append(n.Edges.IssuesClosed, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -727,37 +684,6 @@ func (uq *UserQuery) loadIssuesAssigned(ctx context.Context, query *IssueQuery, 
 		for kn := range nodes {
 			assign(kn, n)
 		}
-	}
-	return nil
-}
-func (uq *UserQuery) loadIssuesClosed(ctx context.Context, query *IssueQuery, nodes []*User, init func(*User), assign func(*User, *Issue)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*User)
-	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
-	}
-	query.withFKs = true
-	query.Where(predicate.Issue(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.IssuesClosedColumn), fks...))
-	}))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		fk := n.issue_closed_by
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "issue_closed_by" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
-		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "issue_closed_by" returned %v for node %v`, *fk, n.ID)
-		}
-		assign(node, n)
 	}
 	return nil
 }

@@ -133,6 +133,12 @@ func (ic *IssueCreate) SetNillableActiveLockReason(s *string) *IssueCreate {
 	return ic
 }
 
+// SetCommentsCount sets the "comments_count" field.
+func (ic *IssueCreate) SetCommentsCount(i int64) *IssueCreate {
+	ic.mutation.SetCommentsCount(i)
+	return ic
+}
+
 // SetClosedAt sets the "closed_at" field.
 func (ic *IssueCreate) SetClosedAt(t time.Time) *IssueCreate {
 	ic.mutation.SetClosedAt(t)
@@ -228,25 +234,6 @@ func (ic *IssueCreate) AddAssignees(u ...*User) *IssueCreate {
 	return ic.AddAssigneeIDs(ids...)
 }
 
-// SetClosedByID sets the "closed_by" edge to the User entity by ID.
-func (ic *IssueCreate) SetClosedByID(id int64) *IssueCreate {
-	ic.mutation.SetClosedByID(id)
-	return ic
-}
-
-// SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
-func (ic *IssueCreate) SetNillableClosedByID(id *int64) *IssueCreate {
-	if id != nil {
-		ic = ic.SetClosedByID(*id)
-	}
-	return ic
-}
-
-// SetClosedBy sets the "closed_by" edge to the User entity.
-func (ic *IssueCreate) SetClosedBy(u *User) *IssueCreate {
-	return ic.SetClosedByID(u.ID)
-}
-
 // AddCommentIDs adds the "comments" edge to the IssueComment entity by IDs.
 func (ic *IssueCreate) AddCommentIDs(ids ...int64) *IssueCreate {
 	ic.mutation.AddCommentIDs(ids...)
@@ -333,6 +320,9 @@ func (ic *IssueCreate) check() error {
 	}
 	if _, ok := ic.mutation.Locked(); !ok {
 		return &ValidationError{Name: "locked", err: errors.New(`ent: missing required field "Issue.locked"`)}
+	}
+	if _, ok := ic.mutation.CommentsCount(); !ok {
+		return &ValidationError{Name: "comments_count", err: errors.New(`ent: missing required field "Issue.comments_count"`)}
 	}
 	if _, ok := ic.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Issue.created_at"`)}
@@ -446,6 +436,10 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 		_spec.SetField(issue.FieldActiveLockReason, field.TypeString, value)
 		_node.ActiveLockReason = &value
 	}
+	if value, ok := ic.mutation.CommentsCount(); ok {
+		_spec.SetField(issue.FieldCommentsCount, field.TypeInt64, value)
+		_node.CommentsCount = value
+	}
 	if value, ok := ic.mutation.ClosedAt(); ok {
 		_spec.SetField(issue.FieldClosedAt, field.TypeTime, value)
 		_node.ClosedAt = &value
@@ -518,23 +512,6 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := ic.mutation.ClosedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   issue.ClosedByTable,
-			Columns: []string{issue.ClosedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.issue_closed_by = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := ic.mutation.CommentsIDs(); len(nodes) > 0 {
@@ -794,6 +771,24 @@ func (u *IssueUpsert) UpdateActiveLockReason() *IssueUpsert {
 // ClearActiveLockReason clears the value of the "active_lock_reason" field.
 func (u *IssueUpsert) ClearActiveLockReason() *IssueUpsert {
 	u.SetNull(issue.FieldActiveLockReason)
+	return u
+}
+
+// SetCommentsCount sets the "comments_count" field.
+func (u *IssueUpsert) SetCommentsCount(v int64) *IssueUpsert {
+	u.Set(issue.FieldCommentsCount, v)
+	return u
+}
+
+// UpdateCommentsCount sets the "comments_count" field to the value that was provided on create.
+func (u *IssueUpsert) UpdateCommentsCount() *IssueUpsert {
+	u.SetExcluded(issue.FieldCommentsCount)
+	return u
+}
+
+// AddCommentsCount adds v to the "comments_count" field.
+func (u *IssueUpsert) AddCommentsCount(v int64) *IssueUpsert {
+	u.Add(issue.FieldCommentsCount, v)
 	return u
 }
 
@@ -1144,6 +1139,27 @@ func (u *IssueUpsertOne) UpdateActiveLockReason() *IssueUpsertOne {
 func (u *IssueUpsertOne) ClearActiveLockReason() *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
 		s.ClearActiveLockReason()
+	})
+}
+
+// SetCommentsCount sets the "comments_count" field.
+func (u *IssueUpsertOne) SetCommentsCount(v int64) *IssueUpsertOne {
+	return u.Update(func(s *IssueUpsert) {
+		s.SetCommentsCount(v)
+	})
+}
+
+// AddCommentsCount adds v to the "comments_count" field.
+func (u *IssueUpsertOne) AddCommentsCount(v int64) *IssueUpsertOne {
+	return u.Update(func(s *IssueUpsert) {
+		s.AddCommentsCount(v)
+	})
+}
+
+// UpdateCommentsCount sets the "comments_count" field to the value that was provided on create.
+func (u *IssueUpsertOne) UpdateCommentsCount() *IssueUpsertOne {
+	return u.Update(func(s *IssueUpsert) {
+		s.UpdateCommentsCount()
 	})
 }
 
@@ -1672,6 +1688,27 @@ func (u *IssueUpsertBulk) UpdateActiveLockReason() *IssueUpsertBulk {
 func (u *IssueUpsertBulk) ClearActiveLockReason() *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.ClearActiveLockReason()
+	})
+}
+
+// SetCommentsCount sets the "comments_count" field.
+func (u *IssueUpsertBulk) SetCommentsCount(v int64) *IssueUpsertBulk {
+	return u.Update(func(s *IssueUpsert) {
+		s.SetCommentsCount(v)
+	})
+}
+
+// AddCommentsCount adds v to the "comments_count" field.
+func (u *IssueUpsertBulk) AddCommentsCount(v int64) *IssueUpsertBulk {
+	return u.Update(func(s *IssueUpsert) {
+		s.AddCommentsCount(v)
+	})
+}
+
+// UpdateCommentsCount sets the "comments_count" field to the value that was provided on create.
+func (u *IssueUpsertBulk) UpdateCommentsCount() *IssueUpsertBulk {
+	return u.Update(func(s *IssueUpsert) {
+		s.UpdateCommentsCount()
 	})
 }
 

@@ -126,13 +126,17 @@ type resource[T any] interface {
 }
 
 func fetch[T any](ctx context.Context, h *hub, res resource[T]) (T, error) {
-	fn, _ := fetchInternal(ctx, h, res)
+	fn, _ := setUpdatedFunc(h, res.ID(), func() (T, error) {
+		return res.Fetch(ctx, h)
+	})
 
 	return fn()
 }
 
 func fetchAsync[T any](ctx context.Context, h *hub, res resource[T]) {
-	fn, created := fetchInternal(ctx, h, res)
+	fn, created := setUpdatedFunc(h, res.ID(), func() (T, error) {
+		return res.Fetch(ctx, h)
+	})
 
 	if created {
 		h.Go(func() error {
@@ -146,22 +150,23 @@ func fetchAsync[T any](ctx context.Context, h *hub, res resource[T]) {
 	}
 }
 
-func fetchInternal[T any](ctx context.Context, h *hub, res resource[T]) (func() (T, error), bool) {
-	id := res.ID()
-
-	var created bool
+// setUpdatedFunc changes h.updated. If a value already exists, it is returneed
+// as the getter; otherwise, it will be set to fn. getter will be either fn or a
+// function to retrieve the cache from a previously done request with the same
+// id. created indicates whether the value at id was just created, and as such
+// if fn == getter.
+func setUpdatedFunc[T any](h *hub, id string, fn func() (T, error)) (getter func() (T, error), created bool) {
 	h.updatedMu.Lock()
-	fn, ok := h.updated[id]
+	getterRaw, ok := h.updated[id]
 	if !ok {
-		fn = sync.OnceValues(func() (T, error) {
-			return res.Fetch(ctx, h)
-		})
-		h.updated[id] = fn
+		getter = sync.OnceValues(fn)
+		h.updated[id] = getter
 		created = true
+	} else {
+		getter = getterRaw.(func() (T, error))
 	}
 	h.updatedMu.Unlock()
-
-	return fn.(func() (T, error)), created
+	return
 }
 
 // warn prints the given error as a warning, without halting execution.

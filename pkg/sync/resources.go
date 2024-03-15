@@ -30,37 +30,26 @@ func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, er
 		return nil, fmt.Errorf("fetchRepository%+v fetch: %w", f, err)
 	}
 
-	h.DB.Repository.Create().
-		SetArchiveURL("this").
-		SetWatchers(11)
+	u, err := fetch(ctx, h, fetchUser{username: r.Owner.Login})
+	if err != nil {
+		return nil, err
+	}
 
-	err := h.DB.Repository.Create().
+	err = h.DB.Repository.Create().
 		CopyRepository(&r.Repository).
+		SetOwnerID(u.ID).
 		OnConflict().UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetchRepository%+v save: %w", f, err)
 	}
 
-	u, err := fetch(ctx, h, fetchUser{username: r.Owner.Login})
-	if err != nil {
-		return nil, err
-	}
-	savedRepo, err := h.DB.Repository.UpdateOneID(r.ID).
-		SetOwnerID(u.ID).
-		Save(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("link repo %d (%s) to owner %d (%s): %w",
-			r.ID, r.Name, u.ID, u.Login, err)
-	}
-	savedRepo.Edges.Owner = u
-
 	h.Go(func() error {
 		fetchIssues(ctx, h, f.owner, f.repo)
 		return nil
 	})
 
-	return savedRepo, nil
+	return h.DB.Repository.Get(ctx, r.ID)
 }
 
 func fetchRepositories(ctx context.Context, h *hub, owner string, shouldFetch func(*ent.Repository) bool) {
@@ -119,23 +108,25 @@ func (fi fetchIssue) ID() string {
 		fi.owner, fi.repo, fi.issueNumber)
 }
 
+type issueAndEdges struct {
+	ent.Issue
+	User *struct {
+		Login string `json:"login"`
+	} `json:"user"`
+	Assignees []struct {
+		Login string `json:"login"`
+	} `json:"assignees"`
+}
+
 func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
-	var i struct {
-		ent.Issue
-		User *struct {
-			Login string `json:"login"`
-		} `json:"user"`
-		Assignees []struct {
-			Login string `json:"login"`
-		} `json:"assignees"`
-		ClosedBy *struct {
-			Login string `json:"login"`
-		} `json:"closed_by"`
-	}
+	var i issueAndEdges
 	if err := httpGet(ctx, h, fi.ID(), &i); err != nil {
 		return nil, fmt.Errorf("fetchIssue%+v get: %w", fi, err)
 	}
+	return fi.fetch(ctx, h, i)
+}
 
+func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.Issue, error) {
 	cr := h.DB.Issue.Create().CopyIssue(&i.Issue)
 
 	eg, egCtx := errgroup.WithContext(ctx)
@@ -169,9 +160,6 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
 		login := assignee.Login
 		localGetUser(login, func(i int64) *ent.IssueCreate { return cr.AddAssigneeIDs(i) })
 	}
-	if i.ClosedBy != nil {
-		localGetUser(i.ClosedBy.Login, cr.SetClosedByID)
-	}
 
 	err := eg.Wait()
 	if err != nil {
@@ -184,18 +172,20 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
 		return nil, fmt.Errorf("fetchIssue%+v save: %w", fi, err)
 	}
 
-	h.Go(func() error {
-		if err := fetchIssueComments(ctx, h, fi.owner, fi.repo, fi.issueNumber); err != nil {
-			h.warn(err)
-		}
-		return nil
-	})
+	if i.CommentsCount > 0 {
+		h.Go(func() error {
+			if err := fetchIssueComments(ctx, h, fi.owner, fi.repo, fi.issueNumber); err != nil {
+				h.warn(err)
+			}
+			return nil
+		})
+	}
 
 	return h.DB.Issue.Get(ctx, i.ID)
 }
 
 func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
-	err := httpGetIterate(ctx, h, fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName), func(i *ent.Issue) error {
+	err := httpGetIterate(ctx, h, fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName), func(i issueAndEdges) error {
 		iss, err := h.DB.Issue.Query().
 			Select(issue.FieldUpdatedAt).
 			Where(issue.ID(i.ID)).
@@ -203,12 +193,17 @@ func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 		if err != nil && !ent.IsNotFound(err) {
 			return err
 		}
-		// TODO: instead of double-fetching, we could save the issue here.
-		// fields that we want to make sure that are the same in the two:
-		// state_reason, body, labels, draft, assignees, active_lock_reason
-		// pull_request (existance), reactions.
+
 		if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
-			fetchAsync(ctx, h, fetchIssue{repoOwner, repoName, i.Number})
+			// this does not incur in an additional request; we have all the data
+			// we want from this request already
+			fi := fetchIssue{repoOwner, repoName, i.Number}
+			fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
+				return fi.fetch(ctx, h, i)
+			})
+			if created {
+				fn()
+			}
 		}
 		return nil
 	})
@@ -257,5 +252,3 @@ func fetchIssueComments(ctx context.Context, h *hub,
 	}
 	return nil
 }
-
-// PULL REQUESTS

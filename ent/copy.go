@@ -26,6 +26,7 @@ func (ic *IssueCreate) CopyIssue(input *Issue) *IssueCreate {
 	if input.ActiveLockReason != nil {
 		ic.SetActiveLockReason(*input.ActiveLockReason)
 	}
+	ic.SetCommentsCount(input.CommentsCount)
 	if input.ClosedAt != nil {
 		ic.SetClosedAt(*input.ClosedAt)
 	}
@@ -60,6 +61,7 @@ func (iuo *IssueUpdateOne) CopyIssue(input *Issue) *IssueUpdateOne {
 	if input.ActiveLockReason != nil {
 		iuo.SetActiveLockReason(*input.ActiveLockReason)
 	}
+	iuo.SetCommentsCount(input.CommentsCount)
 	if input.ClosedAt != nil {
 		iuo.SetClosedAt(*input.ClosedAt)
 	}

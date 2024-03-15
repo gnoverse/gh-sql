@@ -120,6 +120,11 @@ func ActiveLockReason(v string) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldActiveLockReason, v))
 }
 
+// CommentsCount applies equality check predicate on the "comments_count" field. It's identical to CommentsCountEQ.
+func CommentsCount(v int64) predicate.Issue {
+	return predicate.Issue(sql.FieldEQ(FieldCommentsCount, v))
+}
+
 // ClosedAt applies equality check predicate on the "closed_at" field. It's identical to ClosedAtEQ.
 func ClosedAt(v time.Time) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldClosedAt, v))
@@ -955,6 +960,46 @@ func ActiveLockReasonContainsFold(v string) predicate.Issue {
 	return predicate.Issue(sql.FieldContainsFold(FieldActiveLockReason, v))
 }
 
+// CommentsCountEQ applies the EQ predicate on the "comments_count" field.
+func CommentsCountEQ(v int64) predicate.Issue {
+	return predicate.Issue(sql.FieldEQ(FieldCommentsCount, v))
+}
+
+// CommentsCountNEQ applies the NEQ predicate on the "comments_count" field.
+func CommentsCountNEQ(v int64) predicate.Issue {
+	return predicate.Issue(sql.FieldNEQ(FieldCommentsCount, v))
+}
+
+// CommentsCountIn applies the In predicate on the "comments_count" field.
+func CommentsCountIn(vs ...int64) predicate.Issue {
+	return predicate.Issue(sql.FieldIn(FieldCommentsCount, vs...))
+}
+
+// CommentsCountNotIn applies the NotIn predicate on the "comments_count" field.
+func CommentsCountNotIn(vs ...int64) predicate.Issue {
+	return predicate.Issue(sql.FieldNotIn(FieldCommentsCount, vs...))
+}
+
+// CommentsCountGT applies the GT predicate on the "comments_count" field.
+func CommentsCountGT(v int64) predicate.Issue {
+	return predicate.Issue(sql.FieldGT(FieldCommentsCount, v))
+}
+
+// CommentsCountGTE applies the GTE predicate on the "comments_count" field.
+func CommentsCountGTE(v int64) predicate.Issue {
+	return predicate.Issue(sql.FieldGTE(FieldCommentsCount, v))
+}
+
+// CommentsCountLT applies the LT predicate on the "comments_count" field.
+func CommentsCountLT(v int64) predicate.Issue {
+	return predicate.Issue(sql.FieldLT(FieldCommentsCount, v))
+}
+
+// CommentsCountLTE applies the LTE predicate on the "comments_count" field.
+func CommentsCountLTE(v int64) predicate.Issue {
+	return predicate.Issue(sql.FieldLTE(FieldCommentsCount, v))
+}
+
 // ClosedAtEQ applies the EQ predicate on the "closed_at" field.
 func ClosedAtEQ(v time.Time) predicate.Issue {
 	return predicate.Issue(sql.FieldEQ(FieldClosedAt, v))
@@ -1176,29 +1221,6 @@ func HasAssignees() predicate.Issue {
 func HasAssigneesWith(preds ...predicate.User) predicate.Issue {
 	return predicate.Issue(func(s *sql.Selector) {
 		step := newAssigneesStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
-// HasClosedBy applies the HasEdge predicate on the "closed_by" edge.
-func HasClosedBy() predicate.Issue {
-	return predicate.Issue(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, ClosedByTable, ClosedByColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasClosedByWith applies the HasEdge predicate on the "closed_by" edge with a given conditions (other predicates).
-func HasClosedByWith(preds ...predicate.User) predicate.Issue {
-	return predicate.Issue(func(s *sql.Selector) {
-		step := newClosedByStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

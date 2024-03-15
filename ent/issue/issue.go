@@ -42,6 +42,8 @@ const (
 	FieldLocked = "locked"
 	// FieldActiveLockReason holds the string denoting the active_lock_reason field in the database.
 	FieldActiveLockReason = "active_lock_reason"
+	// FieldCommentsCount holds the string denoting the comments_count field in the database.
+	FieldCommentsCount = "comments_count"
 	// FieldClosedAt holds the string denoting the closed_at field in the database.
 	FieldClosedAt = "closed_at"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
@@ -60,8 +62,6 @@ const (
 	EdgeUser = "user"
 	// EdgeAssignees holds the string denoting the assignees edge name in mutations.
 	EdgeAssignees = "assignees"
-	// EdgeClosedBy holds the string denoting the closed_by edge name in mutations.
-	EdgeClosedBy = "closed_by"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
 	EdgeComments = "comments"
 	// Table holds the table name of the issue in the database.
@@ -85,13 +85,6 @@ const (
 	// AssigneesInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	AssigneesInverseTable = "users"
-	// ClosedByTable is the table that holds the closed_by relation/edge.
-	ClosedByTable = "issues"
-	// ClosedByInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	ClosedByInverseTable = "users"
-	// ClosedByColumn is the table column denoting the closed_by relation/edge.
-	ClosedByColumn = "issue_closed_by"
 	// CommentsTable is the table that holds the comments relation/edge.
 	CommentsTable = "issue_comments"
 	// CommentsInverseTable is the table name for the IssueComment entity.
@@ -118,6 +111,7 @@ var Columns = []string{
 	FieldBody,
 	FieldLocked,
 	FieldActiveLockReason,
+	FieldCommentsCount,
 	FieldClosedAt,
 	FieldCreatedAt,
 	FieldUpdatedAt,
@@ -129,7 +123,6 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "issues"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"issue_closed_by",
 	"repository_issues",
 	"user_issues_created",
 }
@@ -286,6 +279,11 @@ func ByActiveLockReason(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldActiveLockReason, opts...).ToFunc()
 }
 
+// ByCommentsCountField orders the results by the comments_count field.
+func ByCommentsCountField(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCommentsCount, opts...).ToFunc()
+}
+
 // ByClosedAt orders the results by the closed_at field.
 func ByClosedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldClosedAt, opts...).ToFunc()
@@ -339,13 +337,6 @@ func ByAssignees(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByClosedByField orders the results by closed_by field.
-func ByClosedByField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newClosedByStep(), sql.OrderByField(field, opts...))
-	}
-}
-
 // ByCommentsCount orders the results by comments count.
 func ByCommentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -378,13 +369,6 @@ func newAssigneesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AssigneesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, false, AssigneesTable, AssigneesPrimaryKey...),
-	)
-}
-func newClosedByStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(ClosedByInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, ClosedByTable, ClosedByColumn),
 	)
 }
 func newCommentsStep() *sqlgraph.Step {

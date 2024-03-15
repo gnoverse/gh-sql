@@ -80,8 +80,6 @@ const (
 	EdgeCommentsCreated = "comments_created"
 	// EdgeIssuesAssigned holds the string denoting the issues_assigned edge name in mutations.
 	EdgeIssuesAssigned = "issues_assigned"
-	// EdgeIssuesClosed holds the string denoting the issues_closed edge name in mutations.
-	EdgeIssuesClosed = "issues_closed"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// RepositoriesTable is the table that holds the repositories relation/edge.
@@ -110,13 +108,6 @@ const (
 	// IssuesAssignedInverseTable is the table name for the Issue entity.
 	// It exists in this package in order to avoid circular dependency with the "issue" package.
 	IssuesAssignedInverseTable = "issues"
-	// IssuesClosedTable is the table that holds the issues_closed relation/edge.
-	IssuesClosedTable = "issues"
-	// IssuesClosedInverseTable is the table name for the Issue entity.
-	// It exists in this package in order to avoid circular dependency with the "issue" package.
-	IssuesClosedInverseTable = "issues"
-	// IssuesClosedColumn is the table column denoting the issues_closed relation/edge.
-	IssuesClosedColumn = "issue_closed_by"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -383,20 +374,6 @@ func ByIssuesAssigned(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newIssuesAssignedStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
-// ByIssuesClosedCount orders the results by issues_closed count.
-func ByIssuesClosedCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newIssuesClosedStep(), opts...)
-	}
-}
-
-// ByIssuesClosed orders the results by issues_closed terms.
-func ByIssuesClosed(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newIssuesClosedStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
 func newRepositoriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -423,12 +400,5 @@ func newIssuesAssignedStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IssuesAssignedInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, IssuesAssignedTable, IssuesAssignedPrimaryKey...),
-	)
-}
-func newIssuesClosedStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(IssuesClosedInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, true, IssuesClosedTable, IssuesClosedColumn),
 	)
 }

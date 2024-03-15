@@ -587,21 +587,6 @@ func (uu *UserUpdate) AddIssuesAssigned(i ...*Issue) *UserUpdate {
 	return uu.AddIssuesAssignedIDs(ids...)
 }
 
-// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
-func (uu *UserUpdate) AddIssuesClosedIDs(ids ...int64) *UserUpdate {
-	uu.mutation.AddIssuesClosedIDs(ids...)
-	return uu
-}
-
-// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
-func (uu *UserUpdate) AddIssuesClosed(i ...*Issue) *UserUpdate {
-	ids := make([]int64, len(i))
-	for j := range i {
-		ids[j] = i[j].ID
-	}
-	return uu.AddIssuesClosedIDs(ids...)
-}
-
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -689,27 +674,6 @@ func (uu *UserUpdate) RemoveIssuesAssigned(i ...*Issue) *UserUpdate {
 		ids[j] = i[j].ID
 	}
 	return uu.RemoveIssuesAssignedIDs(ids...)
-}
-
-// ClearIssuesClosed clears all "issues_closed" edges to the Issue entity.
-func (uu *UserUpdate) ClearIssuesClosed() *UserUpdate {
-	uu.mutation.ClearIssuesClosed()
-	return uu
-}
-
-// RemoveIssuesClosedIDs removes the "issues_closed" edge to Issue entities by IDs.
-func (uu *UserUpdate) RemoveIssuesClosedIDs(ids ...int64) *UserUpdate {
-	uu.mutation.RemoveIssuesClosedIDs(ids...)
-	return uu
-}
-
-// RemoveIssuesClosed removes "issues_closed" edges to Issue entities.
-func (uu *UserUpdate) RemoveIssuesClosed(i ...*Issue) *UserUpdate {
-	ids := make([]int64, len(i))
-	for j := range i {
-		ids[j] = i[j].ID
-	}
-	return uu.RemoveIssuesClosedIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1044,51 +1008,6 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Inverse: true,
 			Table:   user.IssuesAssignedTable,
 			Columns: user.IssuesAssignedPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if uu.mutation.IssuesClosedCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.IssuesClosedTable,
-			Columns: []string{user.IssuesClosedColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uu.mutation.RemovedIssuesClosedIDs(); len(nodes) > 0 && !uu.mutation.IssuesClosedCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.IssuesClosedTable,
-			Columns: []string{user.IssuesClosedColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uu.mutation.IssuesClosedIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.IssuesClosedTable,
-			Columns: []string{user.IssuesClosedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
@@ -1675,21 +1594,6 @@ func (uuo *UserUpdateOne) AddIssuesAssigned(i ...*Issue) *UserUpdateOne {
 	return uuo.AddIssuesAssignedIDs(ids...)
 }
 
-// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
-func (uuo *UserUpdateOne) AddIssuesClosedIDs(ids ...int64) *UserUpdateOne {
-	uuo.mutation.AddIssuesClosedIDs(ids...)
-	return uuo
-}
-
-// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
-func (uuo *UserUpdateOne) AddIssuesClosed(i ...*Issue) *UserUpdateOne {
-	ids := make([]int64, len(i))
-	for j := range i {
-		ids[j] = i[j].ID
-	}
-	return uuo.AddIssuesClosedIDs(ids...)
-}
-
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -1777,27 +1681,6 @@ func (uuo *UserUpdateOne) RemoveIssuesAssigned(i ...*Issue) *UserUpdateOne {
 		ids[j] = i[j].ID
 	}
 	return uuo.RemoveIssuesAssignedIDs(ids...)
-}
-
-// ClearIssuesClosed clears all "issues_closed" edges to the Issue entity.
-func (uuo *UserUpdateOne) ClearIssuesClosed() *UserUpdateOne {
-	uuo.mutation.ClearIssuesClosed()
-	return uuo
-}
-
-// RemoveIssuesClosedIDs removes the "issues_closed" edge to Issue entities by IDs.
-func (uuo *UserUpdateOne) RemoveIssuesClosedIDs(ids ...int64) *UserUpdateOne {
-	uuo.mutation.RemoveIssuesClosedIDs(ids...)
-	return uuo
-}
-
-// RemoveIssuesClosed removes "issues_closed" edges to Issue entities.
-func (uuo *UserUpdateOne) RemoveIssuesClosed(i ...*Issue) *UserUpdateOne {
-	ids := make([]int64, len(i))
-	for j := range i {
-		ids[j] = i[j].ID
-	}
-	return uuo.RemoveIssuesClosedIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -2162,51 +2045,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Inverse: true,
 			Table:   user.IssuesAssignedTable,
 			Columns: user.IssuesAssignedPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if uuo.mutation.IssuesClosedCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.IssuesClosedTable,
-			Columns: []string{user.IssuesClosedColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uuo.mutation.RemovedIssuesClosedIDs(); len(nodes) > 0 && !uuo.mutation.IssuesClosedCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.IssuesClosedTable,
-			Columns: []string{user.IssuesClosedColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uuo.mutation.IssuesClosedIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: true,
-			Table:   user.IssuesClosedTable,
-			Columns: []string{user.IssuesClosedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
