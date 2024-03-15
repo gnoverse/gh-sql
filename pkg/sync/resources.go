@@ -30,6 +30,10 @@ func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, er
 		return nil, fmt.Errorf("fetchRepository%+v fetch: %w", f, err)
 	}
 
+	h.DB.Repository.Create().
+		SetArchiveURL("this").
+		SetWatchers(11)
+
 	err := h.DB.Repository.Create().
 		CopyRepository(&r.Repository).
 		OnConflict().UpdateNewValues().

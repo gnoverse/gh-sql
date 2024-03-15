@@ -166,6 +166,8 @@ const (
 	FieldOpenIssues = "open_issues"
 	// FieldWatchers holds the string denoting the watchers field in the database.
 	FieldWatchers = "watchers"
+	// FieldLicense holds the string denoting the license field in the database.
+	FieldLicense = "license"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeIssues holds the string denoting the issues edge name in mutations.
@@ -267,6 +269,7 @@ var Columns = []string{
 	FieldForks,
 	FieldOpenIssues,
 	FieldWatchers,
+	FieldLicense,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "repositories"

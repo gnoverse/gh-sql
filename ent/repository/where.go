@@ -4375,6 +4375,16 @@ func WatchersLTE(v int64) predicate.Repository {
 	return predicate.Repository(sql.FieldLTE(FieldWatchers, v))
 }
 
+// LicenseIsNil applies the IsNil predicate on the "license" field.
+func LicenseIsNil() predicate.Repository {
+	return predicate.Repository(sql.FieldIsNull(FieldLicense))
+}
+
+// LicenseNotNil applies the NotNil predicate on the "license" field.
+func LicenseNotNil() predicate.Repository {
+	return predicate.Repository(sql.FieldNotNull(FieldLicense))
+}
+
 // HasOwner applies the HasEdge predicate on the "owner" edge.
 func HasOwner() predicate.Repository {
 	return predicate.Repository(func(s *sql.Selector) {

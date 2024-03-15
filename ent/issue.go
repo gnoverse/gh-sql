@@ -21,48 +21,48 @@ type Issue struct {
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
 	// NodeID holds the value of the "node_id" field.
-	NodeID string `json:"node_id,omitempty"`
+	NodeID string `json:"node_id"`
 	// URL for the issue
-	URL string `json:"url,omitempty"`
+	URL string `json:"url"`
 	// RepositoryURL holds the value of the "repository_url" field.
-	RepositoryURL string `json:"repository_url,omitempty"`
+	RepositoryURL string `json:"repository_url"`
 	// LabelsURL holds the value of the "labels_url" field.
-	LabelsURL string `json:"labels_url,omitempty"`
+	LabelsURL string `json:"labels_url"`
 	// CommentsURL holds the value of the "comments_url" field.
-	CommentsURL string `json:"comments_url,omitempty"`
+	CommentsURL string `json:"comments_url"`
 	// EventsURL holds the value of the "events_url" field.
-	EventsURL string `json:"events_url,omitempty"`
+	EventsURL string `json:"events_url"`
 	// HTMLURL holds the value of the "html_url" field.
-	HTMLURL string `json:"html_url,omitempty"`
+	HTMLURL string `json:"html_url"`
 	// Number uniquely identifying the issue within its repository
-	Number int64 `json:"number,omitempty"`
+	Number int64 `json:"number"`
 	// State of the issue; either 'open' or 'closed'
-	State string `json:"state,omitempty"`
+	State string `json:"state"`
 	// StateReason holds the value of the "state_reason" field.
-	StateReason *issue.StateReason `json:"state_reason,omitempty"`
+	StateReason *issue.StateReason `json:"state_reason"`
 	// Title of the issue
-	Title string `json:"title,omitempty"`
+	Title string `json:"title"`
 	// Body holds the value of the "body" field.
-	Body *string `json:"body,omitempty"`
+	Body *string `json:"body"`
 	// Locked holds the value of the "locked" field.
-	Locked bool `json:"locked,omitempty"`
+	Locked bool `json:"locked"`
 	// ActiveLockReason holds the value of the "active_lock_reason" field.
-	ActiveLockReason *string `json:"active_lock_reason,omitempty"`
+	ActiveLockReason *string `json:"active_lock_reason"`
 	// ClosedAt holds the value of the "closed_at" field.
-	ClosedAt *time.Time `json:"closed_at,omitempty"`
+	ClosedAt *time.Time `json:"closed_at"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// Draft holds the value of the "draft" field.
-	Draft bool `json:"draft,omitempty"`
+	Draft bool `json:"draft"`
 	// AuthorAssociation holds the value of the "author_association" field.
-	AuthorAssociation issue.AuthorAssociation `json:"author_association,omitempty"`
+	AuthorAssociation issue.AuthorAssociation `json:"author_association"`
 	// Reactions holds the value of the "reactions" field.
-	Reactions map[string]interface{} `json:"reactions,omitempty"`
+	Reactions map[string]interface{} `json:"reactions"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IssueQuery when eager-loading is set.
-	Edges               IssueEdges `json:"edges"`
+	Edges               IssueEdges `json:"-"`
 	issue_closed_by     *int64
 	repository_issues   *int64
 	user_issues_created *int64
@@ -456,6 +456,18 @@ func (i *Issue) String() string {
 	builder.WriteString(fmt.Sprintf("%v", i.Reactions))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (i *Issue) MarshalJSON() ([]byte, error) {
+	type Alias Issue
+	return json.Marshal(&struct {
+		*Alias
+		IssueEdges
+	}{
+		Alias:      (*Alias)(i),
+		IssueEdges: i.Edges,
+	})
 }
 
 // Issues is a parsable slice of Issue.

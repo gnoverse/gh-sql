@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // RepositoryCreate is the builder for creating a Repository entity.
@@ -517,6 +518,12 @@ func (rc *RepositoryCreate) SetOpenIssues(i int64) *RepositoryCreate {
 // SetWatchers sets the "watchers" field.
 func (rc *RepositoryCreate) SetWatchers(i int64) *RepositoryCreate {
 	rc.mutation.SetWatchers(i)
+	return rc
+}
+
+// SetLicense sets the "license" field.
+func (rc *RepositoryCreate) SetLicense(m *model.License) *RepositoryCreate {
+	rc.mutation.SetLicense(m)
 	return rc
 }
 
@@ -1031,7 +1038,7 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := rc.mutation.MirrorURL(); ok {
 		_spec.SetField(repository.FieldMirrorURL, field.TypeString, value)
-		_node.MirrorURL = value
+		_node.MirrorURL = &value
 	}
 	if value, ok := rc.mutation.HooksURL(); ok {
 		_spec.SetField(repository.FieldHooksURL, field.TypeString, value)
@@ -1148,6 +1155,10 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 	if value, ok := rc.mutation.Watchers(); ok {
 		_spec.SetField(repository.FieldWatchers, field.TypeInt64, value)
 		_node.Watchers = value
+	}
+	if value, ok := rc.mutation.License(); ok {
+		_spec.SetField(repository.FieldLicense, field.TypeJSON, value)
+		_node.License = value
 	}
 	if nodes := rc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -2233,6 +2244,24 @@ func (u *RepositoryUpsert) UpdateWatchers() *RepositoryUpsert {
 // AddWatchers adds v to the "watchers" field.
 func (u *RepositoryUpsert) AddWatchers(v int64) *RepositoryUpsert {
 	u.Add(repository.FieldWatchers, v)
+	return u
+}
+
+// SetLicense sets the "license" field.
+func (u *RepositoryUpsert) SetLicense(v *model.License) *RepositoryUpsert {
+	u.Set(repository.FieldLicense, v)
+	return u
+}
+
+// UpdateLicense sets the "license" field to the value that was provided on create.
+func (u *RepositoryUpsert) UpdateLicense() *RepositoryUpsert {
+	u.SetExcluded(repository.FieldLicense)
+	return u
+}
+
+// ClearLicense clears the value of the "license" field.
+func (u *RepositoryUpsert) ClearLicense() *RepositoryUpsert {
+	u.SetNull(repository.FieldLicense)
 	return u
 }
 
@@ -3450,6 +3479,27 @@ func (u *RepositoryUpsertOne) AddWatchers(v int64) *RepositoryUpsertOne {
 func (u *RepositoryUpsertOne) UpdateWatchers() *RepositoryUpsertOne {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.UpdateWatchers()
+	})
+}
+
+// SetLicense sets the "license" field.
+func (u *RepositoryUpsertOne) SetLicense(v *model.License) *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetLicense(v)
+	})
+}
+
+// UpdateLicense sets the "license" field to the value that was provided on create.
+func (u *RepositoryUpsertOne) UpdateLicense() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateLicense()
+	})
+}
+
+// ClearLicense clears the value of the "license" field.
+func (u *RepositoryUpsertOne) ClearLicense() *RepositoryUpsertOne {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearLicense()
 	})
 }
 
@@ -4832,6 +4882,27 @@ func (u *RepositoryUpsertBulk) AddWatchers(v int64) *RepositoryUpsertBulk {
 func (u *RepositoryUpsertBulk) UpdateWatchers() *RepositoryUpsertBulk {
 	return u.Update(func(s *RepositoryUpsert) {
 		s.UpdateWatchers()
+	})
+}
+
+// SetLicense sets the "license" field.
+func (u *RepositoryUpsertBulk) SetLicense(v *model.License) *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.SetLicense(v)
+	})
+}
+
+// UpdateLicense sets the "license" field to the value that was provided on create.
+func (u *RepositoryUpsertBulk) UpdateLicense() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.UpdateLicense()
+	})
+}
+
+// ClearLicense clears the value of the "license" field.
+func (u *RepositoryUpsertBulk) ClearLicense() *RepositoryUpsertBulk {
+	return u.Update(func(s *RepositoryUpsert) {
+		s.ClearLicense()
 	})
 }
 

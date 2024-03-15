@@ -147,7 +147,7 @@ func newServeCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 			if len(args) > 0 {
 				return ff.ErrHelp
 			}
-			srv := rest.New(rest.Options{
+			srv := rest.Handler(rest.Options{
 				DB: ec.db,
 			})
 			log.Printf("Listening on %s", *addr)

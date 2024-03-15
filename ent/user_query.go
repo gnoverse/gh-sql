@@ -440,7 +440,7 @@ func (uq *UserQuery) WithIssuesClosed(opts ...func(*IssueQuery)) *UserQuery {
 // Example:
 //
 //	var v []struct {
-//		Login string `json:"login,omitempty"`
+//		Login string `json:"login"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -463,7 +463,7 @@ func (uq *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Login string `json:"login,omitempty"`
+//		Login string `json:"login"`
 //	}
 //
 //	client.User.Query().

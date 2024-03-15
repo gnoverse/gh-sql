@@ -21,26 +21,26 @@ type IssueComment struct {
 	// Unique identifier of the issue comment
 	ID int64 `json:"id,omitempty"`
 	// NodeID holds the value of the "node_id" field.
-	NodeID string `json:"node_id,omitempty"`
+	NodeID string `json:"node_id"`
 	// URL for the issue comment
-	URL string `json:"url,omitempty"`
+	URL string `json:"url"`
 	// Body holds the value of the "body" field.
-	Body string `json:"body,omitempty"`
+	Body string `json:"body"`
 	// HTMLURL holds the value of the "html_url" field.
-	HTMLURL string `json:"html_url,omitempty"`
+	HTMLURL string `json:"html_url"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt string `json:"created_at,omitempty"`
+	CreatedAt string `json:"created_at"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt string `json:"updated_at,omitempty"`
+	UpdatedAt string `json:"updated_at"`
 	// IssueURL holds the value of the "issue_url" field.
-	IssueURL string `json:"issue_url,omitempty"`
+	IssueURL string `json:"issue_url"`
 	// AuthorAssociation holds the value of the "author_association" field.
-	AuthorAssociation issuecomment.AuthorAssociation `json:"author_association,omitempty"`
+	AuthorAssociation issuecomment.AuthorAssociation `json:"author_association"`
 	// Reactions holds the value of the "reactions" field.
-	Reactions map[string]interface{} `json:"reactions,omitempty"`
+	Reactions map[string]interface{} `json:"reactions"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IssueCommentQuery when eager-loading is set.
-	Edges                 IssueCommentEdges `json:"edges"`
+	Edges                 IssueCommentEdges `json:"-"`
 	issue_comments        *int64
 	user_comments_created *int64
 	selectValues          sql.SelectValues
@@ -259,6 +259,18 @@ func (ic *IssueComment) String() string {
 	builder.WriteString(fmt.Sprintf("%v", ic.Reactions))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (ic *IssueComment) MarshalJSON() ([]byte, error) {
+	type Alias IssueComment
+	return json.Marshal(&struct {
+		*Alias
+		IssueCommentEdges
+	}{
+		Alias:             (*Alias)(ic),
+		IssueCommentEdges: ic.Edges,
+	})
 }
 
 // IssueComments is a parsable slice of IssueComment.

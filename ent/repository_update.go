@@ -16,6 +16,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // RepositoryUpdate is the builder for updating Repository entities.
@@ -1193,6 +1194,18 @@ func (ru *RepositoryUpdate) AddWatchers(i int64) *RepositoryUpdate {
 	return ru
 }
 
+// SetLicense sets the "license" field.
+func (ru *RepositoryUpdate) SetLicense(m *model.License) *RepositoryUpdate {
+	ru.mutation.SetLicense(m)
+	return ru
+}
+
+// ClearLicense clears the value of the "license" field.
+func (ru *RepositoryUpdate) ClearLicense() *RepositoryUpdate {
+	ru.mutation.ClearLicense()
+	return ru
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (ru *RepositoryUpdate) SetOwnerID(id int64) *RepositoryUpdate {
 	ru.mutation.SetOwnerID(id)
@@ -1585,6 +1598,12 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := ru.mutation.AddedWatchers(); ok {
 		_spec.AddField(repository.FieldWatchers, field.TypeInt64, value)
+	}
+	if value, ok := ru.mutation.License(); ok {
+		_spec.SetField(repository.FieldLicense, field.TypeJSON, value)
+	}
+	if ru.mutation.LicenseCleared() {
+		_spec.ClearField(repository.FieldLicense, field.TypeJSON)
 	}
 	if ru.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -2842,6 +2861,18 @@ func (ruo *RepositoryUpdateOne) AddWatchers(i int64) *RepositoryUpdateOne {
 	return ruo
 }
 
+// SetLicense sets the "license" field.
+func (ruo *RepositoryUpdateOne) SetLicense(m *model.License) *RepositoryUpdateOne {
+	ruo.mutation.SetLicense(m)
+	return ruo
+}
+
+// ClearLicense clears the value of the "license" field.
+func (ruo *RepositoryUpdateOne) ClearLicense() *RepositoryUpdateOne {
+	ruo.mutation.ClearLicense()
+	return ruo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (ruo *RepositoryUpdateOne) SetOwnerID(id int64) *RepositoryUpdateOne {
 	ruo.mutation.SetOwnerID(id)
@@ -3264,6 +3295,12 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 	}
 	if value, ok := ruo.mutation.AddedWatchers(); ok {
 		_spec.AddField(repository.FieldWatchers, field.TypeInt64, value)
+	}
+	if value, ok := ruo.mutation.License(); ok {
+		_spec.SetField(repository.FieldLicense, field.TypeJSON, value)
+	}
+	if ruo.mutation.LicenseCleared() {
+		_spec.ClearField(repository.FieldLicense, field.TypeJSON)
 	}
 	if ruo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

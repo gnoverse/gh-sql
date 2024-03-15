@@ -16,6 +16,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 const (
@@ -2842,6 +2843,7 @@ type RepositoryMutation struct {
 	addopen_issues       *int64
 	watchers             *int64
 	addwatchers          *int64
+	license              **model.License
 	clearedFields        map[string]struct{}
 	owner                *int64
 	clearedowner         bool
@@ -4643,7 +4645,7 @@ func (m *RepositoryMutation) MirrorURL() (r string, exists bool) {
 // OldMirrorURL returns the old "mirror_url" field's value of the Repository entity.
 // If the Repository object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *RepositoryMutation) OldMirrorURL(ctx context.Context) (v string, err error) {
+func (m *RepositoryMutation) OldMirrorURL(ctx context.Context) (v *string, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldMirrorURL is only allowed on UpdateOne operations")
 	}
@@ -5973,6 +5975,55 @@ func (m *RepositoryMutation) ResetWatchers() {
 	m.addwatchers = nil
 }
 
+// SetLicense sets the "license" field.
+func (m *RepositoryMutation) SetLicense(value *model.License) {
+	m.license = &value
+}
+
+// License returns the value of the "license" field in the mutation.
+func (m *RepositoryMutation) License() (r *model.License, exists bool) {
+	v := m.license
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLicense returns the old "license" field's value of the Repository entity.
+// If the Repository object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepositoryMutation) OldLicense(ctx context.Context) (v *model.License, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLicense is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLicense requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLicense: %w", err)
+	}
+	return oldValue.License, nil
+}
+
+// ClearLicense clears the value of the "license" field.
+func (m *RepositoryMutation) ClearLicense() {
+	m.license = nil
+	m.clearedFields[repository.FieldLicense] = struct{}{}
+}
+
+// LicenseCleared returns if the "license" field was cleared in this mutation.
+func (m *RepositoryMutation) LicenseCleared() bool {
+	_, ok := m.clearedFields[repository.FieldLicense]
+	return ok
+}
+
+// ResetLicense resets all changes to the "license" field.
+func (m *RepositoryMutation) ResetLicense() {
+	m.license = nil
+	delete(m.clearedFields, repository.FieldLicense)
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *RepositoryMutation) SetOwnerID(id int64) {
 	m.owner = &id
@@ -6100,7 +6151,7 @@ func (m *RepositoryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RepositoryMutation) Fields() []string {
-	fields := make([]string, 0, 76)
+	fields := make([]string, 0, 77)
 	if m.node_id != nil {
 		fields = append(fields, repository.FieldNodeID)
 	}
@@ -6329,6 +6380,9 @@ func (m *RepositoryMutation) Fields() []string {
 	if m.watchers != nil {
 		fields = append(fields, repository.FieldWatchers)
 	}
+	if m.license != nil {
+		fields = append(fields, repository.FieldLicense)
+	}
 	return fields
 }
 
@@ -6489,6 +6543,8 @@ func (m *RepositoryMutation) Field(name string) (ent.Value, bool) {
 		return m.OpenIssues()
 	case repository.FieldWatchers:
 		return m.Watchers()
+	case repository.FieldLicense:
+		return m.License()
 	}
 	return nil, false
 }
@@ -6650,6 +6706,8 @@ func (m *RepositoryMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldOpenIssues(ctx)
 	case repository.FieldWatchers:
 		return m.OldWatchers(ctx)
+	case repository.FieldLicense:
+		return m.OldLicense(ctx)
 	}
 	return nil, fmt.Errorf("unknown Repository field %s", name)
 }
@@ -7191,6 +7249,13 @@ func (m *RepositoryMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetWatchers(v)
 		return nil
+	case repository.FieldLicense:
+		v, ok := value.(*model.License)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLicense(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Repository field %s", name)
 }
@@ -7359,6 +7424,9 @@ func (m *RepositoryMutation) ClearedFields() []string {
 	if m.FieldCleared(repository.FieldVisibility) {
 		fields = append(fields, repository.FieldVisibility)
 	}
+	if m.FieldCleared(repository.FieldLicense) {
+		fields = append(fields, repository.FieldLicense)
+	}
 	return fields
 }
 
@@ -7387,6 +7455,9 @@ func (m *RepositoryMutation) ClearField(name string) error {
 		return nil
 	case repository.FieldVisibility:
 		m.ClearVisibility()
+		return nil
+	case repository.FieldLicense:
+		m.ClearLicense()
 		return nil
 	}
 	return fmt.Errorf("unknown Repository nullable field %s", name)
@@ -7623,6 +7694,9 @@ func (m *RepositoryMutation) ResetField(name string) error {
 		return nil
 	case repository.FieldWatchers:
 		m.ResetWatchers()
+		return nil
+	case repository.FieldLicense:
+		m.ResetLicense()
 		return nil
 	}
 	return fmt.Errorf("unknown Repository field %s", name)

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // Repository is the model entity for the Repository schema.
@@ -20,160 +21,162 @@ type Repository struct {
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
 	// NodeID holds the value of the "node_id" field.
-	NodeID string `json:"node_id,omitempty"`
+	NodeID string `json:"node_id"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// FullName holds the value of the "full_name" field.
-	FullName string `json:"full_name,omitempty"`
+	FullName string `json:"full_name"`
 	// Private holds the value of the "private" field.
-	Private bool `json:"private,omitempty"`
+	Private bool `json:"private"`
 	// HTMLURL holds the value of the "html_url" field.
-	HTMLURL string `json:"html_url,omitempty"`
+	HTMLURL string `json:"html_url"`
 	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 	// Fork holds the value of the "fork" field.
-	Fork bool `json:"fork,omitempty"`
+	Fork bool `json:"fork"`
 	// URL holds the value of the "url" field.
-	URL string `json:"url,omitempty"`
+	URL string `json:"url"`
 	// ArchiveURL holds the value of the "archive_url" field.
-	ArchiveURL string `json:"archive_url,omitempty"`
+	ArchiveURL string `json:"archive_url"`
 	// AssigneesURL holds the value of the "assignees_url" field.
-	AssigneesURL string `json:"assignees_url,omitempty"`
+	AssigneesURL string `json:"assignees_url"`
 	// BlobsURL holds the value of the "blobs_url" field.
-	BlobsURL string `json:"blobs_url,omitempty"`
+	BlobsURL string `json:"blobs_url"`
 	// BranchesURL holds the value of the "branches_url" field.
-	BranchesURL string `json:"branches_url,omitempty"`
+	BranchesURL string `json:"branches_url"`
 	// CollaboratorsURL holds the value of the "collaborators_url" field.
-	CollaboratorsURL string `json:"collaborators_url,omitempty"`
+	CollaboratorsURL string `json:"collaborators_url"`
 	// CommentsURL holds the value of the "comments_url" field.
-	CommentsURL string `json:"comments_url,omitempty"`
+	CommentsURL string `json:"comments_url"`
 	// CommitsURL holds the value of the "commits_url" field.
-	CommitsURL string `json:"commits_url,omitempty"`
+	CommitsURL string `json:"commits_url"`
 	// CompareURL holds the value of the "compare_url" field.
-	CompareURL string `json:"compare_url,omitempty"`
+	CompareURL string `json:"compare_url"`
 	// ContentsURL holds the value of the "contents_url" field.
-	ContentsURL string `json:"contents_url,omitempty"`
+	ContentsURL string `json:"contents_url"`
 	// ContributorsURL holds the value of the "contributors_url" field.
-	ContributorsURL string `json:"contributors_url,omitempty"`
+	ContributorsURL string `json:"contributors_url"`
 	// DeploymentsURL holds the value of the "deployments_url" field.
-	DeploymentsURL string `json:"deployments_url,omitempty"`
+	DeploymentsURL string `json:"deployments_url"`
 	// DownloadsURL holds the value of the "downloads_url" field.
-	DownloadsURL string `json:"downloads_url,omitempty"`
+	DownloadsURL string `json:"downloads_url"`
 	// EventsURL holds the value of the "events_url" field.
-	EventsURL string `json:"events_url,omitempty"`
+	EventsURL string `json:"events_url"`
 	// ForksURL holds the value of the "forks_url" field.
-	ForksURL string `json:"forks_url,omitempty"`
+	ForksURL string `json:"forks_url"`
 	// GitCommitsURL holds the value of the "git_commits_url" field.
-	GitCommitsURL string `json:"git_commits_url,omitempty"`
+	GitCommitsURL string `json:"git_commits_url"`
 	// GitRefsURL holds the value of the "git_refs_url" field.
-	GitRefsURL string `json:"git_refs_url,omitempty"`
+	GitRefsURL string `json:"git_refs_url"`
 	// GitTagsURL holds the value of the "git_tags_url" field.
-	GitTagsURL string `json:"git_tags_url,omitempty"`
+	GitTagsURL string `json:"git_tags_url"`
 	// GitURL holds the value of the "git_url" field.
-	GitURL string `json:"git_url,omitempty"`
+	GitURL string `json:"git_url"`
 	// IssueCommentURL holds the value of the "issue_comment_url" field.
-	IssueCommentURL string `json:"issue_comment_url,omitempty"`
+	IssueCommentURL string `json:"issue_comment_url"`
 	// IssueEventsURL holds the value of the "issue_events_url" field.
-	IssueEventsURL string `json:"issue_events_url,omitempty"`
+	IssueEventsURL string `json:"issue_events_url"`
 	// IssuesURL holds the value of the "issues_url" field.
-	IssuesURL string `json:"issues_url,omitempty"`
+	IssuesURL string `json:"issues_url"`
 	// KeysURL holds the value of the "keys_url" field.
-	KeysURL string `json:"keys_url,omitempty"`
+	KeysURL string `json:"keys_url"`
 	// LabelsURL holds the value of the "labels_url" field.
-	LabelsURL string `json:"labels_url,omitempty"`
+	LabelsURL string `json:"labels_url"`
 	// LanguagesURL holds the value of the "languages_url" field.
-	LanguagesURL string `json:"languages_url,omitempty"`
+	LanguagesURL string `json:"languages_url"`
 	// MergesURL holds the value of the "merges_url" field.
-	MergesURL string `json:"merges_url,omitempty"`
+	MergesURL string `json:"merges_url"`
 	// MilestonesURL holds the value of the "milestones_url" field.
-	MilestonesURL string `json:"milestones_url,omitempty"`
+	MilestonesURL string `json:"milestones_url"`
 	// NotificationsURL holds the value of the "notifications_url" field.
-	NotificationsURL string `json:"notifications_url,omitempty"`
+	NotificationsURL string `json:"notifications_url"`
 	// PullsURL holds the value of the "pulls_url" field.
-	PullsURL string `json:"pulls_url,omitempty"`
+	PullsURL string `json:"pulls_url"`
 	// ReleasesURL holds the value of the "releases_url" field.
-	ReleasesURL string `json:"releases_url,omitempty"`
+	ReleasesURL string `json:"releases_url"`
 	// SSHURL holds the value of the "ssh_url" field.
-	SSHURL string `json:"ssh_url,omitempty"`
+	SSHURL string `json:"ssh_url"`
 	// StargazersURL holds the value of the "stargazers_url" field.
-	StargazersURL string `json:"stargazers_url,omitempty"`
+	StargazersURL string `json:"stargazers_url"`
 	// StatusesURL holds the value of the "statuses_url" field.
-	StatusesURL string `json:"statuses_url,omitempty"`
+	StatusesURL string `json:"statuses_url"`
 	// SubscribersURL holds the value of the "subscribers_url" field.
-	SubscribersURL string `json:"subscribers_url,omitempty"`
+	SubscribersURL string `json:"subscribers_url"`
 	// SubscriptionURL holds the value of the "subscription_url" field.
-	SubscriptionURL string `json:"subscription_url,omitempty"`
+	SubscriptionURL string `json:"subscription_url"`
 	// TagsURL holds the value of the "tags_url" field.
-	TagsURL string `json:"tags_url,omitempty"`
+	TagsURL string `json:"tags_url"`
 	// TeamsURL holds the value of the "teams_url" field.
-	TeamsURL string `json:"teams_url,omitempty"`
+	TeamsURL string `json:"teams_url"`
 	// TreesURL holds the value of the "trees_url" field.
-	TreesURL string `json:"trees_url,omitempty"`
+	TreesURL string `json:"trees_url"`
 	// CloneURL holds the value of the "clone_url" field.
-	CloneURL string `json:"clone_url,omitempty"`
+	CloneURL string `json:"clone_url"`
 	// MirrorURL holds the value of the "mirror_url" field.
-	MirrorURL string `json:"mirror_url,omitempty"`
+	MirrorURL *string `json:"mirror_url"`
 	// HooksURL holds the value of the "hooks_url" field.
-	HooksURL string `json:"hooks_url,omitempty"`
+	HooksURL string `json:"hooks_url"`
 	// SvnURL holds the value of the "svn_url" field.
-	SvnURL string `json:"svn_url,omitempty"`
+	SvnURL string `json:"svn_url"`
 	// Homepage holds the value of the "homepage" field.
-	Homepage string `json:"homepage,omitempty"`
+	Homepage string `json:"homepage"`
 	// Language holds the value of the "language" field.
-	Language string `json:"language,omitempty"`
+	Language string `json:"language"`
 	// ForksCount holds the value of the "forks_count" field.
-	ForksCount int64 `json:"forks_count,omitempty"`
+	ForksCount int64 `json:"forks_count"`
 	// StargazersCount holds the value of the "stargazers_count" field.
-	StargazersCount int64 `json:"stargazers_count,omitempty"`
+	StargazersCount int64 `json:"stargazers_count"`
 	// WatchersCount holds the value of the "watchers_count" field.
-	WatchersCount int64 `json:"watchers_count,omitempty"`
+	WatchersCount int64 `json:"watchers_count"`
 	// The size of the repository, in kilobytes. Size is calculated hourly. When a repository is initially created, the size is 0.
-	Size int64 `json:"size,omitempty"`
+	Size int64 `json:"size"`
 	// DefaultBranch holds the value of the "default_branch" field.
-	DefaultBranch string `json:"default_branch,omitempty"`
+	DefaultBranch string `json:"default_branch"`
 	// OpenIssuesCount holds the value of the "open_issues_count" field.
-	OpenIssuesCount int64 `json:"open_issues_count,omitempty"`
+	OpenIssuesCount int64 `json:"open_issues_count"`
 	// IsTemplate holds the value of the "is_template" field.
-	IsTemplate bool `json:"is_template,omitempty"`
+	IsTemplate bool `json:"is_template"`
 	// Topics holds the value of the "topics" field.
-	Topics []string `json:"topics,omitempty"`
+	Topics []string `json:"topics"`
 	// HasIssuesEnabled holds the value of the "has_issues_enabled" field.
 	HasIssuesEnabled bool `json:"has_issues"`
 	// HasProjects holds the value of the "has_projects" field.
-	HasProjects bool `json:"has_projects,omitempty"`
+	HasProjects bool `json:"has_projects"`
 	// HasWiki holds the value of the "has_wiki" field.
-	HasWiki bool `json:"has_wiki,omitempty"`
+	HasWiki bool `json:"has_wiki"`
 	// HasPages holds the value of the "has_pages" field.
-	HasPages bool `json:"has_pages,omitempty"`
+	HasPages bool `json:"has_pages"`
 	// HasDownloads holds the value of the "has_downloads" field.
-	HasDownloads bool `json:"has_downloads,omitempty"`
+	HasDownloads bool `json:"has_downloads"`
 	// HasDiscussions holds the value of the "has_discussions" field.
-	HasDiscussions bool `json:"has_discussions,omitempty"`
+	HasDiscussions bool `json:"has_discussions"`
 	// Archived holds the value of the "archived" field.
-	Archived bool `json:"archived,omitempty"`
+	Archived bool `json:"archived"`
 	// Returns whether or not this repository disabled.
-	Disabled bool `json:"disabled,omitempty"`
+	Disabled bool `json:"disabled"`
 	// Visibility holds the value of the "visibility" field.
-	Visibility *repository.Visibility `json:"visibility,omitempty"`
+	Visibility *repository.Visibility `json:"visibility"`
 	// PushedAt holds the value of the "pushed_at" field.
-	PushedAt time.Time `json:"pushed_at,omitempty"`
+	PushedAt time.Time `json:"pushed_at"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// SubscribersCount holds the value of the "subscribers_count" field.
-	SubscribersCount int64 `json:"subscribers_count,omitempty"`
+	SubscribersCount int64 `json:"subscribers_count"`
 	// NetworkCount holds the value of the "network_count" field.
-	NetworkCount int64 `json:"network_count,omitempty"`
+	NetworkCount int64 `json:"network_count"`
 	// Forks holds the value of the "forks" field.
-	Forks int64 `json:"forks,omitempty"`
+	Forks int64 `json:"forks"`
 	// OpenIssues holds the value of the "open_issues" field.
-	OpenIssues int64 `json:"open_issues,omitempty"`
+	OpenIssues int64 `json:"open_issues"`
 	// Watchers holds the value of the "watchers" field.
-	Watchers int64 `json:"watchers,omitempty"`
+	Watchers int64 `json:"watchers"`
+	// License holds the value of the "license" field.
+	License *model.License `json:"license"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RepositoryQuery when eager-loading is set.
-	Edges             RepositoryEdges `json:"edges"`
+	Edges             RepositoryEdges `json:"-"`
 	user_repositories *int64
 	selectValues      sql.SelectValues
 }
@@ -214,7 +217,7 @@ func (*Repository) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case repository.FieldTopics:
+		case repository.FieldTopics, repository.FieldLicense:
 			values[i] = new([]byte)
 		case repository.FieldPrivate, repository.FieldFork, repository.FieldIsTemplate, repository.FieldHasIssuesEnabled, repository.FieldHasProjects, repository.FieldHasWiki, repository.FieldHasPages, repository.FieldHasDownloads, repository.FieldHasDiscussions, repository.FieldArchived, repository.FieldDisabled:
 			values[i] = new(sql.NullBool)
@@ -527,7 +530,8 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field mirror_url", values[i])
 			} else if value.Valid {
-				r.MirrorURL = value.String
+				r.MirrorURL = new(string)
+				*r.MirrorURL = value.String
 			}
 		case repository.FieldHooksURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -705,6 +709,14 @@ func (r *Repository) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field watchers", values[i])
 			} else if value.Valid {
 				r.Watchers = value.Int64
+			}
+		case repository.FieldLicense:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field license", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &r.License); err != nil {
+					return fmt.Errorf("unmarshal field license: %w", err)
+				}
 			}
 		case repository.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -897,8 +909,10 @@ func (r *Repository) String() string {
 	builder.WriteString("clone_url=")
 	builder.WriteString(r.CloneURL)
 	builder.WriteString(", ")
-	builder.WriteString("mirror_url=")
-	builder.WriteString(r.MirrorURL)
+	if v := r.MirrorURL; v != nil {
+		builder.WriteString("mirror_url=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("hooks_url=")
 	builder.WriteString(r.HooksURL)
@@ -988,8 +1002,23 @@ func (r *Repository) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("watchers=")
 	builder.WriteString(fmt.Sprintf("%v", r.Watchers))
+	builder.WriteString(", ")
+	builder.WriteString("license=")
+	builder.WriteString(fmt.Sprintf("%v", r.License))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (r *Repository) MarshalJSON() ([]byte, error) {
+	type Alias Repository
+	return json.Marshal(&struct {
+		*Alias
+		RepositoryEdges
+	}{
+		Alias:           (*Alias)(r),
+		RepositoryEdges: r.Edges,
+	})
 }
 
 // Repositories is a parsable slice of Repository.

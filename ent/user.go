@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -18,68 +19,68 @@ type User struct {
 	// ID of the ent.
 	ID int64 `json:"id,omitempty"`
 	// Login holds the value of the "login" field.
-	Login string `json:"login,omitempty"`
+	Login string `json:"login"`
 	// NodeID holds the value of the "node_id" field.
-	NodeID string `json:"node_id,omitempty"`
+	NodeID string `json:"node_id"`
 	// AvatarURL holds the value of the "avatar_url" field.
-	AvatarURL string `json:"avatar_url,omitempty"`
+	AvatarURL string `json:"avatar_url"`
 	// GravatarID holds the value of the "gravatar_id" field.
-	GravatarID string `json:"gravatar_id,omitempty"`
+	GravatarID string `json:"gravatar_id"`
 	// URL holds the value of the "url" field.
-	URL string `json:"url,omitempty"`
+	URL string `json:"url"`
 	// HTMLURL holds the value of the "html_url" field.
-	HTMLURL string `json:"html_url,omitempty"`
+	HTMLURL string `json:"html_url"`
 	// FollowersURL holds the value of the "followers_url" field.
-	FollowersURL string `json:"followers_url,omitempty"`
+	FollowersURL string `json:"followers_url"`
 	// FollowingURL holds the value of the "following_url" field.
-	FollowingURL string `json:"following_url,omitempty"`
+	FollowingURL string `json:"following_url"`
 	// GistsURL holds the value of the "gists_url" field.
-	GistsURL string `json:"gists_url,omitempty"`
+	GistsURL string `json:"gists_url"`
 	// StarredURL holds the value of the "starred_url" field.
-	StarredURL string `json:"starred_url,omitempty"`
+	StarredURL string `json:"starred_url"`
 	// SubscriptionsURL holds the value of the "subscriptions_url" field.
-	SubscriptionsURL string `json:"subscriptions_url,omitempty"`
+	SubscriptionsURL string `json:"subscriptions_url"`
 	// OrganizationsURL holds the value of the "organizations_url" field.
-	OrganizationsURL string `json:"organizations_url,omitempty"`
+	OrganizationsURL string `json:"organizations_url"`
 	// ReposURL holds the value of the "repos_url" field.
-	ReposURL string `json:"repos_url,omitempty"`
+	ReposURL string `json:"repos_url"`
 	// EventsURL holds the value of the "events_url" field.
-	EventsURL string `json:"events_url,omitempty"`
+	EventsURL string `json:"events_url"`
 	// ReceivedEventsURL holds the value of the "received_events_url" field.
-	ReceivedEventsURL string `json:"received_events_url,omitempty"`
+	ReceivedEventsURL string `json:"received_events_url"`
 	// Type holds the value of the "type" field.
-	Type string `json:"type,omitempty"`
+	Type string `json:"type"`
 	// SiteAdmin holds the value of the "site_admin" field.
-	SiteAdmin bool `json:"site_admin,omitempty"`
+	SiteAdmin bool `json:"site_admin"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	Name string `json:"name"`
 	// Company holds the value of the "company" field.
-	Company string `json:"company,omitempty"`
+	Company string `json:"company"`
 	// Blog holds the value of the "blog" field.
-	Blog string `json:"blog,omitempty"`
+	Blog string `json:"blog"`
 	// Location holds the value of the "location" field.
-	Location string `json:"location,omitempty"`
+	Location string `json:"location"`
 	// Email holds the value of the "email" field.
-	Email string `json:"email,omitempty"`
+	Email string `json:"email"`
 	// Hireable holds the value of the "hireable" field.
-	Hireable bool `json:"hireable,omitempty"`
+	Hireable bool `json:"hireable"`
 	// Bio holds the value of the "bio" field.
-	Bio string `json:"bio,omitempty"`
+	Bio string `json:"bio"`
 	// PublicRepos holds the value of the "public_repos" field.
-	PublicRepos int64 `json:"public_repos,omitempty"`
+	PublicRepos int64 `json:"public_repos"`
 	// PublicGists holds the value of the "public_gists" field.
-	PublicGists int64 `json:"public_gists,omitempty"`
+	PublicGists int64 `json:"public_gists"`
 	// Followers holds the value of the "followers" field.
-	Followers int64 `json:"followers,omitempty"`
+	Followers int64 `json:"followers"`
 	// Following holds the value of the "following" field.
-	Following int64 `json:"following,omitempty"`
+	Following int64 `json:"following"`
 	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges        UserEdges `json:"edges"`
+	Edges        UserEdges `json:"-"`
 	selectValues sql.SelectValues
 }
 
@@ -511,6 +512,18 @@ func (u *User) String() string {
 	builder.WriteString(u.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
+}
+
+// MarshalJSON implements the json.Marshaler interface.
+func (u *User) MarshalJSON() ([]byte, error) {
+	type Alias User
+	return json.Marshal(&struct {
+		*Alias
+		UserEdges
+	}{
+		Alias:     (*Alias)(u),
+		UserEdges: u.Edges,
+	})
 }
 
 // Users is a parsable slice of User.

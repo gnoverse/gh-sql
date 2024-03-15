@@ -175,6 +175,7 @@ var (
 		{Name: "forks", Type: field.TypeInt64},
 		{Name: "open_issues", Type: field.TypeInt64},
 		{Name: "watchers", Type: field.TypeInt64},
+		{Name: "license", Type: field.TypeJSON, Nullable: true},
 		{Name: "user_repositories", Type: field.TypeInt64, Nullable: true},
 	}
 	// RepositoriesTable holds the schema information for the "repositories" table.
@@ -185,7 +186,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "repositories_users_repositories",
-				Columns:    []*schema.Column{RepositoriesColumns[77]},
+				Columns:    []*schema.Column{RepositoriesColumns[78]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

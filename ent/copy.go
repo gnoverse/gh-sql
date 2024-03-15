@@ -152,7 +152,9 @@ func (rc *RepositoryCreate) CopyRepository(input *Repository) *RepositoryCreate 
 	rc.SetTeamsURL(input.TeamsURL)
 	rc.SetTreesURL(input.TreesURL)
 	rc.SetCloneURL(input.CloneURL)
-	rc.SetMirrorURL(input.MirrorURL)
+	if input.MirrorURL != nil {
+		rc.SetMirrorURL(*input.MirrorURL)
+	}
 	rc.SetHooksURL(input.HooksURL)
 	rc.SetSvnURL(input.SvnURL)
 	rc.SetHomepage(input.Homepage)
@@ -184,6 +186,7 @@ func (rc *RepositoryCreate) CopyRepository(input *Repository) *RepositoryCreate 
 	rc.SetForks(input.Forks)
 	rc.SetOpenIssues(input.OpenIssues)
 	rc.SetWatchers(input.Watchers)
+	rc.SetLicense(input.License)
 	return rc
 }
 
@@ -236,7 +239,9 @@ func (ruo *RepositoryUpdateOne) CopyRepository(input *Repository) *RepositoryUpd
 	ruo.SetTeamsURL(input.TeamsURL)
 	ruo.SetTreesURL(input.TreesURL)
 	ruo.SetCloneURL(input.CloneURL)
-	ruo.SetMirrorURL(input.MirrorURL)
+	if input.MirrorURL != nil {
+		ruo.SetMirrorURL(*input.MirrorURL)
+	}
 	ruo.SetHooksURL(input.HooksURL)
 	ruo.SetSvnURL(input.SvnURL)
 	ruo.SetHomepage(input.Homepage)
@@ -268,6 +273,7 @@ func (ruo *RepositoryUpdateOne) CopyRepository(input *Repository) *RepositoryUpd
 	ruo.SetForks(input.Forks)
 	ruo.SetOpenIssues(input.OpenIssues)
 	ruo.SetWatchers(input.Watchers)
+	ruo.SetLicense(input.License)
 	return ruo
 }
 

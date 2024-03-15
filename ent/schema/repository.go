@@ -5,6 +5,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // Repository holds the schema definition for the Repository entity.
@@ -67,7 +68,8 @@ func (Repository) Fields() []ent.Field {
 		field.String("trees_url"),
 		field.String("clone_url"),
 		field.String("mirror_url").
-			Optional(),
+			Optional().
+			Nillable(),
 		field.String("hooks_url"),
 		field.String("svn_url"),
 		field.String("homepage").
@@ -92,7 +94,10 @@ func (Repository) Fields() []ent.Field {
 		field.Bool("archived"),
 		field.Bool("disabled").
 			Comment("Returns whether or not this repository disabled."),
-		field.Enum("visibility").Nillable().Optional().Values("public", "private", "internal"),
+		field.Enum("visibility").
+			Nillable().
+			Optional().
+			Values("public", "private", "internal"),
 		field.Time("pushed_at"),
 		field.Time("created_at"),
 		field.Time("updated_at"),
@@ -117,6 +122,7 @@ func (Repository) Fields() []ent.Field {
 		// ignored: master_branch: not required
 		field.Int64("open_issues"),
 		field.Int64("watchers"),
+		field.JSON("license", &model.License{}).Optional(),
 		// ignored: anonymous_access_enabled: not required
 		// ignored: custom_properties: not required
 	}
@@ -130,7 +136,6 @@ func (Repository) Edges() []ent.Edge {
 			Unique(),
 		edge.To("issues", Issue.Type),
 		// edge: template_repository (#/components/schemas/nullable-repository)
-		// edge: license (#/components/schemas/nullable-license-simple)
 		// edge: organization (#/components/schemas/nullable-simple-user)
 		// edge: parent (#/components/schemas/repository)
 		// edge: source (#/components/schemas/repository)

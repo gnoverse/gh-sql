@@ -334,7 +334,7 @@ func (icq *IssueCommentQuery) WithUser(opts ...func(*UserQuery)) *IssueCommentQu
 // Example:
 //
 //	var v []struct {
-//		NodeID string `json:"node_id,omitempty"`
+//		NodeID string `json:"node_id"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -357,7 +357,7 @@ func (icq *IssueCommentQuery) GroupBy(field string, fields ...string) *IssueComm
 // Example:
 //
 //	var v []struct {
-//		NodeID string `json:"node_id,omitempty"`
+//		NodeID string `json:"node_id"`
 //	}
 //
 //	client.IssueComment.Query().

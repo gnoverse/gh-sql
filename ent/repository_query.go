@@ -335,7 +335,7 @@ func (rq *RepositoryQuery) WithIssues(opts ...func(*IssueQuery)) *RepositoryQuer
 // Example:
 //
 //	var v []struct {
-//		NodeID string `json:"node_id,omitempty"`
+//		NodeID string `json:"node_id"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -358,7 +358,7 @@ func (rq *RepositoryQuery) GroupBy(field string, fields ...string) *RepositoryGr
 // Example:
 //
 //	var v []struct {
-//		NodeID string `json:"node_id,omitempty"`
+//		NodeID string `json:"node_id"`
 //	}
 //
 //	client.Repository.Query().
