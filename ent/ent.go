@@ -15,6 +15,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
 )
 
@@ -76,10 +77,11 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			issue.Table:        issue.ValidColumn,
-			issuecomment.Table: issuecomment.ValidColumn,
-			repository.Table:   repository.ValidColumn,
-			user.Table:         user.ValidColumn,
+			issue.Table:         issue.ValidColumn,
+			issuecomment.Table:  issuecomment.ValidColumn,
+			repository.Table:    repository.ValidColumn,
+			timelineevent.Table: timelineevent.ValidColumn,
+			user.Table:          user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

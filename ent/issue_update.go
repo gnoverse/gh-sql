@@ -15,7 +15,9 @@ import (
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // IssueUpdate is the builder for updating Issue entities.
@@ -165,15 +167,15 @@ func (iu *IssueUpdate) SetNillableState(s *string) *IssueUpdate {
 }
 
 // SetStateReason sets the "state_reason" field.
-func (iu *IssueUpdate) SetStateReason(ir issue.StateReason) *IssueUpdate {
-	iu.mutation.SetStateReason(ir)
+func (iu *IssueUpdate) SetStateReason(mr model.StateReason) *IssueUpdate {
+	iu.mutation.SetStateReason(mr)
 	return iu
 }
 
 // SetNillableStateReason sets the "state_reason" field if the given value is not nil.
-func (iu *IssueUpdate) SetNillableStateReason(ir *issue.StateReason) *IssueUpdate {
-	if ir != nil {
-		iu.SetStateReason(*ir)
+func (iu *IssueUpdate) SetNillableStateReason(mr *model.StateReason) *IssueUpdate {
+	if mr != nil {
+		iu.SetStateReason(*mr)
 	}
 	return iu
 }
@@ -336,22 +338,22 @@ func (iu *IssueUpdate) SetNillableDraft(b *bool) *IssueUpdate {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (iu *IssueUpdate) SetAuthorAssociation(ia issue.AuthorAssociation) *IssueUpdate {
-	iu.mutation.SetAuthorAssociation(ia)
+func (iu *IssueUpdate) SetAuthorAssociation(ma model.AuthorAssociation) *IssueUpdate {
+	iu.mutation.SetAuthorAssociation(ma)
 	return iu
 }
 
 // SetNillableAuthorAssociation sets the "author_association" field if the given value is not nil.
-func (iu *IssueUpdate) SetNillableAuthorAssociation(ia *issue.AuthorAssociation) *IssueUpdate {
-	if ia != nil {
-		iu.SetAuthorAssociation(*ia)
+func (iu *IssueUpdate) SetNillableAuthorAssociation(ma *model.AuthorAssociation) *IssueUpdate {
+	if ma != nil {
+		iu.SetAuthorAssociation(*ma)
 	}
 	return iu
 }
 
 // SetReactions sets the "reactions" field.
-func (iu *IssueUpdate) SetReactions(m map[string]interface{}) *IssueUpdate {
-	iu.mutation.SetReactions(m)
+func (iu *IssueUpdate) SetReactions(mr model.ReactionRollup) *IssueUpdate {
+	iu.mutation.SetReactions(mr)
 	return iu
 }
 
@@ -415,6 +417,21 @@ func (iu *IssueUpdate) AddComments(i ...*IssueComment) *IssueUpdate {
 	return iu.AddCommentIDs(ids...)
 }
 
+// AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by IDs.
+func (iu *IssueUpdate) AddTimelineIDs(ids ...string) *IssueUpdate {
+	iu.mutation.AddTimelineIDs(ids...)
+	return iu
+}
+
+// AddTimeline adds the "timeline" edges to the TimelineEvent entity.
+func (iu *IssueUpdate) AddTimeline(t ...*TimelineEvent) *IssueUpdate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return iu.AddTimelineIDs(ids...)
+}
+
 // Mutation returns the IssueMutation object of the builder.
 func (iu *IssueUpdate) Mutation() *IssueMutation {
 	return iu.mutation
@@ -472,6 +489,27 @@ func (iu *IssueUpdate) RemoveComments(i ...*IssueComment) *IssueUpdate {
 		ids[j] = i[j].ID
 	}
 	return iu.RemoveCommentIDs(ids...)
+}
+
+// ClearTimeline clears all "timeline" edges to the TimelineEvent entity.
+func (iu *IssueUpdate) ClearTimeline() *IssueUpdate {
+	iu.mutation.ClearTimeline()
+	return iu
+}
+
+// RemoveTimelineIDs removes the "timeline" edge to TimelineEvent entities by IDs.
+func (iu *IssueUpdate) RemoveTimelineIDs(ids ...string) *IssueUpdate {
+	iu.mutation.RemoveTimelineIDs(ids...)
+	return iu
+}
+
+// RemoveTimeline removes "timeline" edges to TimelineEvent entities.
+func (iu *IssueUpdate) RemoveTimeline(t ...*TimelineEvent) *IssueUpdate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return iu.RemoveTimelineIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -760,6 +798,51 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if iu.mutation.TimelineCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.TimelineTable,
+			Columns: []string{issue.TimelineColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.RemovedTimelineIDs(); len(nodes) > 0 && !iu.mutation.TimelineCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.TimelineTable,
+			Columns: []string{issue.TimelineColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.TimelineIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.TimelineTable,
+			Columns: []string{issue.TimelineColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, iu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{issue.Label}
@@ -914,15 +997,15 @@ func (iuo *IssueUpdateOne) SetNillableState(s *string) *IssueUpdateOne {
 }
 
 // SetStateReason sets the "state_reason" field.
-func (iuo *IssueUpdateOne) SetStateReason(ir issue.StateReason) *IssueUpdateOne {
-	iuo.mutation.SetStateReason(ir)
+func (iuo *IssueUpdateOne) SetStateReason(mr model.StateReason) *IssueUpdateOne {
+	iuo.mutation.SetStateReason(mr)
 	return iuo
 }
 
 // SetNillableStateReason sets the "state_reason" field if the given value is not nil.
-func (iuo *IssueUpdateOne) SetNillableStateReason(ir *issue.StateReason) *IssueUpdateOne {
-	if ir != nil {
-		iuo.SetStateReason(*ir)
+func (iuo *IssueUpdateOne) SetNillableStateReason(mr *model.StateReason) *IssueUpdateOne {
+	if mr != nil {
+		iuo.SetStateReason(*mr)
 	}
 	return iuo
 }
@@ -1085,22 +1168,22 @@ func (iuo *IssueUpdateOne) SetNillableDraft(b *bool) *IssueUpdateOne {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (iuo *IssueUpdateOne) SetAuthorAssociation(ia issue.AuthorAssociation) *IssueUpdateOne {
-	iuo.mutation.SetAuthorAssociation(ia)
+func (iuo *IssueUpdateOne) SetAuthorAssociation(ma model.AuthorAssociation) *IssueUpdateOne {
+	iuo.mutation.SetAuthorAssociation(ma)
 	return iuo
 }
 
 // SetNillableAuthorAssociation sets the "author_association" field if the given value is not nil.
-func (iuo *IssueUpdateOne) SetNillableAuthorAssociation(ia *issue.AuthorAssociation) *IssueUpdateOne {
-	if ia != nil {
-		iuo.SetAuthorAssociation(*ia)
+func (iuo *IssueUpdateOne) SetNillableAuthorAssociation(ma *model.AuthorAssociation) *IssueUpdateOne {
+	if ma != nil {
+		iuo.SetAuthorAssociation(*ma)
 	}
 	return iuo
 }
 
 // SetReactions sets the "reactions" field.
-func (iuo *IssueUpdateOne) SetReactions(m map[string]interface{}) *IssueUpdateOne {
-	iuo.mutation.SetReactions(m)
+func (iuo *IssueUpdateOne) SetReactions(mr model.ReactionRollup) *IssueUpdateOne {
+	iuo.mutation.SetReactions(mr)
 	return iuo
 }
 
@@ -1164,6 +1247,21 @@ func (iuo *IssueUpdateOne) AddComments(i ...*IssueComment) *IssueUpdateOne {
 	return iuo.AddCommentIDs(ids...)
 }
 
+// AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by IDs.
+func (iuo *IssueUpdateOne) AddTimelineIDs(ids ...string) *IssueUpdateOne {
+	iuo.mutation.AddTimelineIDs(ids...)
+	return iuo
+}
+
+// AddTimeline adds the "timeline" edges to the TimelineEvent entity.
+func (iuo *IssueUpdateOne) AddTimeline(t ...*TimelineEvent) *IssueUpdateOne {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return iuo.AddTimelineIDs(ids...)
+}
+
 // Mutation returns the IssueMutation object of the builder.
 func (iuo *IssueUpdateOne) Mutation() *IssueMutation {
 	return iuo.mutation
@@ -1221,6 +1319,27 @@ func (iuo *IssueUpdateOne) RemoveComments(i ...*IssueComment) *IssueUpdateOne {
 		ids[j] = i[j].ID
 	}
 	return iuo.RemoveCommentIDs(ids...)
+}
+
+// ClearTimeline clears all "timeline" edges to the TimelineEvent entity.
+func (iuo *IssueUpdateOne) ClearTimeline() *IssueUpdateOne {
+	iuo.mutation.ClearTimeline()
+	return iuo
+}
+
+// RemoveTimelineIDs removes the "timeline" edge to TimelineEvent entities by IDs.
+func (iuo *IssueUpdateOne) RemoveTimelineIDs(ids ...string) *IssueUpdateOne {
+	iuo.mutation.RemoveTimelineIDs(ids...)
+	return iuo
+}
+
+// RemoveTimeline removes "timeline" edges to TimelineEvent entities.
+func (iuo *IssueUpdateOne) RemoveTimeline(t ...*TimelineEvent) *IssueUpdateOne {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return iuo.RemoveTimelineIDs(ids...)
 }
 
 // Where appends a list predicates to the IssueUpdate builder.
@@ -1532,6 +1651,51 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issuecomment.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if iuo.mutation.TimelineCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.TimelineTable,
+			Columns: []string{issue.TimelineColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.RemovedTimelineIDs(); len(nodes) > 0 && !iuo.mutation.TimelineCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.TimelineTable,
+			Columns: []string{issue.TimelineColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.TimelineIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.TimelineTable,
+			Columns: []string{issue.TimelineColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

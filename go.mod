@@ -4,6 +4,7 @@ go 1.21.1
 
 require (
 	entgo.io/ent v0.13.1
+	github.com/buger/jsonparser v1.1.1
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/peterbourgon/ff/v4 v4.0.0-alpha.4
 	golang.org/x/sync v0.6.0

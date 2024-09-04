@@ -13,6 +13,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // IssueCommentCreate is the builder for creating a IssueComment entity.
@@ -66,8 +67,8 @@ func (icc *IssueCommentCreate) SetIssueURL(s string) *IssueCommentCreate {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (icc *IssueCommentCreate) SetAuthorAssociation(ia issuecomment.AuthorAssociation) *IssueCommentCreate {
-	icc.mutation.SetAuthorAssociation(ia)
+func (icc *IssueCommentCreate) SetAuthorAssociation(ma model.AuthorAssociation) *IssueCommentCreate {
+	icc.mutation.SetAuthorAssociation(ma)
 	return icc
 }
 
@@ -427,7 +428,7 @@ func (u *IssueCommentUpsert) UpdateIssueURL() *IssueCommentUpsert {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (u *IssueCommentUpsert) SetAuthorAssociation(v issuecomment.AuthorAssociation) *IssueCommentUpsert {
+func (u *IssueCommentUpsert) SetAuthorAssociation(v model.AuthorAssociation) *IssueCommentUpsert {
 	u.Set(issuecomment.FieldAuthorAssociation, v)
 	return u
 }
@@ -597,7 +598,7 @@ func (u *IssueCommentUpsertOne) UpdateIssueURL() *IssueCommentUpsertOne {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (u *IssueCommentUpsertOne) SetAuthorAssociation(v issuecomment.AuthorAssociation) *IssueCommentUpsertOne {
+func (u *IssueCommentUpsertOne) SetAuthorAssociation(v model.AuthorAssociation) *IssueCommentUpsertOne {
 	return u.Update(func(s *IssueCommentUpsert) {
 		s.SetAuthorAssociation(v)
 	})
@@ -936,7 +937,7 @@ func (u *IssueCommentUpsertBulk) UpdateIssueURL() *IssueCommentUpsertBulk {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (u *IssueCommentUpsertBulk) SetAuthorAssociation(v issuecomment.AuthorAssociation) *IssueCommentUpsertBulk {
+func (u *IssueCommentUpsertBulk) SetAuthorAssociation(v model.AuthorAssociation) *IssueCommentUpsertBulk {
 	return u.Update(func(s *IssueCommentUpsert) {
 		s.SetAuthorAssociation(v)
 	})

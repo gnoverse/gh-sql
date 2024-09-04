@@ -15,20 +15,22 @@ import (
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
 )
 
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx                 *QueryContext
-	order               []user.OrderOption
-	inters              []Interceptor
-	predicates          []predicate.User
-	withRepositories    *RepositoryQuery
-	withIssuesCreated   *IssueQuery
-	withCommentsCreated *IssueCommentQuery
-	withIssuesAssigned  *IssueQuery
+	ctx                       *QueryContext
+	order                     []user.OrderOption
+	inters                    []Interceptor
+	predicates                []predicate.User
+	withRepositories          *RepositoryQuery
+	withIssuesCreated         *IssueQuery
+	withCommentsCreated       *IssueCommentQuery
+	withIssuesAssigned        *IssueQuery
+	withTimelineEventsCreated *TimelineEventQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -146,6 +148,28 @@ func (uq *UserQuery) QueryIssuesAssigned() *IssueQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(issue.Table, issue.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, user.IssuesAssignedTable, user.IssuesAssignedPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTimelineEventsCreated chains the current query on the "timeline_events_created" edge.
+func (uq *UserQuery) QueryTimelineEventsCreated() *TimelineEventQuery {
+	query := (&TimelineEventClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(timelineevent.Table, timelineevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.TimelineEventsCreatedTable, user.TimelineEventsCreatedColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -340,15 +364,16 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:              uq.config,
-		ctx:                 uq.ctx.Clone(),
-		order:               append([]user.OrderOption{}, uq.order...),
-		inters:              append([]Interceptor{}, uq.inters...),
-		predicates:          append([]predicate.User{}, uq.predicates...),
-		withRepositories:    uq.withRepositories.Clone(),
-		withIssuesCreated:   uq.withIssuesCreated.Clone(),
-		withCommentsCreated: uq.withCommentsCreated.Clone(),
-		withIssuesAssigned:  uq.withIssuesAssigned.Clone(),
+		config:                    uq.config,
+		ctx:                       uq.ctx.Clone(),
+		order:                     append([]user.OrderOption{}, uq.order...),
+		inters:                    append([]Interceptor{}, uq.inters...),
+		predicates:                append([]predicate.User{}, uq.predicates...),
+		withRepositories:          uq.withRepositories.Clone(),
+		withIssuesCreated:         uq.withIssuesCreated.Clone(),
+		withCommentsCreated:       uq.withCommentsCreated.Clone(),
+		withIssuesAssigned:        uq.withIssuesAssigned.Clone(),
+		withTimelineEventsCreated: uq.withTimelineEventsCreated.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
@@ -396,6 +421,17 @@ func (uq *UserQuery) WithIssuesAssigned(opts ...func(*IssueQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withIssuesAssigned = query
+	return uq
+}
+
+// WithTimelineEventsCreated tells the query-builder to eager-load the nodes that are connected to
+// the "timeline_events_created" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithTimelineEventsCreated(opts ...func(*TimelineEventQuery)) *UserQuery {
+	query := (&TimelineEventClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withTimelineEventsCreated = query
 	return uq
 }
 
@@ -477,11 +513,12 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			uq.withRepositories != nil,
 			uq.withIssuesCreated != nil,
 			uq.withCommentsCreated != nil,
 			uq.withIssuesAssigned != nil,
+			uq.withTimelineEventsCreated != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -527,6 +564,15 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadIssuesAssigned(ctx, query, nodes,
 			func(n *User) { n.Edges.IssuesAssigned = []*Issue{} },
 			func(n *User, e *Issue) { n.Edges.IssuesAssigned = append(n.Edges.IssuesAssigned, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withTimelineEventsCreated; query != nil {
+		if err := uq.loadTimelineEventsCreated(ctx, query, nodes,
+			func(n *User) { n.Edges.TimelineEventsCreated = []*TimelineEvent{} },
+			func(n *User, e *TimelineEvent) {
+				n.Edges.TimelineEventsCreated = append(n.Edges.TimelineEventsCreated, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -684,6 +730,37 @@ func (uq *UserQuery) loadIssuesAssigned(ctx context.Context, query *IssueQuery, 
 		for kn := range nodes {
 			assign(kn, n)
 		}
+	}
+	return nil
+}
+func (uq *UserQuery) loadTimelineEventsCreated(ctx context.Context, query *TimelineEventQuery, nodes []*User, init func(*User), assign func(*User, *TimelineEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.TimelineEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TimelineEventsCreatedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.timeline_event_actor
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "timeline_event_actor" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "timeline_event_actor" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

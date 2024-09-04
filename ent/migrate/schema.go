@@ -30,7 +30,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "draft", Type: field.TypeBool},
-		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "NONE", "OWNER"}},
+		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "OWNER", "NONE"}},
 		{Name: "reactions", Type: field.TypeJSON},
 		{Name: "repository_issues", Type: field.TypeInt64},
 		{Name: "user_issues_created", Type: field.TypeInt64, Nullable: true},
@@ -65,7 +65,7 @@ var (
 		{Name: "created_at", Type: field.TypeString},
 		{Name: "updated_at", Type: field.TypeString},
 		{Name: "issue_url", Type: field.TypeString},
-		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "NONE", "OWNER"}},
+		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "OWNER", "NONE"}},
 		{Name: "reactions", Type: field.TypeJSON},
 		{Name: "issue_comments", Type: field.TypeInt64, Nullable: true},
 		{Name: "user_comments_created", Type: field.TypeInt64, Nullable: true},
@@ -186,6 +186,38 @@ var (
 			},
 		},
 	}
+	// TimelineEventsColumns holds the columns for the "timeline_events" table.
+	TimelineEventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeString},
+		{Name: "url", Type: field.TypeString},
+		{Name: "event", Type: field.TypeString},
+		{Name: "commit_id", Type: field.TypeString, Nullable: true},
+		{Name: "commit_url", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "data", Type: field.TypeJSON},
+		{Name: "issue_timeline", Type: field.TypeInt64, Nullable: true},
+		{Name: "timeline_event_actor", Type: field.TypeInt64, Nullable: true},
+	}
+	// TimelineEventsTable holds the schema information for the "timeline_events" table.
+	TimelineEventsTable = &schema.Table{
+		Name:       "timeline_events",
+		Columns:    TimelineEventsColumns,
+		PrimaryKey: []*schema.Column{TimelineEventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "timeline_events_issues_timeline",
+				Columns:    []*schema.Column{TimelineEventsColumns[7]},
+				RefColumns: []*schema.Column{IssuesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "timeline_events_users_actor",
+				Columns:    []*schema.Column{TimelineEventsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -256,6 +288,7 @@ var (
 		IssuesTable,
 		IssueCommentsTable,
 		RepositoriesTable,
+		TimelineEventsTable,
 		UsersTable,
 		IssueAssigneesTable,
 	}
@@ -267,6 +300,8 @@ func init() {
 	IssueCommentsTable.ForeignKeys[0].RefTable = IssuesTable
 	IssueCommentsTable.ForeignKeys[1].RefTable = UsersTable
 	RepositoriesTable.ForeignKeys[0].RefTable = UsersTable
+	TimelineEventsTable.ForeignKeys[0].RefTable = IssuesTable
+	TimelineEventsTable.ForeignKeys[1].RefTable = UsersTable
 	IssueAssigneesTable.ForeignKeys[0].RefTable = IssuesTable
 	IssueAssigneesTable.ForeignKeys[1].RefTable = UsersTable
 }

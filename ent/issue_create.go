@@ -14,7 +14,9 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // IssueCreate is the builder for creating a Issue entity.
@@ -80,15 +82,15 @@ func (ic *IssueCreate) SetState(s string) *IssueCreate {
 }
 
 // SetStateReason sets the "state_reason" field.
-func (ic *IssueCreate) SetStateReason(ir issue.StateReason) *IssueCreate {
-	ic.mutation.SetStateReason(ir)
+func (ic *IssueCreate) SetStateReason(mr model.StateReason) *IssueCreate {
+	ic.mutation.SetStateReason(mr)
 	return ic
 }
 
 // SetNillableStateReason sets the "state_reason" field if the given value is not nil.
-func (ic *IssueCreate) SetNillableStateReason(ir *issue.StateReason) *IssueCreate {
-	if ir != nil {
-		ic.SetStateReason(*ir)
+func (ic *IssueCreate) SetNillableStateReason(mr *model.StateReason) *IssueCreate {
+	if mr != nil {
+		ic.SetStateReason(*mr)
 	}
 	return ic
 }
@@ -172,14 +174,14 @@ func (ic *IssueCreate) SetDraft(b bool) *IssueCreate {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (ic *IssueCreate) SetAuthorAssociation(ia issue.AuthorAssociation) *IssueCreate {
-	ic.mutation.SetAuthorAssociation(ia)
+func (ic *IssueCreate) SetAuthorAssociation(ma model.AuthorAssociation) *IssueCreate {
+	ic.mutation.SetAuthorAssociation(ma)
 	return ic
 }
 
 // SetReactions sets the "reactions" field.
-func (ic *IssueCreate) SetReactions(m map[string]interface{}) *IssueCreate {
-	ic.mutation.SetReactions(m)
+func (ic *IssueCreate) SetReactions(mr model.ReactionRollup) *IssueCreate {
+	ic.mutation.SetReactions(mr)
 	return ic
 }
 
@@ -247,6 +249,21 @@ func (ic *IssueCreate) AddComments(i ...*IssueComment) *IssueCreate {
 		ids[j] = i[j].ID
 	}
 	return ic.AddCommentIDs(ids...)
+}
+
+// AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by IDs.
+func (ic *IssueCreate) AddTimelineIDs(ids ...string) *IssueCreate {
+	ic.mutation.AddTimelineIDs(ids...)
+	return ic
+}
+
+// AddTimeline adds the "timeline" edges to the TimelineEvent entity.
+func (ic *IssueCreate) AddTimeline(t ...*TimelineEvent) *IssueCreate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return ic.AddTimelineIDs(ids...)
 }
 
 // Mutation returns the IssueMutation object of the builder.
@@ -530,6 +547,22 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := ic.mutation.TimelineIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   issue.TimelineTable,
+			Columns: []string{issue.TimelineColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -697,7 +730,7 @@ func (u *IssueUpsert) UpdateState() *IssueUpsert {
 }
 
 // SetStateReason sets the "state_reason" field.
-func (u *IssueUpsert) SetStateReason(v issue.StateReason) *IssueUpsert {
+func (u *IssueUpsert) SetStateReason(v model.StateReason) *IssueUpsert {
 	u.Set(issue.FieldStateReason, v)
 	return u
 }
@@ -847,7 +880,7 @@ func (u *IssueUpsert) UpdateDraft() *IssueUpsert {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (u *IssueUpsert) SetAuthorAssociation(v issue.AuthorAssociation) *IssueUpsert {
+func (u *IssueUpsert) SetAuthorAssociation(v model.AuthorAssociation) *IssueUpsert {
 	u.Set(issue.FieldAuthorAssociation, v)
 	return u
 }
@@ -859,7 +892,7 @@ func (u *IssueUpsert) UpdateAuthorAssociation() *IssueUpsert {
 }
 
 // SetReactions sets the "reactions" field.
-func (u *IssueUpsert) SetReactions(v map[string]interface{}) *IssueUpsert {
+func (u *IssueUpsert) SetReactions(v model.ReactionRollup) *IssueUpsert {
 	u.Set(issue.FieldReactions, v)
 	return u
 }
@@ -1052,7 +1085,7 @@ func (u *IssueUpsertOne) UpdateState() *IssueUpsertOne {
 }
 
 // SetStateReason sets the "state_reason" field.
-func (u *IssueUpsertOne) SetStateReason(v issue.StateReason) *IssueUpsertOne {
+func (u *IssueUpsertOne) SetStateReason(v model.StateReason) *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetStateReason(v)
 	})
@@ -1227,7 +1260,7 @@ func (u *IssueUpsertOne) UpdateDraft() *IssueUpsertOne {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (u *IssueUpsertOne) SetAuthorAssociation(v issue.AuthorAssociation) *IssueUpsertOne {
+func (u *IssueUpsertOne) SetAuthorAssociation(v model.AuthorAssociation) *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetAuthorAssociation(v)
 	})
@@ -1241,7 +1274,7 @@ func (u *IssueUpsertOne) UpdateAuthorAssociation() *IssueUpsertOne {
 }
 
 // SetReactions sets the "reactions" field.
-func (u *IssueUpsertOne) SetReactions(v map[string]interface{}) *IssueUpsertOne {
+func (u *IssueUpsertOne) SetReactions(v model.ReactionRollup) *IssueUpsertOne {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetReactions(v)
 	})
@@ -1601,7 +1634,7 @@ func (u *IssueUpsertBulk) UpdateState() *IssueUpsertBulk {
 }
 
 // SetStateReason sets the "state_reason" field.
-func (u *IssueUpsertBulk) SetStateReason(v issue.StateReason) *IssueUpsertBulk {
+func (u *IssueUpsertBulk) SetStateReason(v model.StateReason) *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetStateReason(v)
 	})
@@ -1776,7 +1809,7 @@ func (u *IssueUpsertBulk) UpdateDraft() *IssueUpsertBulk {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (u *IssueUpsertBulk) SetAuthorAssociation(v issue.AuthorAssociation) *IssueUpsertBulk {
+func (u *IssueUpsertBulk) SetAuthorAssociation(v model.AuthorAssociation) *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetAuthorAssociation(v)
 	})
@@ -1790,7 +1823,7 @@ func (u *IssueUpsertBulk) UpdateAuthorAssociation() *IssueUpsertBulk {
 }
 
 // SetReactions sets the "reactions" field.
-func (u *IssueUpsertBulk) SetReactions(v map[string]interface{}) *IssueUpsertBulk {
+func (u *IssueUpsertBulk) SetReactions(v model.ReactionRollup) *IssueUpsertBulk {
 	return u.Update(func(s *IssueUpsert) {
 		s.SetReactions(v)
 	})

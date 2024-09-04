@@ -64,5 +64,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("comments_created", IssueComment.Type),
 		edge.From("issues_assigned", Issue.Type).
 			Ref("assignees"),
+		edge.From("timeline_events_created", TimelineEvent.Type).
+			Ref("actor"),
 	}
 }

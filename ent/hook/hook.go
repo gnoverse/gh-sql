@@ -45,6 +45,18 @@ func (f RepositoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RepositoryMutation", m)
 }
 
+// The TimelineEventFunc type is an adapter to allow the use of ordinary
+// function as TimelineEvent mutator.
+type TimelineEventFunc func(context.Context, *ent.TimelineEventMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TimelineEventFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TimelineEventMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TimelineEventMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

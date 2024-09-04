@@ -7,6 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 const (
@@ -64,6 +65,8 @@ const (
 	EdgeAssignees = "assignees"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
 	EdgeComments = "comments"
+	// EdgeTimeline holds the string denoting the timeline edge name in mutations.
+	EdgeTimeline = "timeline"
 	// Table holds the table name of the issue in the database.
 	Table = "issues"
 	// RepositoryTable is the table that holds the repository relation/edge.
@@ -92,6 +95,13 @@ const (
 	CommentsInverseTable = "issue_comments"
 	// CommentsColumn is the table column denoting the comments relation/edge.
 	CommentsColumn = "issue_comments"
+	// TimelineTable is the table that holds the timeline relation/edge.
+	TimelineTable = "timeline_events"
+	// TimelineInverseTable is the table name for the TimelineEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "timelineevent" package.
+	TimelineInverseTable = "timeline_events"
+	// TimelineColumn is the table column denoting the timeline relation/edge.
+	TimelineColumn = "issue_timeline"
 )
 
 // Columns holds all SQL columns for issue fields.
@@ -148,53 +158,20 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// StateReason defines the type for the "state_reason" enum field.
-type StateReason string
-
-// StateReason values.
-const (
-	StateReasonCompleted  StateReason = "completed"
-	StateReasonReopened   StateReason = "reopened"
-	StateReasonNotPlanned StateReason = "not_planned"
-)
-
-func (sr StateReason) String() string {
-	return string(sr)
-}
-
 // StateReasonValidator is a validator for the "state_reason" field enum values. It is called by the builders before save.
-func StateReasonValidator(sr StateReason) error {
+func StateReasonValidator(sr model.StateReason) error {
 	switch sr {
-	case StateReasonCompleted, StateReasonReopened, StateReasonNotPlanned:
+	case "completed", "reopened", "not_planned":
 		return nil
 	default:
 		return fmt.Errorf("issue: invalid enum value for state_reason field: %q", sr)
 	}
 }
 
-// AuthorAssociation defines the type for the "author_association" enum field.
-type AuthorAssociation string
-
-// AuthorAssociation values.
-const (
-	AuthorAssociationCOLLABORATOR           AuthorAssociation = "COLLABORATOR"
-	AuthorAssociationCONTRIBUTOR            AuthorAssociation = "CONTRIBUTOR"
-	AuthorAssociationFIRST_TIMER            AuthorAssociation = "FIRST_TIMER"
-	AuthorAssociationFIRST_TIME_CONTRIBUTOR AuthorAssociation = "FIRST_TIME_CONTRIBUTOR"
-	AuthorAssociationMANNEQUIN              AuthorAssociation = "MANNEQUIN"
-	AuthorAssociationMEMBER                 AuthorAssociation = "MEMBER"
-	AuthorAssociationNONE                   AuthorAssociation = "NONE"
-	AuthorAssociationOWNER                  AuthorAssociation = "OWNER"
-)
-
-func (aa AuthorAssociation) String() string {
-	return string(aa)
-}
-
 // AuthorAssociationValidator is a validator for the "author_association" field enum values. It is called by the builders before save.
-func AuthorAssociationValidator(aa AuthorAssociation) error {
+func AuthorAssociationValidator(aa model.AuthorAssociation) error {
 	switch aa {
-	case AuthorAssociationCOLLABORATOR, AuthorAssociationCONTRIBUTOR, AuthorAssociationFIRST_TIMER, AuthorAssociationFIRST_TIME_CONTRIBUTOR, AuthorAssociationMANNEQUIN, AuthorAssociationMEMBER, AuthorAssociationNONE, AuthorAssociationOWNER:
+	case "COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "OWNER", "NONE":
 		return nil
 	default:
 		return fmt.Errorf("issue: invalid enum value for author_association field: %q", aa)
@@ -350,6 +327,20 @@ func ByComments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCommentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTimelineCount orders the results by timeline count.
+func ByTimelineCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTimelineStep(), opts...)
+	}
+}
+
+// ByTimeline orders the results by timeline terms.
+func ByTimeline(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTimelineStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newRepositoryStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -376,5 +367,12 @@ func newCommentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CommentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CommentsTable, CommentsColumn),
+	)
+}
+func newTimelineStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TimelineInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TimelineTable, TimelineColumn),
 	)
 }

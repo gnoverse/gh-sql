@@ -94,9 +94,11 @@ type UserEdges struct {
 	CommentsCreated []*IssueComment `json:"comments_created,omitempty"`
 	// IssuesAssigned holds the value of the issues_assigned edge.
 	IssuesAssigned []*Issue `json:"issues_assigned,omitempty"`
+	// TimelineEventsCreated holds the value of the timeline_events_created edge.
+	TimelineEventsCreated []*TimelineEvent `json:"timeline_events_created,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // RepositoriesOrErr returns the Repositories value or an error if the edge
@@ -133,6 +135,15 @@ func (e UserEdges) IssuesAssignedOrErr() ([]*Issue, error) {
 		return e.IssuesAssigned, nil
 	}
 	return nil, &NotLoadedError{edge: "issues_assigned"}
+}
+
+// TimelineEventsCreatedOrErr returns the TimelineEventsCreated value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) TimelineEventsCreatedOrErr() ([]*TimelineEvent, error) {
+	if e.loadedTypes[4] {
+		return e.TimelineEventsCreated, nil
+	}
+	return nil, &NotLoadedError{edge: "timeline_events_created"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -380,6 +391,11 @@ func (u *User) QueryCommentsCreated() *IssueCommentQuery {
 // QueryIssuesAssigned queries the "issues_assigned" edge of the User entity.
 func (u *User) QueryIssuesAssigned() *IssueQuery {
 	return NewUserClient(u.config).QueryIssuesAssigned(u)
+}
+
+// QueryTimelineEventsCreated queries the "timeline_events_created" edge of the User entity.
+func (u *User) QueryTimelineEventsCreated() *TimelineEventQuery {
+	return NewUserClient(u.config).QueryTimelineEventsCreated(u)
 }
 
 // Update returns a builder for updating this User.

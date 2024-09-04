@@ -279,6 +279,39 @@ func (ruo *RepositoryUpdateOne) CopyRepository(input *Repository) *RepositoryUpd
 	return ruo
 }
 
+// CopyTimelineEvent allows to create a new TimelineEvent copying the existing
+// values of input.
+func (tec *TimelineEventCreate) CopyTimelineEvent(input *TimelineEvent) *TimelineEventCreate {
+	tec.SetID(input.ID)
+	tec.SetURL(input.URL)
+	tec.SetEvent(input.Event)
+	if input.CommitID != nil {
+		tec.SetCommitID(*input.CommitID)
+	}
+	if input.CommitURL != nil {
+		tec.SetCommitURL(*input.CommitURL)
+	}
+	tec.SetCreatedAt(input.CreatedAt)
+	tec.SetData(input.Data)
+	return tec
+}
+
+// CopyTimelineEvent allows to update a TimelineEvent copying the existing
+// values of input.
+func (teuo *TimelineEventUpdateOne) CopyTimelineEvent(input *TimelineEvent) *TimelineEventUpdateOne {
+	teuo.SetURL(input.URL)
+	teuo.SetEvent(input.Event)
+	if input.CommitID != nil {
+		teuo.SetCommitID(*input.CommitID)
+	}
+	if input.CommitURL != nil {
+		teuo.SetCommitURL(*input.CommitURL)
+	}
+	teuo.SetCreatedAt(input.CreatedAt)
+	teuo.SetData(input.Data)
+	return teuo
+}
+
 // CopyUser allows to create a new User copying the existing
 // values of input.
 func (uc *UserCreate) CopyUser(input *User) *UserCreate {

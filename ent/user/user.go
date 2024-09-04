@@ -80,6 +80,8 @@ const (
 	EdgeCommentsCreated = "comments_created"
 	// EdgeIssuesAssigned holds the string denoting the issues_assigned edge name in mutations.
 	EdgeIssuesAssigned = "issues_assigned"
+	// EdgeTimelineEventsCreated holds the string denoting the timeline_events_created edge name in mutations.
+	EdgeTimelineEventsCreated = "timeline_events_created"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// RepositoriesTable is the table that holds the repositories relation/edge.
@@ -108,6 +110,13 @@ const (
 	// IssuesAssignedInverseTable is the table name for the Issue entity.
 	// It exists in this package in order to avoid circular dependency with the "issue" package.
 	IssuesAssignedInverseTable = "issues"
+	// TimelineEventsCreatedTable is the table that holds the timeline_events_created relation/edge.
+	TimelineEventsCreatedTable = "timeline_events"
+	// TimelineEventsCreatedInverseTable is the table name for the TimelineEvent entity.
+	// It exists in this package in order to avoid circular dependency with the "timelineevent" package.
+	TimelineEventsCreatedInverseTable = "timeline_events"
+	// TimelineEventsCreatedColumn is the table column denoting the timeline_events_created relation/edge.
+	TimelineEventsCreatedColumn = "timeline_event_actor"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -374,6 +383,20 @@ func ByIssuesAssigned(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newIssuesAssignedStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTimelineEventsCreatedCount orders the results by timeline_events_created count.
+func ByTimelineEventsCreatedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTimelineEventsCreatedStep(), opts...)
+	}
+}
+
+// ByTimelineEventsCreated orders the results by timeline_events_created terms.
+func ByTimelineEventsCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTimelineEventsCreatedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newRepositoriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -400,5 +423,12 @@ func newIssuesAssignedStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IssuesAssignedInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, IssuesAssignedTable, IssuesAssignedPrimaryKey...),
+	)
+}
+func newTimelineEventsCreatedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TimelineEventsCreatedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, true, TimelineEventsCreatedTable, TimelineEventsCreatedColumn),
 	)
 }

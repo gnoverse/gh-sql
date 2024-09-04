@@ -15,5 +15,8 @@ type IssueComment func(*sql.Selector)
 // Repository is the predicate function for repository builders.
 type Repository func(*sql.Selector)
 
+// TimelineEvent is the predicate function for timelineevent builders.
+type TimelineEvent func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

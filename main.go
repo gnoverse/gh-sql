@@ -13,6 +13,7 @@ import (
 
 	"github.com/gnolang/gh-sql/ent"
 	"github.com/gnolang/gh-sql/ent/migrate"
+	"github.com/gnolang/gh-sql/pkg/model"
 	"github.com/gnolang/gh-sql/pkg/rest"
 	"github.com/gnolang/gh-sql/pkg/sync"
 	"github.com/peterbourgon/ff/v4"
@@ -108,7 +109,11 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 		full  = fset.BoolLong("full", "sync repositories from scratch (non-incremental), automatic if more than >10_000 events to retrieve")
 		token = fset.StringLong("token", "", "github personal access token to use (heavily suggested)")
 
-		debugHTTP = fset.BoolLong("debug.http", "log http requests")
+		debugHTTP        = fset.BoolLong("debug.http", "log http requests")
+		debugJSONCatcher = fset.StringLong(
+			"debug.jsoncatcher",
+			filepath.Join(os.TempDir(), "jsoncatcher.log"),
+			"use jsoncatcher to find incorrectly-parsed events. (enabled by default)")
 	)
 	return &ff.Command{
 		Name:      "sync",
@@ -123,6 +128,10 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 			// this line for all other DBs
 			ec.sqlDB.SetMaxOpenConns(1)
 
+			if *debugJSONCatcher != "" {
+				model.EventsMissedData = &onDemandFile{fileName: *debugJSONCatcher}
+			}
+
 			return sync.Sync(ctx, args, sync.Options{
 				DB:        ec.db,
 				Full:      *full,
@@ -131,6 +140,25 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 			})
 		},
 	}
+}
+
+type onDemandFile struct {
+	*os.File
+	err      error
+	fileName string
+}
+
+func (w *onDemandFile) Write(p []byte) (int, error) {
+	if w.err != nil {
+		return 0, w.err
+	}
+	if w.File == nil {
+		w.File, w.err = os.OpenFile(w.fileName, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+		if w.err != nil {
+			return 0, w.err
+		}
+	}
+	return w.File.Write(p)
 }
 
 func newServeCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {

@@ -2067,6 +2067,29 @@ func HasIssuesAssignedWith(preds ...predicate.Issue) predicate.User {
 	})
 }
 
+// HasTimelineEventsCreated applies the HasEdge predicate on the "timeline_events_created" edge.
+func HasTimelineEventsCreated() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, TimelineEventsCreatedTable, TimelineEventsCreatedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTimelineEventsCreatedWith applies the HasEdge predicate on the "timeline_events_created" edge with a given conditions (other predicates).
+func HasTimelineEventsCreatedWith(preds ...predicate.TimelineEvent) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newTimelineEventsCreatedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

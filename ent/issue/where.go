@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // ID filters vertices based on their ID field.
@@ -706,23 +707,33 @@ func StateContainsFold(v string) predicate.Issue {
 }
 
 // StateReasonEQ applies the EQ predicate on the "state_reason" field.
-func StateReasonEQ(v StateReason) predicate.Issue {
-	return predicate.Issue(sql.FieldEQ(FieldStateReason, v))
+func StateReasonEQ(v model.StateReason) predicate.Issue {
+	vc := v
+	return predicate.Issue(sql.FieldEQ(FieldStateReason, vc))
 }
 
 // StateReasonNEQ applies the NEQ predicate on the "state_reason" field.
-func StateReasonNEQ(v StateReason) predicate.Issue {
-	return predicate.Issue(sql.FieldNEQ(FieldStateReason, v))
+func StateReasonNEQ(v model.StateReason) predicate.Issue {
+	vc := v
+	return predicate.Issue(sql.FieldNEQ(FieldStateReason, vc))
 }
 
 // StateReasonIn applies the In predicate on the "state_reason" field.
-func StateReasonIn(vs ...StateReason) predicate.Issue {
-	return predicate.Issue(sql.FieldIn(FieldStateReason, vs...))
+func StateReasonIn(vs ...model.StateReason) predicate.Issue {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Issue(sql.FieldIn(FieldStateReason, v...))
 }
 
 // StateReasonNotIn applies the NotIn predicate on the "state_reason" field.
-func StateReasonNotIn(vs ...StateReason) predicate.Issue {
-	return predicate.Issue(sql.FieldNotIn(FieldStateReason, vs...))
+func StateReasonNotIn(vs ...model.StateReason) predicate.Issue {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Issue(sql.FieldNotIn(FieldStateReason, v...))
 }
 
 // StateReasonIsNil applies the IsNil predicate on the "state_reason" field.
@@ -1141,23 +1152,33 @@ func DraftNEQ(v bool) predicate.Issue {
 }
 
 // AuthorAssociationEQ applies the EQ predicate on the "author_association" field.
-func AuthorAssociationEQ(v AuthorAssociation) predicate.Issue {
-	return predicate.Issue(sql.FieldEQ(FieldAuthorAssociation, v))
+func AuthorAssociationEQ(v model.AuthorAssociation) predicate.Issue {
+	vc := v
+	return predicate.Issue(sql.FieldEQ(FieldAuthorAssociation, vc))
 }
 
 // AuthorAssociationNEQ applies the NEQ predicate on the "author_association" field.
-func AuthorAssociationNEQ(v AuthorAssociation) predicate.Issue {
-	return predicate.Issue(sql.FieldNEQ(FieldAuthorAssociation, v))
+func AuthorAssociationNEQ(v model.AuthorAssociation) predicate.Issue {
+	vc := v
+	return predicate.Issue(sql.FieldNEQ(FieldAuthorAssociation, vc))
 }
 
 // AuthorAssociationIn applies the In predicate on the "author_association" field.
-func AuthorAssociationIn(vs ...AuthorAssociation) predicate.Issue {
-	return predicate.Issue(sql.FieldIn(FieldAuthorAssociation, vs...))
+func AuthorAssociationIn(vs ...model.AuthorAssociation) predicate.Issue {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Issue(sql.FieldIn(FieldAuthorAssociation, v...))
 }
 
 // AuthorAssociationNotIn applies the NotIn predicate on the "author_association" field.
-func AuthorAssociationNotIn(vs ...AuthorAssociation) predicate.Issue {
-	return predicate.Issue(sql.FieldNotIn(FieldAuthorAssociation, vs...))
+func AuthorAssociationNotIn(vs ...model.AuthorAssociation) predicate.Issue {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Issue(sql.FieldNotIn(FieldAuthorAssociation, v...))
 }
 
 // HasRepository applies the HasEdge predicate on the "repository" edge.
@@ -1244,6 +1265,29 @@ func HasComments() predicate.Issue {
 func HasCommentsWith(preds ...predicate.IssueComment) predicate.Issue {
 	return predicate.Issue(func(s *sql.Selector) {
 		step := newCommentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTimeline applies the HasEdge predicate on the "timeline" edge.
+func HasTimeline() predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TimelineTable, TimelineColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTimelineWith applies the HasEdge predicate on the "timeline" edge with a given conditions (other predicates).
+func HasTimelineWith(preds ...predicate.TimelineEvent) predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := newTimelineStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

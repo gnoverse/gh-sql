@@ -2,10 +2,12 @@ package sync
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/gnolang/gh-sql/ent"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/pkg/model"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -174,12 +176,20 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 
 	if i.CommentsCount > 0 {
 		h.Go(func() error {
-			if err := fetchIssueComments(ctx, h, fi.owner, fi.repo, fi.issueNumber); err != nil {
+			if err := fetchIssueComments(ctx, h, fi); err != nil {
 				h.warn(err)
 			}
 			return nil
 		})
 	}
+	h.Go(func() error {
+		// TODO: probably have to fetch both timeline AND issue events to have a complete picture.
+		// why, github, why?
+		if err := fetchIssueEvents(ctx, h, fi); err != nil {
+			h.warn(err)
+		}
+		return nil
+	})
 
 	return h.DB.Issue.Get(ctx, i.ID)
 }
@@ -212,10 +222,8 @@ func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 	}
 }
 
-func fetchIssueComments(ctx context.Context, h *hub,
-	repoOwner, repoName string, issueNumber int64,
-) error {
-	iss, err := fetch(ctx, h, fetchIssue{repoOwner, repoName, issueNumber})
+func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
+	iss, err := fetch(ctx, h, fi)
 	if err != nil {
 		return err
 	}
@@ -228,7 +236,7 @@ func fetchIssueComments(ctx context.Context, h *hub,
 	err = httpGetIterate(
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/issues/%d/comments?per_page=100",
-			repoOwner, repoName, issueNumber),
+			fi.owner, fi.repo, fi.issueNumber),
 		func(ic *dstType) error {
 			// Create issue comment
 			cr := h.DB.IssueComment.Create().
@@ -248,7 +256,67 @@ func fetchIssueComments(ctx context.Context, h *hub,
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("fetchIssueComments(%q, %q, %d): %w", repoOwner, repoName, issueNumber, err)
+		return fmt.Errorf("fetchIssueComments(%q): %w", fi.ID(), err)
+	}
+	return nil
+}
+
+type fetchIssueEventType struct {
+	ent.TimelineEvent
+	Actor *struct {
+		Login string `json:"login"`
+	} `json:"actor"`
+	model.TimelineEventWrapper
+}
+
+func (f *fetchIssueEventType) UnmarshalJSON(b []byte) error {
+	if err := json.Unmarshal(b, &f.TimelineEvent); err != nil {
+		return err
+	}
+
+	if err := f.TimelineEventWrapper.UnmarshalJSON(b); err != nil {
+		return err
+	}
+
+	f.TimelineEvent.Data = f.TimelineEventWrapper
+	return nil
+}
+
+func fetchIssueEvents(ctx context.Context, h *hub, fi fetchIssue) error {
+	iss, err := fetch(ctx, h, fi)
+	if err != nil {
+		return err
+	}
+	err = httpGetIterate(
+		ctx, h,
+		fmt.Sprintf("/repos/%s/%s/issues/%d/timeline?per_page=100",
+			fi.owner, fi.repo, fi.issueNumber),
+		func(iev *fetchIssueEventType) error {
+			// Create issue event.
+			cr := h.DB.TimelineEvent.Create().
+				CopyTimelineEvent(&iev.TimelineEvent).
+				SetIssueID(iss.ID)
+
+			// Assign user if possible.
+			if iev.Actor != nil {
+				us, err := fetch(ctx, h, fetchUser{iev.Actor.Login})
+				if err != nil {
+					return err
+				}
+				cr.SetActorID(us.ID)
+			}
+
+			err := cr.
+				OnConflict().UpdateNewValues().
+				Exec(ctx)
+			if err != nil {
+				h.warn(fmt.Errorf("save event of type %v: %w", iev.Event, err))
+			}
+			return nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("fetchIssueEvents(%q): %w", fi.ID(), err)
 	}
 	return nil
 }

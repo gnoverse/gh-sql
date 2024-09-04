@@ -15,6 +15,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
 	"github.com/gnolang/gh-sql/pkg/model"
 )
@@ -28,10 +29,11 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeIssue        = "Issue"
-	TypeIssueComment = "IssueComment"
-	TypeRepository   = "Repository"
-	TypeUser         = "User"
+	TypeIssue         = "Issue"
+	TypeIssueComment  = "IssueComment"
+	TypeRepository    = "Repository"
+	TypeTimelineEvent = "TimelineEvent"
+	TypeUser          = "User"
 )
 
 // IssueMutation represents an operation that mutates the Issue nodes in the graph.
@@ -50,7 +52,7 @@ type IssueMutation struct {
 	number             *int64
 	addnumber          *int64
 	state              *string
-	state_reason       *issue.StateReason
+	state_reason       *model.StateReason
 	title              *string
 	body               *string
 	locked             *bool
@@ -61,8 +63,8 @@ type IssueMutation struct {
 	created_at         *time.Time
 	updated_at         *time.Time
 	draft              *bool
-	author_association *issue.AuthorAssociation
-	reactions          *map[string]interface{}
+	author_association *model.AuthorAssociation
+	reactions          *model.ReactionRollup
 	clearedFields      map[string]struct{}
 	repository         *int64
 	clearedrepository  bool
@@ -74,6 +76,9 @@ type IssueMutation struct {
 	comments           map[int64]struct{}
 	removedcomments    map[int64]struct{}
 	clearedcomments    bool
+	timeline           map[string]struct{}
+	removedtimeline    map[string]struct{}
+	clearedtimeline    bool
 	done               bool
 	oldValue           func(context.Context) (*Issue, error)
 	predicates         []predicate.Issue
@@ -528,12 +533,12 @@ func (m *IssueMutation) ResetState() {
 }
 
 // SetStateReason sets the "state_reason" field.
-func (m *IssueMutation) SetStateReason(ir issue.StateReason) {
-	m.state_reason = &ir
+func (m *IssueMutation) SetStateReason(mr model.StateReason) {
+	m.state_reason = &mr
 }
 
 // StateReason returns the value of the "state_reason" field in the mutation.
-func (m *IssueMutation) StateReason() (r issue.StateReason, exists bool) {
+func (m *IssueMutation) StateReason() (r model.StateReason, exists bool) {
 	v := m.state_reason
 	if v == nil {
 		return
@@ -544,7 +549,7 @@ func (m *IssueMutation) StateReason() (r issue.StateReason, exists bool) {
 // OldStateReason returns the old "state_reason" field's value of the Issue entity.
 // If the Issue object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *IssueMutation) OldStateReason(ctx context.Context) (v *issue.StateReason, err error) {
+func (m *IssueMutation) OldStateReason(ctx context.Context) (v *model.StateReason, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldStateReason is only allowed on UpdateOne operations")
 	}
@@ -960,12 +965,12 @@ func (m *IssueMutation) ResetDraft() {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (m *IssueMutation) SetAuthorAssociation(ia issue.AuthorAssociation) {
-	m.author_association = &ia
+func (m *IssueMutation) SetAuthorAssociation(ma model.AuthorAssociation) {
+	m.author_association = &ma
 }
 
 // AuthorAssociation returns the value of the "author_association" field in the mutation.
-func (m *IssueMutation) AuthorAssociation() (r issue.AuthorAssociation, exists bool) {
+func (m *IssueMutation) AuthorAssociation() (r model.AuthorAssociation, exists bool) {
 	v := m.author_association
 	if v == nil {
 		return
@@ -976,7 +981,7 @@ func (m *IssueMutation) AuthorAssociation() (r issue.AuthorAssociation, exists b
 // OldAuthorAssociation returns the old "author_association" field's value of the Issue entity.
 // If the Issue object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *IssueMutation) OldAuthorAssociation(ctx context.Context) (v issue.AuthorAssociation, err error) {
+func (m *IssueMutation) OldAuthorAssociation(ctx context.Context) (v model.AuthorAssociation, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAuthorAssociation is only allowed on UpdateOne operations")
 	}
@@ -996,12 +1001,12 @@ func (m *IssueMutation) ResetAuthorAssociation() {
 }
 
 // SetReactions sets the "reactions" field.
-func (m *IssueMutation) SetReactions(value map[string]interface{}) {
-	m.reactions = &value
+func (m *IssueMutation) SetReactions(mr model.ReactionRollup) {
+	m.reactions = &mr
 }
 
 // Reactions returns the value of the "reactions" field in the mutation.
-func (m *IssueMutation) Reactions() (r map[string]interface{}, exists bool) {
+func (m *IssueMutation) Reactions() (r model.ReactionRollup, exists bool) {
 	v := m.reactions
 	if v == nil {
 		return
@@ -1012,7 +1017,7 @@ func (m *IssueMutation) Reactions() (r map[string]interface{}, exists bool) {
 // OldReactions returns the old "reactions" field's value of the Issue entity.
 // If the Issue object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *IssueMutation) OldReactions(ctx context.Context) (v map[string]interface{}, err error) {
+func (m *IssueMutation) OldReactions(ctx context.Context) (v model.ReactionRollup, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReactions is only allowed on UpdateOne operations")
 	}
@@ -1215,6 +1220,60 @@ func (m *IssueMutation) ResetComments() {
 	m.comments = nil
 	m.clearedcomments = false
 	m.removedcomments = nil
+}
+
+// AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by ids.
+func (m *IssueMutation) AddTimelineIDs(ids ...string) {
+	if m.timeline == nil {
+		m.timeline = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.timeline[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTimeline clears the "timeline" edge to the TimelineEvent entity.
+func (m *IssueMutation) ClearTimeline() {
+	m.clearedtimeline = true
+}
+
+// TimelineCleared reports if the "timeline" edge to the TimelineEvent entity was cleared.
+func (m *IssueMutation) TimelineCleared() bool {
+	return m.clearedtimeline
+}
+
+// RemoveTimelineIDs removes the "timeline" edge to the TimelineEvent entity by IDs.
+func (m *IssueMutation) RemoveTimelineIDs(ids ...string) {
+	if m.removedtimeline == nil {
+		m.removedtimeline = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.timeline, ids[i])
+		m.removedtimeline[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTimeline returns the removed IDs of the "timeline" edge to the TimelineEvent entity.
+func (m *IssueMutation) RemovedTimelineIDs() (ids []string) {
+	for id := range m.removedtimeline {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TimelineIDs returns the "timeline" edge IDs in the mutation.
+func (m *IssueMutation) TimelineIDs() (ids []string) {
+	for id := range m.timeline {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTimeline resets all changes to the "timeline" edge.
+func (m *IssueMutation) ResetTimeline() {
+	m.timeline = nil
+	m.clearedtimeline = false
+	m.removedtimeline = nil
 }
 
 // Where appends a list predicates to the IssueMutation builder.
@@ -1489,7 +1548,7 @@ func (m *IssueMutation) SetField(name string, value ent.Value) error {
 		m.SetState(v)
 		return nil
 	case issue.FieldStateReason:
-		v, ok := value.(issue.StateReason)
+		v, ok := value.(model.StateReason)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1559,14 +1618,14 @@ func (m *IssueMutation) SetField(name string, value ent.Value) error {
 		m.SetDraft(v)
 		return nil
 	case issue.FieldAuthorAssociation:
-		v, ok := value.(issue.AuthorAssociation)
+		v, ok := value.(model.AuthorAssociation)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetAuthorAssociation(v)
 		return nil
 	case issue.FieldReactions:
-		v, ok := value.(map[string]interface{})
+		v, ok := value.(model.ReactionRollup)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1744,7 +1803,7 @@ func (m *IssueMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *IssueMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.repository != nil {
 		edges = append(edges, issue.EdgeRepository)
 	}
@@ -1756,6 +1815,9 @@ func (m *IssueMutation) AddedEdges() []string {
 	}
 	if m.comments != nil {
 		edges = append(edges, issue.EdgeComments)
+	}
+	if m.timeline != nil {
+		edges = append(edges, issue.EdgeTimeline)
 	}
 	return edges
 }
@@ -1784,18 +1846,27 @@ func (m *IssueMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case issue.EdgeTimeline:
+		ids := make([]ent.Value, 0, len(m.timeline))
+		for id := range m.timeline {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *IssueMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedassignees != nil {
 		edges = append(edges, issue.EdgeAssignees)
 	}
 	if m.removedcomments != nil {
 		edges = append(edges, issue.EdgeComments)
+	}
+	if m.removedtimeline != nil {
+		edges = append(edges, issue.EdgeTimeline)
 	}
 	return edges
 }
@@ -1816,13 +1887,19 @@ func (m *IssueMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case issue.EdgeTimeline:
+		ids := make([]ent.Value, 0, len(m.removedtimeline))
+		for id := range m.removedtimeline {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *IssueMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedrepository {
 		edges = append(edges, issue.EdgeRepository)
 	}
@@ -1834,6 +1911,9 @@ func (m *IssueMutation) ClearedEdges() []string {
 	}
 	if m.clearedcomments {
 		edges = append(edges, issue.EdgeComments)
+	}
+	if m.clearedtimeline {
+		edges = append(edges, issue.EdgeTimeline)
 	}
 	return edges
 }
@@ -1850,6 +1930,8 @@ func (m *IssueMutation) EdgeCleared(name string) bool {
 		return m.clearedassignees
 	case issue.EdgeComments:
 		return m.clearedcomments
+	case issue.EdgeTimeline:
+		return m.clearedtimeline
 	}
 	return false
 }
@@ -1884,6 +1966,9 @@ func (m *IssueMutation) ResetEdge(name string) error {
 	case issue.EdgeComments:
 		m.ResetComments()
 		return nil
+	case issue.EdgeTimeline:
+		m.ResetTimeline()
+		return nil
 	}
 	return fmt.Errorf("unknown Issue edge %s", name)
 }
@@ -1901,7 +1986,7 @@ type IssueCommentMutation struct {
 	created_at         *string
 	updated_at         *string
 	issue_url          *string
-	author_association *issuecomment.AuthorAssociation
+	author_association *model.AuthorAssociation
 	reactions          *map[string]interface{}
 	clearedFields      map[string]struct{}
 	issue              *int64
@@ -2270,12 +2355,12 @@ func (m *IssueCommentMutation) ResetIssueURL() {
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (m *IssueCommentMutation) SetAuthorAssociation(ia issuecomment.AuthorAssociation) {
-	m.author_association = &ia
+func (m *IssueCommentMutation) SetAuthorAssociation(ma model.AuthorAssociation) {
+	m.author_association = &ma
 }
 
 // AuthorAssociation returns the value of the "author_association" field in the mutation.
-func (m *IssueCommentMutation) AuthorAssociation() (r issuecomment.AuthorAssociation, exists bool) {
+func (m *IssueCommentMutation) AuthorAssociation() (r model.AuthorAssociation, exists bool) {
 	v := m.author_association
 	if v == nil {
 		return
@@ -2286,7 +2371,7 @@ func (m *IssueCommentMutation) AuthorAssociation() (r issuecomment.AuthorAssocia
 // OldAuthorAssociation returns the old "author_association" field's value of the IssueComment entity.
 // If the IssueComment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *IssueCommentMutation) OldAuthorAssociation(ctx context.Context) (v issuecomment.AuthorAssociation, err error) {
+func (m *IssueCommentMutation) OldAuthorAssociation(ctx context.Context) (v model.AuthorAssociation, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAuthorAssociation is only allowed on UpdateOne operations")
 	}
@@ -2593,7 +2678,7 @@ func (m *IssueCommentMutation) SetField(name string, value ent.Value) error {
 		m.SetIssueURL(v)
 		return nil
 	case issuecomment.FieldAuthorAssociation:
-		v, ok := value.(issuecomment.AuthorAssociation)
+		v, ok := value.(model.AuthorAssociation)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -7832,62 +7917,834 @@ func (m *RepositoryMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Repository edge %s", name)
 }
 
+// TimelineEventMutation represents an operation that mutates the TimelineEvent nodes in the graph.
+type TimelineEventMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *string
+	url           *string
+	event         *string
+	commit_id     *string
+	commit_url    *string
+	created_at    *time.Time
+	data          *model.TimelineEventWrapper
+	clearedFields map[string]struct{}
+	actor         *int64
+	clearedactor  bool
+	issue         *int64
+	clearedissue  bool
+	done          bool
+	oldValue      func(context.Context) (*TimelineEvent, error)
+	predicates    []predicate.TimelineEvent
+}
+
+var _ ent.Mutation = (*TimelineEventMutation)(nil)
+
+// timelineeventOption allows management of the mutation configuration using functional options.
+type timelineeventOption func(*TimelineEventMutation)
+
+// newTimelineEventMutation creates new mutation for the TimelineEvent entity.
+func newTimelineEventMutation(c config, op Op, opts ...timelineeventOption) *TimelineEventMutation {
+	m := &TimelineEventMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTimelineEvent,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTimelineEventID sets the ID field of the mutation.
+func withTimelineEventID(id string) timelineeventOption {
+	return func(m *TimelineEventMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TimelineEvent
+		)
+		m.oldValue = func(ctx context.Context) (*TimelineEvent, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TimelineEvent.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTimelineEvent sets the old TimelineEvent of the mutation.
+func withTimelineEvent(node *TimelineEvent) timelineeventOption {
+	return func(m *TimelineEventMutation) {
+		m.oldValue = func(context.Context) (*TimelineEvent, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TimelineEventMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TimelineEventMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TimelineEvent entities.
+func (m *TimelineEventMutation) SetID(id string) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TimelineEventMutation) ID() (id string, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TimelineEventMutation) IDs(ctx context.Context) ([]string, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []string{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TimelineEvent.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetURL sets the "url" field.
+func (m *TimelineEventMutation) SetURL(s string) {
+	m.url = &s
+}
+
+// URL returns the value of the "url" field in the mutation.
+func (m *TimelineEventMutation) URL() (r string, exists bool) {
+	v := m.url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURL returns the old "url" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURL: %w", err)
+	}
+	return oldValue.URL, nil
+}
+
+// ResetURL resets all changes to the "url" field.
+func (m *TimelineEventMutation) ResetURL() {
+	m.url = nil
+}
+
+// SetEvent sets the "event" field.
+func (m *TimelineEventMutation) SetEvent(s string) {
+	m.event = &s
+}
+
+// Event returns the value of the "event" field in the mutation.
+func (m *TimelineEventMutation) Event() (r string, exists bool) {
+	v := m.event
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEvent returns the old "event" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldEvent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEvent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEvent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEvent: %w", err)
+	}
+	return oldValue.Event, nil
+}
+
+// ResetEvent resets all changes to the "event" field.
+func (m *TimelineEventMutation) ResetEvent() {
+	m.event = nil
+}
+
+// SetCommitID sets the "commit_id" field.
+func (m *TimelineEventMutation) SetCommitID(s string) {
+	m.commit_id = &s
+}
+
+// CommitID returns the value of the "commit_id" field in the mutation.
+func (m *TimelineEventMutation) CommitID() (r string, exists bool) {
+	v := m.commit_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommitID returns the old "commit_id" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldCommitID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommitID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommitID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommitID: %w", err)
+	}
+	return oldValue.CommitID, nil
+}
+
+// ClearCommitID clears the value of the "commit_id" field.
+func (m *TimelineEventMutation) ClearCommitID() {
+	m.commit_id = nil
+	m.clearedFields[timelineevent.FieldCommitID] = struct{}{}
+}
+
+// CommitIDCleared returns if the "commit_id" field was cleared in this mutation.
+func (m *TimelineEventMutation) CommitIDCleared() bool {
+	_, ok := m.clearedFields[timelineevent.FieldCommitID]
+	return ok
+}
+
+// ResetCommitID resets all changes to the "commit_id" field.
+func (m *TimelineEventMutation) ResetCommitID() {
+	m.commit_id = nil
+	delete(m.clearedFields, timelineevent.FieldCommitID)
+}
+
+// SetCommitURL sets the "commit_url" field.
+func (m *TimelineEventMutation) SetCommitURL(s string) {
+	m.commit_url = &s
+}
+
+// CommitURL returns the value of the "commit_url" field in the mutation.
+func (m *TimelineEventMutation) CommitURL() (r string, exists bool) {
+	v := m.commit_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommitURL returns the old "commit_url" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldCommitURL(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommitURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommitURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommitURL: %w", err)
+	}
+	return oldValue.CommitURL, nil
+}
+
+// ClearCommitURL clears the value of the "commit_url" field.
+func (m *TimelineEventMutation) ClearCommitURL() {
+	m.commit_url = nil
+	m.clearedFields[timelineevent.FieldCommitURL] = struct{}{}
+}
+
+// CommitURLCleared returns if the "commit_url" field was cleared in this mutation.
+func (m *TimelineEventMutation) CommitURLCleared() bool {
+	_, ok := m.clearedFields[timelineevent.FieldCommitURL]
+	return ok
+}
+
+// ResetCommitURL resets all changes to the "commit_url" field.
+func (m *TimelineEventMutation) ResetCommitURL() {
+	m.commit_url = nil
+	delete(m.clearedFields, timelineevent.FieldCommitURL)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TimelineEventMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TimelineEventMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TimelineEventMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetData sets the "data" field.
+func (m *TimelineEventMutation) SetData(mew model.TimelineEventWrapper) {
+	m.data = &mew
+}
+
+// Data returns the value of the "data" field in the mutation.
+func (m *TimelineEventMutation) Data() (r model.TimelineEventWrapper, exists bool) {
+	v := m.data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldData returns the old "data" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldData(ctx context.Context) (v model.TimelineEventWrapper, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldData: %w", err)
+	}
+	return oldValue.Data, nil
+}
+
+// ResetData resets all changes to the "data" field.
+func (m *TimelineEventMutation) ResetData() {
+	m.data = nil
+}
+
+// SetActorID sets the "actor" edge to the User entity by id.
+func (m *TimelineEventMutation) SetActorID(id int64) {
+	m.actor = &id
+}
+
+// ClearActor clears the "actor" edge to the User entity.
+func (m *TimelineEventMutation) ClearActor() {
+	m.clearedactor = true
+}
+
+// ActorCleared reports if the "actor" edge to the User entity was cleared.
+func (m *TimelineEventMutation) ActorCleared() bool {
+	return m.clearedactor
+}
+
+// ActorID returns the "actor" edge ID in the mutation.
+func (m *TimelineEventMutation) ActorID() (id int64, exists bool) {
+	if m.actor != nil {
+		return *m.actor, true
+	}
+	return
+}
+
+// ActorIDs returns the "actor" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ActorID instead. It exists only for internal usage by the builders.
+func (m *TimelineEventMutation) ActorIDs() (ids []int64) {
+	if id := m.actor; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetActor resets all changes to the "actor" edge.
+func (m *TimelineEventMutation) ResetActor() {
+	m.actor = nil
+	m.clearedactor = false
+}
+
+// SetIssueID sets the "issue" edge to the Issue entity by id.
+func (m *TimelineEventMutation) SetIssueID(id int64) {
+	m.issue = &id
+}
+
+// ClearIssue clears the "issue" edge to the Issue entity.
+func (m *TimelineEventMutation) ClearIssue() {
+	m.clearedissue = true
+}
+
+// IssueCleared reports if the "issue" edge to the Issue entity was cleared.
+func (m *TimelineEventMutation) IssueCleared() bool {
+	return m.clearedissue
+}
+
+// IssueID returns the "issue" edge ID in the mutation.
+func (m *TimelineEventMutation) IssueID() (id int64, exists bool) {
+	if m.issue != nil {
+		return *m.issue, true
+	}
+	return
+}
+
+// IssueIDs returns the "issue" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// IssueID instead. It exists only for internal usage by the builders.
+func (m *TimelineEventMutation) IssueIDs() (ids []int64) {
+	if id := m.issue; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetIssue resets all changes to the "issue" edge.
+func (m *TimelineEventMutation) ResetIssue() {
+	m.issue = nil
+	m.clearedissue = false
+}
+
+// Where appends a list predicates to the TimelineEventMutation builder.
+func (m *TimelineEventMutation) Where(ps ...predicate.TimelineEvent) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TimelineEventMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TimelineEventMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TimelineEvent, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TimelineEventMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TimelineEventMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TimelineEvent).
+func (m *TimelineEventMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TimelineEventMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.url != nil {
+		fields = append(fields, timelineevent.FieldURL)
+	}
+	if m.event != nil {
+		fields = append(fields, timelineevent.FieldEvent)
+	}
+	if m.commit_id != nil {
+		fields = append(fields, timelineevent.FieldCommitID)
+	}
+	if m.commit_url != nil {
+		fields = append(fields, timelineevent.FieldCommitURL)
+	}
+	if m.created_at != nil {
+		fields = append(fields, timelineevent.FieldCreatedAt)
+	}
+	if m.data != nil {
+		fields = append(fields, timelineevent.FieldData)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TimelineEventMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case timelineevent.FieldURL:
+		return m.URL()
+	case timelineevent.FieldEvent:
+		return m.Event()
+	case timelineevent.FieldCommitID:
+		return m.CommitID()
+	case timelineevent.FieldCommitURL:
+		return m.CommitURL()
+	case timelineevent.FieldCreatedAt:
+		return m.CreatedAt()
+	case timelineevent.FieldData:
+		return m.Data()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TimelineEventMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case timelineevent.FieldURL:
+		return m.OldURL(ctx)
+	case timelineevent.FieldEvent:
+		return m.OldEvent(ctx)
+	case timelineevent.FieldCommitID:
+		return m.OldCommitID(ctx)
+	case timelineevent.FieldCommitURL:
+		return m.OldCommitURL(ctx)
+	case timelineevent.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case timelineevent.FieldData:
+		return m.OldData(ctx)
+	}
+	return nil, fmt.Errorf("unknown TimelineEvent field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TimelineEventMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case timelineevent.FieldURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURL(v)
+		return nil
+	case timelineevent.FieldEvent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEvent(v)
+		return nil
+	case timelineevent.FieldCommitID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommitID(v)
+		return nil
+	case timelineevent.FieldCommitURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommitURL(v)
+		return nil
+	case timelineevent.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case timelineevent.FieldData:
+		v, ok := value.(model.TimelineEventWrapper)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetData(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TimelineEvent field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TimelineEventMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TimelineEventMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TimelineEventMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown TimelineEvent numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TimelineEventMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(timelineevent.FieldCommitID) {
+		fields = append(fields, timelineevent.FieldCommitID)
+	}
+	if m.FieldCleared(timelineevent.FieldCommitURL) {
+		fields = append(fields, timelineevent.FieldCommitURL)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TimelineEventMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TimelineEventMutation) ClearField(name string) error {
+	switch name {
+	case timelineevent.FieldCommitID:
+		m.ClearCommitID()
+		return nil
+	case timelineevent.FieldCommitURL:
+		m.ClearCommitURL()
+		return nil
+	}
+	return fmt.Errorf("unknown TimelineEvent nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TimelineEventMutation) ResetField(name string) error {
+	switch name {
+	case timelineevent.FieldURL:
+		m.ResetURL()
+		return nil
+	case timelineevent.FieldEvent:
+		m.ResetEvent()
+		return nil
+	case timelineevent.FieldCommitID:
+		m.ResetCommitID()
+		return nil
+	case timelineevent.FieldCommitURL:
+		m.ResetCommitURL()
+		return nil
+	case timelineevent.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case timelineevent.FieldData:
+		m.ResetData()
+		return nil
+	}
+	return fmt.Errorf("unknown TimelineEvent field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TimelineEventMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.actor != nil {
+		edges = append(edges, timelineevent.EdgeActor)
+	}
+	if m.issue != nil {
+		edges = append(edges, timelineevent.EdgeIssue)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TimelineEventMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case timelineevent.EdgeActor:
+		if id := m.actor; id != nil {
+			return []ent.Value{*id}
+		}
+	case timelineevent.EdgeIssue:
+		if id := m.issue; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TimelineEventMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TimelineEventMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TimelineEventMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedactor {
+		edges = append(edges, timelineevent.EdgeActor)
+	}
+	if m.clearedissue {
+		edges = append(edges, timelineevent.EdgeIssue)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TimelineEventMutation) EdgeCleared(name string) bool {
+	switch name {
+	case timelineevent.EdgeActor:
+		return m.clearedactor
+	case timelineevent.EdgeIssue:
+		return m.clearedissue
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TimelineEventMutation) ClearEdge(name string) error {
+	switch name {
+	case timelineevent.EdgeActor:
+		m.ClearActor()
+		return nil
+	case timelineevent.EdgeIssue:
+		m.ClearIssue()
+		return nil
+	}
+	return fmt.Errorf("unknown TimelineEvent unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TimelineEventMutation) ResetEdge(name string) error {
+	switch name {
+	case timelineevent.EdgeActor:
+		m.ResetActor()
+		return nil
+	case timelineevent.EdgeIssue:
+		m.ResetIssue()
+		return nil
+	}
+	return fmt.Errorf("unknown TimelineEvent edge %s", name)
+}
+
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                      Op
-	typ                     string
-	id                      *int64
-	login                   *string
-	node_id                 *string
-	avatar_url              *string
-	gravatar_id             *string
-	url                     *string
-	html_url                *string
-	followers_url           *string
-	following_url           *string
-	gists_url               *string
-	starred_url             *string
-	subscriptions_url       *string
-	organizations_url       *string
-	repos_url               *string
-	events_url              *string
-	received_events_url     *string
-	_type                   *string
-	site_admin              *bool
-	name                    *string
-	company                 *string
-	blog                    *string
-	location                *string
-	email                   *string
-	hireable                *bool
-	bio                     *string
-	public_repos            *int64
-	addpublic_repos         *int64
-	public_gists            *int64
-	addpublic_gists         *int64
-	followers               *int64
-	addfollowers            *int64
-	following               *int64
-	addfollowing            *int64
-	created_at              *time.Time
-	updated_at              *time.Time
-	clearedFields           map[string]struct{}
-	repositories            map[int64]struct{}
-	removedrepositories     map[int64]struct{}
-	clearedrepositories     bool
-	issues_created          map[int64]struct{}
-	removedissues_created   map[int64]struct{}
-	clearedissues_created   bool
-	comments_created        map[int64]struct{}
-	removedcomments_created map[int64]struct{}
-	clearedcomments_created bool
-	issues_assigned         map[int64]struct{}
-	removedissues_assigned  map[int64]struct{}
-	clearedissues_assigned  bool
-	done                    bool
-	oldValue                func(context.Context) (*User, error)
-	predicates              []predicate.User
+	op                             Op
+	typ                            string
+	id                             *int64
+	login                          *string
+	node_id                        *string
+	avatar_url                     *string
+	gravatar_id                    *string
+	url                            *string
+	html_url                       *string
+	followers_url                  *string
+	following_url                  *string
+	gists_url                      *string
+	starred_url                    *string
+	subscriptions_url              *string
+	organizations_url              *string
+	repos_url                      *string
+	events_url                     *string
+	received_events_url            *string
+	_type                          *string
+	site_admin                     *bool
+	name                           *string
+	company                        *string
+	blog                           *string
+	location                       *string
+	email                          *string
+	hireable                       *bool
+	bio                            *string
+	public_repos                   *int64
+	addpublic_repos                *int64
+	public_gists                   *int64
+	addpublic_gists                *int64
+	followers                      *int64
+	addfollowers                   *int64
+	following                      *int64
+	addfollowing                   *int64
+	created_at                     *time.Time
+	updated_at                     *time.Time
+	clearedFields                  map[string]struct{}
+	repositories                   map[int64]struct{}
+	removedrepositories            map[int64]struct{}
+	clearedrepositories            bool
+	issues_created                 map[int64]struct{}
+	removedissues_created          map[int64]struct{}
+	clearedissues_created          bool
+	comments_created               map[int64]struct{}
+	removedcomments_created        map[int64]struct{}
+	clearedcomments_created        bool
+	issues_assigned                map[int64]struct{}
+	removedissues_assigned         map[int64]struct{}
+	clearedissues_assigned         bool
+	timeline_events_created        map[string]struct{}
+	removedtimeline_events_created map[string]struct{}
+	clearedtimeline_events_created bool
+	done                           bool
+	oldValue                       func(context.Context) (*User, error)
+	predicates                     []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -9474,6 +10331,60 @@ func (m *UserMutation) ResetIssuesAssigned() {
 	m.removedissues_assigned = nil
 }
 
+// AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by ids.
+func (m *UserMutation) AddTimelineEventsCreatedIDs(ids ...string) {
+	if m.timeline_events_created == nil {
+		m.timeline_events_created = make(map[string]struct{})
+	}
+	for i := range ids {
+		m.timeline_events_created[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTimelineEventsCreated clears the "timeline_events_created" edge to the TimelineEvent entity.
+func (m *UserMutation) ClearTimelineEventsCreated() {
+	m.clearedtimeline_events_created = true
+}
+
+// TimelineEventsCreatedCleared reports if the "timeline_events_created" edge to the TimelineEvent entity was cleared.
+func (m *UserMutation) TimelineEventsCreatedCleared() bool {
+	return m.clearedtimeline_events_created
+}
+
+// RemoveTimelineEventsCreatedIDs removes the "timeline_events_created" edge to the TimelineEvent entity by IDs.
+func (m *UserMutation) RemoveTimelineEventsCreatedIDs(ids ...string) {
+	if m.removedtimeline_events_created == nil {
+		m.removedtimeline_events_created = make(map[string]struct{})
+	}
+	for i := range ids {
+		delete(m.timeline_events_created, ids[i])
+		m.removedtimeline_events_created[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTimelineEventsCreated returns the removed IDs of the "timeline_events_created" edge to the TimelineEvent entity.
+func (m *UserMutation) RemovedTimelineEventsCreatedIDs() (ids []string) {
+	for id := range m.removedtimeline_events_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TimelineEventsCreatedIDs returns the "timeline_events_created" edge IDs in the mutation.
+func (m *UserMutation) TimelineEventsCreatedIDs() (ids []string) {
+	for id := range m.timeline_events_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTimelineEventsCreated resets all changes to the "timeline_events_created" edge.
+func (m *UserMutation) ResetTimelineEventsCreated() {
+	m.timeline_events_created = nil
+	m.clearedtimeline_events_created = false
+	m.removedtimeline_events_created = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -10202,7 +11113,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.repositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -10214,6 +11125,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.issues_assigned != nil {
 		edges = append(edges, user.EdgeIssuesAssigned)
+	}
+	if m.timeline_events_created != nil {
+		edges = append(edges, user.EdgeTimelineEventsCreated)
 	}
 	return edges
 }
@@ -10246,13 +11160,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeTimelineEventsCreated:
+		ids := make([]ent.Value, 0, len(m.timeline_events_created))
+		for id := range m.timeline_events_created {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedrepositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -10264,6 +11184,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedissues_assigned != nil {
 		edges = append(edges, user.EdgeIssuesAssigned)
+	}
+	if m.removedtimeline_events_created != nil {
+		edges = append(edges, user.EdgeTimelineEventsCreated)
 	}
 	return edges
 }
@@ -10296,13 +11219,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeTimelineEventsCreated:
+		ids := make([]ent.Value, 0, len(m.removedtimeline_events_created))
+		for id := range m.removedtimeline_events_created {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedrepositories {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -10314,6 +11243,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	}
 	if m.clearedissues_assigned {
 		edges = append(edges, user.EdgeIssuesAssigned)
+	}
+	if m.clearedtimeline_events_created {
+		edges = append(edges, user.EdgeTimelineEventsCreated)
 	}
 	return edges
 }
@@ -10330,6 +11262,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedcomments_created
 	case user.EdgeIssuesAssigned:
 		return m.clearedissues_assigned
+	case user.EdgeTimelineEventsCreated:
+		return m.clearedtimeline_events_created
 	}
 	return false
 }
@@ -10357,6 +11291,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeIssuesAssigned:
 		m.ResetIssuesAssigned()
+		return nil
+	case user.EdgeTimelineEventsCreated:
+		m.ResetTimelineEventsCreated()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

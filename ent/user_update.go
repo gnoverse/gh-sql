@@ -15,6 +15,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
 )
 
@@ -587,6 +588,21 @@ func (uu *UserUpdate) AddIssuesAssigned(i ...*Issue) *UserUpdate {
 	return uu.AddIssuesAssignedIDs(ids...)
 }
 
+// AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by IDs.
+func (uu *UserUpdate) AddTimelineEventsCreatedIDs(ids ...string) *UserUpdate {
+	uu.mutation.AddTimelineEventsCreatedIDs(ids...)
+	return uu
+}
+
+// AddTimelineEventsCreated adds the "timeline_events_created" edges to the TimelineEvent entity.
+func (uu *UserUpdate) AddTimelineEventsCreated(t ...*TimelineEvent) *UserUpdate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uu.AddTimelineEventsCreatedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -674,6 +690,27 @@ func (uu *UserUpdate) RemoveIssuesAssigned(i ...*Issue) *UserUpdate {
 		ids[j] = i[j].ID
 	}
 	return uu.RemoveIssuesAssignedIDs(ids...)
+}
+
+// ClearTimelineEventsCreated clears all "timeline_events_created" edges to the TimelineEvent entity.
+func (uu *UserUpdate) ClearTimelineEventsCreated() *UserUpdate {
+	uu.mutation.ClearTimelineEventsCreated()
+	return uu
+}
+
+// RemoveTimelineEventsCreatedIDs removes the "timeline_events_created" edge to TimelineEvent entities by IDs.
+func (uu *UserUpdate) RemoveTimelineEventsCreatedIDs(ids ...string) *UserUpdate {
+	uu.mutation.RemoveTimelineEventsCreatedIDs(ids...)
+	return uu
+}
+
+// RemoveTimelineEventsCreated removes "timeline_events_created" edges to TimelineEvent entities.
+func (uu *UserUpdate) RemoveTimelineEventsCreated(t ...*TimelineEvent) *UserUpdate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uu.RemoveTimelineEventsCreatedIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1011,6 +1048,51 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.TimelineEventsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.TimelineEventsCreatedTable,
+			Columns: []string{user.TimelineEventsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedTimelineEventsCreatedIDs(); len(nodes) > 0 && !uu.mutation.TimelineEventsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.TimelineEventsCreatedTable,
+			Columns: []string{user.TimelineEventsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.TimelineEventsCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.TimelineEventsCreatedTable,
+			Columns: []string{user.TimelineEventsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
@@ -1594,6 +1676,21 @@ func (uuo *UserUpdateOne) AddIssuesAssigned(i ...*Issue) *UserUpdateOne {
 	return uuo.AddIssuesAssignedIDs(ids...)
 }
 
+// AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by IDs.
+func (uuo *UserUpdateOne) AddTimelineEventsCreatedIDs(ids ...string) *UserUpdateOne {
+	uuo.mutation.AddTimelineEventsCreatedIDs(ids...)
+	return uuo
+}
+
+// AddTimelineEventsCreated adds the "timeline_events_created" edges to the TimelineEvent entity.
+func (uuo *UserUpdateOne) AddTimelineEventsCreated(t ...*TimelineEvent) *UserUpdateOne {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uuo.AddTimelineEventsCreatedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -1681,6 +1778,27 @@ func (uuo *UserUpdateOne) RemoveIssuesAssigned(i ...*Issue) *UserUpdateOne {
 		ids[j] = i[j].ID
 	}
 	return uuo.RemoveIssuesAssignedIDs(ids...)
+}
+
+// ClearTimelineEventsCreated clears all "timeline_events_created" edges to the TimelineEvent entity.
+func (uuo *UserUpdateOne) ClearTimelineEventsCreated() *UserUpdateOne {
+	uuo.mutation.ClearTimelineEventsCreated()
+	return uuo
+}
+
+// RemoveTimelineEventsCreatedIDs removes the "timeline_events_created" edge to TimelineEvent entities by IDs.
+func (uuo *UserUpdateOne) RemoveTimelineEventsCreatedIDs(ids ...string) *UserUpdateOne {
+	uuo.mutation.RemoveTimelineEventsCreatedIDs(ids...)
+	return uuo
+}
+
+// RemoveTimelineEventsCreated removes "timeline_events_created" edges to TimelineEvent entities.
+func (uuo *UserUpdateOne) RemoveTimelineEventsCreated(t ...*TimelineEvent) *UserUpdateOne {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uuo.RemoveTimelineEventsCreatedIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -2048,6 +2166,51 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.TimelineEventsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.TimelineEventsCreatedTable,
+			Columns: []string{user.TimelineEventsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedTimelineEventsCreatedIDs(); len(nodes) > 0 && !uuo.mutation.TimelineEventsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.TimelineEventsCreatedTable,
+			Columns: []string{user.TimelineEventsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.TimelineEventsCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.TimelineEventsCreatedTable,
+			Columns: []string{user.TimelineEventsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {

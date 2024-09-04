@@ -15,6 +15,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
 )
 
@@ -29,6 +30,7 @@ type IssueQuery struct {
 	withUser       *UserQuery
 	withAssignees  *UserQuery
 	withComments   *IssueCommentQuery
+	withTimeline   *TimelineEventQuery
 	withFKs        bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -147,6 +149,28 @@ func (iq *IssueQuery) QueryComments() *IssueCommentQuery {
 			sqlgraph.From(issue.Table, issue.FieldID, selector),
 			sqlgraph.To(issuecomment.Table, issuecomment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, issue.CommentsTable, issue.CommentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTimeline chains the current query on the "timeline" edge.
+func (iq *IssueQuery) QueryTimeline() *TimelineEventQuery {
+	query := (&TimelineEventClient{config: iq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := iq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := iq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, selector),
+			sqlgraph.To(timelineevent.Table, timelineevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, issue.TimelineTable, issue.TimelineColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
 		return fromU, nil
@@ -350,6 +374,7 @@ func (iq *IssueQuery) Clone() *IssueQuery {
 		withUser:       iq.withUser.Clone(),
 		withAssignees:  iq.withAssignees.Clone(),
 		withComments:   iq.withComments.Clone(),
+		withTimeline:   iq.withTimeline.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
 		path: iq.path,
@@ -397,6 +422,17 @@ func (iq *IssueQuery) WithComments(opts ...func(*IssueCommentQuery)) *IssueQuery
 		opt(query)
 	}
 	iq.withComments = query
+	return iq
+}
+
+// WithTimeline tells the query-builder to eager-load the nodes that are connected to
+// the "timeline" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *IssueQuery) WithTimeline(opts ...func(*TimelineEventQuery)) *IssueQuery {
+	query := (&TimelineEventClient{config: iq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	iq.withTimeline = query
 	return iq
 }
 
@@ -479,11 +515,12 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 		nodes       = []*Issue{}
 		withFKs     = iq.withFKs
 		_spec       = iq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			iq.withRepository != nil,
 			iq.withUser != nil,
 			iq.withAssignees != nil,
 			iq.withComments != nil,
+			iq.withTimeline != nil,
 		}
 	)
 	if iq.withRepository != nil || iq.withUser != nil {
@@ -533,6 +570,13 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 		if err := iq.loadComments(ctx, query, nodes,
 			func(n *Issue) { n.Edges.Comments = []*IssueComment{} },
 			func(n *Issue, e *IssueComment) { n.Edges.Comments = append(n.Edges.Comments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := iq.withTimeline; query != nil {
+		if err := iq.loadTimeline(ctx, query, nodes,
+			func(n *Issue) { n.Edges.Timeline = []*TimelineEvent{} },
+			func(n *Issue, e *TimelineEvent) { n.Edges.Timeline = append(n.Edges.Timeline, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -690,6 +734,37 @@ func (iq *IssueQuery) loadComments(ctx context.Context, query *IssueCommentQuery
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "issue_comments" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (iq *IssueQuery) loadTimeline(ctx context.Context, query *TimelineEventQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *TimelineEvent)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Issue)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.TimelineEvent(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(issue.TimelineColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.issue_timeline
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "issue_timeline" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "issue_timeline" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

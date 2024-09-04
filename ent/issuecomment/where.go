@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // ID filters vertices based on their ID field.
@@ -544,23 +545,33 @@ func IssueURLContainsFold(v string) predicate.IssueComment {
 }
 
 // AuthorAssociationEQ applies the EQ predicate on the "author_association" field.
-func AuthorAssociationEQ(v AuthorAssociation) predicate.IssueComment {
-	return predicate.IssueComment(sql.FieldEQ(FieldAuthorAssociation, v))
+func AuthorAssociationEQ(v model.AuthorAssociation) predicate.IssueComment {
+	vc := v
+	return predicate.IssueComment(sql.FieldEQ(FieldAuthorAssociation, vc))
 }
 
 // AuthorAssociationNEQ applies the NEQ predicate on the "author_association" field.
-func AuthorAssociationNEQ(v AuthorAssociation) predicate.IssueComment {
-	return predicate.IssueComment(sql.FieldNEQ(FieldAuthorAssociation, v))
+func AuthorAssociationNEQ(v model.AuthorAssociation) predicate.IssueComment {
+	vc := v
+	return predicate.IssueComment(sql.FieldNEQ(FieldAuthorAssociation, vc))
 }
 
 // AuthorAssociationIn applies the In predicate on the "author_association" field.
-func AuthorAssociationIn(vs ...AuthorAssociation) predicate.IssueComment {
-	return predicate.IssueComment(sql.FieldIn(FieldAuthorAssociation, vs...))
+func AuthorAssociationIn(vs ...model.AuthorAssociation) predicate.IssueComment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.IssueComment(sql.FieldIn(FieldAuthorAssociation, v...))
 }
 
 // AuthorAssociationNotIn applies the NotIn predicate on the "author_association" field.
-func AuthorAssociationNotIn(vs ...AuthorAssociation) predicate.IssueComment {
-	return predicate.IssueComment(sql.FieldNotIn(FieldAuthorAssociation, vs...))
+func AuthorAssociationNotIn(vs ...model.AuthorAssociation) predicate.IssueComment {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.IssueComment(sql.FieldNotIn(FieldAuthorAssociation, v...))
 }
 
 // HasIssue applies the HasEdge predicate on the "issue" edge.

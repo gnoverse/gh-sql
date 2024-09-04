@@ -13,6 +13,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // Issue is the model entity for the Issue schema.
@@ -39,7 +40,7 @@ type Issue struct {
 	// State of the issue; either 'open' or 'closed'
 	State string `json:"state"`
 	// StateReason holds the value of the "state_reason" field.
-	StateReason *issue.StateReason `json:"state_reason"`
+	StateReason *model.StateReason `json:"state_reason"`
 	// Title of the issue
 	Title string `json:"title"`
 	// Body holds the value of the "body" field.
@@ -59,9 +60,9 @@ type Issue struct {
 	// Draft holds the value of the "draft" field.
 	Draft bool `json:"draft"`
 	// AuthorAssociation holds the value of the "author_association" field.
-	AuthorAssociation issue.AuthorAssociation `json:"author_association"`
+	AuthorAssociation model.AuthorAssociation `json:"author_association"`
 	// Reactions holds the value of the "reactions" field.
-	Reactions map[string]interface{} `json:"reactions"`
+	Reactions model.ReactionRollup `json:"reactions"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IssueQuery when eager-loading is set.
 	Edges               IssueEdges `json:"-"`
@@ -80,9 +81,11 @@ type IssueEdges struct {
 	Assignees []*User `json:"assignees,omitempty"`
 	// Comments holds the value of the comments edge.
 	Comments []*IssueComment `json:"comments,omitempty"`
+	// Timeline holds the value of the timeline edge.
+	Timeline []*TimelineEvent `json:"timeline,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // RepositoryOrErr returns the Repository value or an error if the edge
@@ -123,6 +126,15 @@ func (e IssueEdges) CommentsOrErr() ([]*IssueComment, error) {
 		return e.Comments, nil
 	}
 	return nil, &NotLoadedError{edge: "comments"}
+}
+
+// TimelineOrErr returns the Timeline value or an error if the edge
+// was not loaded in eager-loading.
+func (e IssueEdges) TimelineOrErr() ([]*TimelineEvent, error) {
+	if e.loadedTypes[4] {
+		return e.Timeline, nil
+	}
+	return nil, &NotLoadedError{edge: "timeline"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -223,8 +235,8 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 			if value, ok := values[j].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field state_reason", values[j])
 			} else if value.Valid {
-				i.StateReason = new(issue.StateReason)
-				*i.StateReason = issue.StateReason(value.String)
+				i.StateReason = new(model.StateReason)
+				*i.StateReason = model.StateReason(value.String)
 			}
 		case issue.FieldTitle:
 			if value, ok := values[j].(*sql.NullString); !ok {
@@ -287,7 +299,7 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 			if value, ok := values[j].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field author_association", values[j])
 			} else if value.Valid {
-				i.AuthorAssociation = issue.AuthorAssociation(value.String)
+				i.AuthorAssociation = model.AuthorAssociation(value.String)
 			}
 		case issue.FieldReactions:
 			if value, ok := values[j].(*[]byte); !ok {
@@ -342,6 +354,11 @@ func (i *Issue) QueryAssignees() *UserQuery {
 // QueryComments queries the "comments" edge of the Issue entity.
 func (i *Issue) QueryComments() *IssueCommentQuery {
 	return NewIssueClient(i.config).QueryComments(i)
+}
+
+// QueryTimeline queries the "timeline" edge of the Issue entity.
+func (i *Issue) QueryTimeline() *TimelineEventQuery {
+	return NewIssueClient(i.config).QueryTimeline(i)
 }
 
 // Update returns a builder for updating this Issue.

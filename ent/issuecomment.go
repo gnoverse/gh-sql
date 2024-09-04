@@ -12,6 +12,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // IssueComment is the model entity for the IssueComment schema.
@@ -35,7 +36,7 @@ type IssueComment struct {
 	// IssueURL holds the value of the "issue_url" field.
 	IssueURL string `json:"issue_url"`
 	// AuthorAssociation holds the value of the "author_association" field.
-	AuthorAssociation issuecomment.AuthorAssociation `json:"author_association"`
+	AuthorAssociation model.AuthorAssociation `json:"author_association"`
 	// Reactions holds the value of the "reactions" field.
 	Reactions map[string]interface{} `json:"reactions"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -161,7 +162,7 @@ func (ic *IssueComment) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field author_association", values[i])
 			} else if value.Valid {
-				ic.AuthorAssociation = issuecomment.AuthorAssociation(value.String)
+				ic.AuthorAssociation = model.AuthorAssociation(value.String)
 			}
 		case issuecomment.FieldReactions:
 			if value, ok := values[i].(*[]byte); !ok {

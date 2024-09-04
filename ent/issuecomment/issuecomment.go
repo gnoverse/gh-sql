@@ -7,6 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 const (
@@ -90,29 +91,10 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-// AuthorAssociation defines the type for the "author_association" enum field.
-type AuthorAssociation string
-
-// AuthorAssociation values.
-const (
-	AuthorAssociationCOLLABORATOR           AuthorAssociation = "COLLABORATOR"
-	AuthorAssociationCONTRIBUTOR            AuthorAssociation = "CONTRIBUTOR"
-	AuthorAssociationFIRST_TIMER            AuthorAssociation = "FIRST_TIMER"
-	AuthorAssociationFIRST_TIME_CONTRIBUTOR AuthorAssociation = "FIRST_TIME_CONTRIBUTOR"
-	AuthorAssociationMANNEQUIN              AuthorAssociation = "MANNEQUIN"
-	AuthorAssociationMEMBER                 AuthorAssociation = "MEMBER"
-	AuthorAssociationNONE                   AuthorAssociation = "NONE"
-	AuthorAssociationOWNER                  AuthorAssociation = "OWNER"
-)
-
-func (aa AuthorAssociation) String() string {
-	return string(aa)
-}
-
 // AuthorAssociationValidator is a validator for the "author_association" field enum values. It is called by the builders before save.
-func AuthorAssociationValidator(aa AuthorAssociation) error {
+func AuthorAssociationValidator(aa model.AuthorAssociation) error {
 	switch aa {
-	case AuthorAssociationCOLLABORATOR, AuthorAssociationCONTRIBUTOR, AuthorAssociationFIRST_TIMER, AuthorAssociationFIRST_TIME_CONTRIBUTOR, AuthorAssociationMANNEQUIN, AuthorAssociationMEMBER, AuthorAssociationNONE, AuthorAssociationOWNER:
+	case "COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "OWNER", "NONE":
 		return nil
 	default:
 		return fmt.Errorf("issuecomment: invalid enum value for author_association field: %q", aa)

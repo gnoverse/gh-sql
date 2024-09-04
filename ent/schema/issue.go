@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // Issue holds the schema definition for the Issue entity.
@@ -30,7 +31,7 @@ func (Issue) Fields() []ent.Field {
 		field.Enum("state_reason").
 			Optional().
 			Nillable().
-			Values("completed", "reopened", "not_planned"),
+			GoType(model.StateReason("")),
 		field.String("title").
 			Comment("Title of the issue"),
 		field.String("body").
@@ -47,19 +48,8 @@ func (Issue) Fields() []ent.Field {
 		field.Time("created_at"),
 		field.Time("updated_at"),
 		field.Bool("draft"),
-		// TODO: unify with IssueComment
-		field.Enum("author_association").Values(
-			"COLLABORATOR",
-			"CONTRIBUTOR",
-			"FIRST_TIMER",
-			"FIRST_TIME_CONTRIBUTOR",
-			"MANNEQUIN",
-			"MEMBER",
-			"NONE",
-			"OWNER",
-		),
-		// TODO: better type
-		field.JSON("reactions", map[string]any{}),
+		field.Enum("author_association").GoType(model.AuthorAssociation("")),
+		field.JSON("reactions", model.ReactionRollup(nil)),
 	}
 }
 
@@ -80,5 +70,6 @@ func (Issue) Edges() []ent.Edge {
 			Unique(),
 		edge.To("assignees", User.Type),
 		edge.To("comments", IssueComment.Type),
+		edge.To("timeline", TimelineEvent.Type),
 	}
 }

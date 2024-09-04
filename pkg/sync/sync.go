@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"regexp"
@@ -20,6 +19,10 @@ import (
 
 	"github.com/gnolang/gh-sql/ent"
 	"golang.org/x/sync/errgroup"
+)
+
+const (
+	maxConcurrentRequests = 4
 )
 
 // Options repsent the options to run Sync. These match the flags provided on
@@ -55,7 +58,7 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 		Group:        gr,
 		limits:       values,
 		limitsTimer:  make(chan struct{}, 1),
-		reqsInflight: make(chan struct{}, 16),
+		reqsInflight: make(chan struct{}, maxConcurrentRequests),
 		updated:      make(map[string]any),
 	}
 	go h.limiter(ctx)
@@ -71,9 +74,10 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 			// contains wildcards
 			reString := "^" + strings.ReplaceAll(regexp.QuoteMeta(parts[1]), `\*`, `.*`) + "$"
 			re := regexp.MustCompile(reString)
-			fetchRepositories(ctx, h, parts[0], func(r *ent.Repository) bool {
+			shouldFetch := func(r *ent.Repository) bool {
 				return re.MatchString(r.Name)
-			})
+			}
+			fetchRepositories(ctx, h, parts[0], shouldFetch)
 		} else {
 			// no wildcards; fetch repo directly.
 			fetchAsync(ctx, h, fetchRepository{owner: parts[0], repo: parts[1]})
@@ -155,6 +159,10 @@ func fetchAsync[T any](ctx context.Context, h *hub, res resource[T]) {
 // function to retrieve the cache from a previously done request with the same
 // id. created indicates whether the value at id was just created, and as such
 // if fn == getter.
+//
+// setUpdatedFunc is generally used internally by [fetch] and [fetchAsync];
+// it should be used elsewhere when the full resource in question has been
+// retrieved otherwise, and fetch/fetchAsync is not necessary.
 func setUpdatedFunc[T any](h *hub, id string, fn func() (T, error)) (getter func() (T, error), created bool) {
 	h.updatedMu.Lock()
 	getterRaw, ok := h.updated[id]
@@ -190,7 +198,7 @@ func httpGet(ctx context.Context, h *hub, path string, dst any) error {
 
 	// unmarshal body into dst
 	defer resp.Body.Close()
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
@@ -246,6 +254,7 @@ func httpInternal(ctx context.Context, h *hub, method, uri string, body io.Reade
 
 var httpLinkHeaderRe = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"(?:,\s*|$)`)
 
+// TODO(morgan): change to go iterator
 func httpGetIterate[T any](ctx context.Context, h *hub, path string, fn func(item T) error) error {
 	uri := apiEndpoint + path
 Upper:
@@ -255,8 +264,10 @@ Upper:
 			return err
 		}
 
+		// TODO(morgan): add debug flag to log failing requests.
+
 		// retrieve data
-		data, err := ioutil.ReadAll(resp.Body)
+		data, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
 		}

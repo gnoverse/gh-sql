@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // IssueComment holds the schema definition for the IssueComment entity.
@@ -24,17 +25,7 @@ func (IssueComment) Fields() []ent.Field {
 		field.String("created_at"),
 		field.String("updated_at"),
 		field.String("issue_url"),
-		// TODO: unify with IssueComment
-		field.Enum("author_association").Values(
-			"COLLABORATOR",
-			"CONTRIBUTOR",
-			"FIRST_TIMER",
-			"FIRST_TIME_CONTRIBUTOR",
-			"MANNEQUIN",
-			"MEMBER",
-			"NONE",
-			"OWNER",
-		),
+		field.Enum("author_association").GoType(model.AuthorAssociation("")),
 		// TODO: better type
 		field.JSON("reactions", map[string]any{}),
 	}

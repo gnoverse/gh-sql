@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
 	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnolang/gh-sql/pkg/model"
 )
 
 // IssueCommentUpdate is the builder for updating IssueComment entities.
@@ -128,15 +129,15 @@ func (icu *IssueCommentUpdate) SetNillableIssueURL(s *string) *IssueCommentUpdat
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (icu *IssueCommentUpdate) SetAuthorAssociation(ia issuecomment.AuthorAssociation) *IssueCommentUpdate {
-	icu.mutation.SetAuthorAssociation(ia)
+func (icu *IssueCommentUpdate) SetAuthorAssociation(ma model.AuthorAssociation) *IssueCommentUpdate {
+	icu.mutation.SetAuthorAssociation(ma)
 	return icu
 }
 
 // SetNillableAuthorAssociation sets the "author_association" field if the given value is not nil.
-func (icu *IssueCommentUpdate) SetNillableAuthorAssociation(ia *issuecomment.AuthorAssociation) *IssueCommentUpdate {
-	if ia != nil {
-		icu.SetAuthorAssociation(*ia)
+func (icu *IssueCommentUpdate) SetNillableAuthorAssociation(ma *model.AuthorAssociation) *IssueCommentUpdate {
+	if ma != nil {
+		icu.SetAuthorAssociation(*ma)
 	}
 	return icu
 }
@@ -455,15 +456,15 @@ func (icuo *IssueCommentUpdateOne) SetNillableIssueURL(s *string) *IssueCommentU
 }
 
 // SetAuthorAssociation sets the "author_association" field.
-func (icuo *IssueCommentUpdateOne) SetAuthorAssociation(ia issuecomment.AuthorAssociation) *IssueCommentUpdateOne {
-	icuo.mutation.SetAuthorAssociation(ia)
+func (icuo *IssueCommentUpdateOne) SetAuthorAssociation(ma model.AuthorAssociation) *IssueCommentUpdateOne {
+	icuo.mutation.SetAuthorAssociation(ma)
 	return icuo
 }
 
 // SetNillableAuthorAssociation sets the "author_association" field if the given value is not nil.
-func (icuo *IssueCommentUpdateOne) SetNillableAuthorAssociation(ia *issuecomment.AuthorAssociation) *IssueCommentUpdateOne {
-	if ia != nil {
-		icuo.SetAuthorAssociation(*ia)
+func (icuo *IssueCommentUpdateOne) SetNillableAuthorAssociation(ma *model.AuthorAssociation) *IssueCommentUpdateOne {
+	if ma != nil {
+		icuo.SetAuthorAssociation(*ma)
 	}
 	return icuo
 }

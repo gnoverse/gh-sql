@@ -18,6 +18,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
 )
 
@@ -32,6 +33,8 @@ type Client struct {
 	IssueComment *IssueCommentClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
+	// TimelineEvent is the client for interacting with the TimelineEvent builders.
+	TimelineEvent *TimelineEventClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -48,6 +51,7 @@ func (c *Client) init() {
 	c.Issue = NewIssueClient(c.config)
 	c.IssueComment = NewIssueCommentClient(c.config)
 	c.Repository = NewRepositoryClient(c.config)
+	c.TimelineEvent = NewTimelineEventClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -139,12 +143,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		Issue:        NewIssueClient(cfg),
-		IssueComment: NewIssueCommentClient(cfg),
-		Repository:   NewRepositoryClient(cfg),
-		User:         NewUserClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Issue:         NewIssueClient(cfg),
+		IssueComment:  NewIssueCommentClient(cfg),
+		Repository:    NewRepositoryClient(cfg),
+		TimelineEvent: NewTimelineEventClient(cfg),
+		User:          NewUserClient(cfg),
 	}, nil
 }
 
@@ -162,12 +167,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		Issue:        NewIssueClient(cfg),
-		IssueComment: NewIssueCommentClient(cfg),
-		Repository:   NewRepositoryClient(cfg),
-		User:         NewUserClient(cfg),
+		ctx:           ctx,
+		config:        cfg,
+		Issue:         NewIssueClient(cfg),
+		IssueComment:  NewIssueCommentClient(cfg),
+		Repository:    NewRepositoryClient(cfg),
+		TimelineEvent: NewTimelineEventClient(cfg),
+		User:          NewUserClient(cfg),
 	}, nil
 }
 
@@ -199,6 +205,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Issue.Use(hooks...)
 	c.IssueComment.Use(hooks...)
 	c.Repository.Use(hooks...)
+	c.TimelineEvent.Use(hooks...)
 	c.User.Use(hooks...)
 }
 
@@ -208,6 +215,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Issue.Intercept(interceptors...)
 	c.IssueComment.Intercept(interceptors...)
 	c.Repository.Intercept(interceptors...)
+	c.TimelineEvent.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
 
@@ -220,6 +228,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.IssueComment.mutate(ctx, m)
 	case *RepositoryMutation:
 		return c.Repository.mutate(ctx, m)
+	case *TimelineEventMutation:
+		return c.TimelineEvent.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -392,6 +402,22 @@ func (c *IssueClient) QueryComments(i *Issue) *IssueCommentQuery {
 			sqlgraph.From(issue.Table, issue.FieldID, id),
 			sqlgraph.To(issuecomment.Table, issuecomment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, issue.CommentsTable, issue.CommentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTimeline queries the timeline edge of a Issue.
+func (c *IssueClient) QueryTimeline(i *Issue) *TimelineEventQuery {
+	query := (&TimelineEventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := i.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, id),
+			sqlgraph.To(timelineevent.Table, timelineevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, issue.TimelineTable, issue.TimelineColumn),
 		)
 		fromV = sqlgraph.Neighbors(i.driver.Dialect(), step)
 		return fromV, nil
@@ -754,6 +780,171 @@ func (c *RepositoryClient) mutate(ctx context.Context, m *RepositoryMutation) (V
 	}
 }
 
+// TimelineEventClient is a client for the TimelineEvent schema.
+type TimelineEventClient struct {
+	config
+}
+
+// NewTimelineEventClient returns a client for the TimelineEvent from the given config.
+func NewTimelineEventClient(c config) *TimelineEventClient {
+	return &TimelineEventClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `timelineevent.Hooks(f(g(h())))`.
+func (c *TimelineEventClient) Use(hooks ...Hook) {
+	c.hooks.TimelineEvent = append(c.hooks.TimelineEvent, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `timelineevent.Intercept(f(g(h())))`.
+func (c *TimelineEventClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TimelineEvent = append(c.inters.TimelineEvent, interceptors...)
+}
+
+// Create returns a builder for creating a TimelineEvent entity.
+func (c *TimelineEventClient) Create() *TimelineEventCreate {
+	mutation := newTimelineEventMutation(c.config, OpCreate)
+	return &TimelineEventCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TimelineEvent entities.
+func (c *TimelineEventClient) CreateBulk(builders ...*TimelineEventCreate) *TimelineEventCreateBulk {
+	return &TimelineEventCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TimelineEventClient) MapCreateBulk(slice any, setFunc func(*TimelineEventCreate, int)) *TimelineEventCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TimelineEventCreateBulk{err: fmt.Errorf("calling to TimelineEventClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TimelineEventCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TimelineEventCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TimelineEvent.
+func (c *TimelineEventClient) Update() *TimelineEventUpdate {
+	mutation := newTimelineEventMutation(c.config, OpUpdate)
+	return &TimelineEventUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TimelineEventClient) UpdateOne(te *TimelineEvent) *TimelineEventUpdateOne {
+	mutation := newTimelineEventMutation(c.config, OpUpdateOne, withTimelineEvent(te))
+	return &TimelineEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TimelineEventClient) UpdateOneID(id string) *TimelineEventUpdateOne {
+	mutation := newTimelineEventMutation(c.config, OpUpdateOne, withTimelineEventID(id))
+	return &TimelineEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TimelineEvent.
+func (c *TimelineEventClient) Delete() *TimelineEventDelete {
+	mutation := newTimelineEventMutation(c.config, OpDelete)
+	return &TimelineEventDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TimelineEventClient) DeleteOne(te *TimelineEvent) *TimelineEventDeleteOne {
+	return c.DeleteOneID(te.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TimelineEventClient) DeleteOneID(id string) *TimelineEventDeleteOne {
+	builder := c.Delete().Where(timelineevent.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TimelineEventDeleteOne{builder}
+}
+
+// Query returns a query builder for TimelineEvent.
+func (c *TimelineEventClient) Query() *TimelineEventQuery {
+	return &TimelineEventQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTimelineEvent},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TimelineEvent entity by its id.
+func (c *TimelineEventClient) Get(ctx context.Context, id string) (*TimelineEvent, error) {
+	return c.Query().Where(timelineevent.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TimelineEventClient) GetX(ctx context.Context, id string) *TimelineEvent {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryActor queries the actor edge of a TimelineEvent.
+func (c *TimelineEventClient) QueryActor(te *TimelineEvent) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := te.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(timelineevent.Table, timelineevent.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, timelineevent.ActorTable, timelineevent.ActorColumn),
+		)
+		fromV = sqlgraph.Neighbors(te.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryIssue queries the issue edge of a TimelineEvent.
+func (c *TimelineEventClient) QueryIssue(te *TimelineEvent) *IssueQuery {
+	query := (&IssueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := te.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(timelineevent.Table, timelineevent.FieldID, id),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, timelineevent.IssueTable, timelineevent.IssueColumn),
+		)
+		fromV = sqlgraph.Neighbors(te.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TimelineEventClient) Hooks() []Hook {
+	return c.hooks.TimelineEvent
+}
+
+// Interceptors returns the client interceptors.
+func (c *TimelineEventClient) Interceptors() []Interceptor {
+	return c.inters.TimelineEvent
+}
+
+func (c *TimelineEventClient) mutate(ctx context.Context, m *TimelineEventMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TimelineEventCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TimelineEventUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TimelineEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TimelineEventDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TimelineEvent mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -926,6 +1117,22 @@ func (c *UserClient) QueryIssuesAssigned(u *User) *IssueQuery {
 	return query
 }
 
+// QueryTimelineEventsCreated queries the timeline_events_created edge of a User.
+func (c *UserClient) QueryTimelineEventsCreated(u *User) *TimelineEventQuery {
+	query := (&TimelineEventClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(timelineevent.Table, timelineevent.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.TimelineEventsCreatedTable, user.TimelineEventsCreatedColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -954,9 +1161,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Issue, IssueComment, Repository, User []ent.Hook
+		Issue, IssueComment, Repository, TimelineEvent, User []ent.Hook
 	}
 	inters struct {
-		Issue, IssueComment, Repository, User []ent.Interceptor
+		Issue, IssueComment, Repository, TimelineEvent, User []ent.Interceptor
 	}
 )

@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
 )
 
@@ -335,6 +336,21 @@ func (uc *UserCreate) AddIssuesAssigned(i ...*Issue) *UserCreate {
 	return uc.AddIssuesAssignedIDs(ids...)
 }
 
+// AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by IDs.
+func (uc *UserCreate) AddTimelineEventsCreatedIDs(ids ...string) *UserCreate {
+	uc.mutation.AddTimelineEventsCreatedIDs(ids...)
+	return uc
+}
+
+// AddTimelineEventsCreated adds the "timeline_events_created" edges to the TimelineEvent entity.
+func (uc *UserCreate) AddTimelineEventsCreated(t ...*TimelineEvent) *UserCreate {
+	ids := make([]string, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uc.AddTimelineEventsCreatedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uc *UserCreate) Mutation() *UserMutation {
 	return uc.mutation
@@ -645,6 +661,22 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.TimelineEventsCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: true,
+			Table:   user.TimelineEventsCreatedTable,
+			Columns: []string{user.TimelineEventsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
 			},
 		}
 		for _, k := range nodes {
