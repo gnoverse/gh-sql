@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 )
@@ -20,13 +21,14 @@ import (
 // RepositoryQuery is the builder for querying Repository entities.
 type RepositoryQuery struct {
 	config
-	ctx        *QueryContext
-	order      []repository.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Repository
-	withOwner  *UserQuery
-	withIssues *IssueQuery
-	withFKs    bool
+	ctx              *QueryContext
+	order            []repository.OrderOption
+	inters           []Interceptor
+	predicates       []predicate.Repository
+	withOwner        *UserQuery
+	withIssues       *IssueQuery
+	withPullRequests *PullRequestQuery
+	withFKs          bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +102,28 @@ func (rq *RepositoryQuery) QueryIssues() *IssueQuery {
 			sqlgraph.From(repository.Table, repository.FieldID, selector),
 			sqlgraph.To(issue.Table, issue.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, repository.IssuesTable, repository.IssuesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPullRequests chains the current query on the "pull_requests" edge.
+func (rq *RepositoryQuery) QueryPullRequests() *PullRequestQuery {
+	query := (&PullRequestClient{config: rq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := rq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := rq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(repository.Table, repository.FieldID, selector),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, repository.PullRequestsTable, repository.PullRequestsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(rq.driver.Dialect(), step)
 		return fromU, nil
@@ -294,13 +318,14 @@ func (rq *RepositoryQuery) Clone() *RepositoryQuery {
 		return nil
 	}
 	return &RepositoryQuery{
-		config:     rq.config,
-		ctx:        rq.ctx.Clone(),
-		order:      append([]repository.OrderOption{}, rq.order...),
-		inters:     append([]Interceptor{}, rq.inters...),
-		predicates: append([]predicate.Repository{}, rq.predicates...),
-		withOwner:  rq.withOwner.Clone(),
-		withIssues: rq.withIssues.Clone(),
+		config:           rq.config,
+		ctx:              rq.ctx.Clone(),
+		order:            append([]repository.OrderOption{}, rq.order...),
+		inters:           append([]Interceptor{}, rq.inters...),
+		predicates:       append([]predicate.Repository{}, rq.predicates...),
+		withOwner:        rq.withOwner.Clone(),
+		withIssues:       rq.withIssues.Clone(),
+		withPullRequests: rq.withPullRequests.Clone(),
 		// clone intermediate query.
 		sql:  rq.sql.Clone(),
 		path: rq.path,
@@ -326,6 +351,17 @@ func (rq *RepositoryQuery) WithIssues(opts ...func(*IssueQuery)) *RepositoryQuer
 		opt(query)
 	}
 	rq.withIssues = query
+	return rq
+}
+
+// WithPullRequests tells the query-builder to eager-load the nodes that are connected to
+// the "pull_requests" edge. The optional arguments are used to configure the query builder of the edge.
+func (rq *RepositoryQuery) WithPullRequests(opts ...func(*PullRequestQuery)) *RepositoryQuery {
+	query := (&PullRequestClient{config: rq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	rq.withPullRequests = query
 	return rq
 }
 
@@ -408,9 +444,10 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 		nodes       = []*Repository{}
 		withFKs     = rq.withFKs
 		_spec       = rq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			rq.withOwner != nil,
 			rq.withIssues != nil,
+			rq.withPullRequests != nil,
 		}
 	)
 	if rq.withOwner != nil {
@@ -447,6 +484,13 @@ func (rq *RepositoryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 		if err := rq.loadIssues(ctx, query, nodes,
 			func(n *Repository) { n.Edges.Issues = []*Issue{} },
 			func(n *Repository, e *Issue) { n.Edges.Issues = append(n.Edges.Issues, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := rq.withPullRequests; query != nil {
+		if err := rq.loadPullRequests(ctx, query, nodes,
+			func(n *Repository) { n.Edges.PullRequests = []*PullRequest{} },
+			func(n *Repository, e *PullRequest) { n.Edges.PullRequests = append(n.Edges.PullRequests, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -511,6 +555,37 @@ func (rq *RepositoryQuery) loadIssues(ctx context.Context, query *IssueQuery, no
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "repository_issues" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (rq *RepositoryQuery) loadPullRequests(ctx context.Context, query *PullRequestQuery, nodes []*Repository, init func(*Repository), assign func(*Repository, *PullRequest)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Repository)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.PullRequest(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(repository.PullRequestsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.repository_pull_requests
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "repository_pull_requests" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "repository_pull_requests" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

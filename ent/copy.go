@@ -104,6 +104,73 @@ func (icuo *IssueCommentUpdateOne) CopyIssueComment(input *IssueComment) *IssueC
 	return icuo
 }
 
+// CopyPullRequest allows to create a new PullRequest copying the existing
+// values of input.
+func (prc *PullRequestCreate) CopyPullRequest(input *PullRequest) *PullRequestCreate {
+	prc.SetID(input.ID)
+	prc.SetURL(input.URL)
+	prc.SetNodeID(input.NodeID)
+	prc.SetHTMLURL(input.HTMLURL)
+	prc.SetDiffURL(input.DiffURL)
+	prc.SetPatchURL(input.PatchURL)
+	prc.SetIssueURL(input.IssueURL)
+	prc.SetCommitsURL(input.CommitsURL)
+	prc.SetReviewCommentsURL(input.ReviewCommentsURL)
+	prc.SetReviewCommentURL(input.ReviewCommentURL)
+	prc.SetCommentsURL(input.CommentsURL)
+	prc.SetStatusesURL(input.StatusesURL)
+	prc.SetNumber(input.Number)
+	prc.SetState(input.State)
+	prc.SetLocked(input.Locked)
+	prc.SetTitle(input.Title)
+	prc.SetBody(input.Body)
+	prc.SetCreatedAt(input.CreatedAt)
+	prc.SetUpdatedAt(input.UpdatedAt)
+	prc.SetClosedAt(input.ClosedAt)
+	prc.SetMergedAt(input.MergedAt)
+	prc.SetMergeCommitSha(input.MergeCommitSha)
+	prc.SetHead(input.Head)
+	prc.SetBase(input.Base)
+	if input.Draft != nil {
+		prc.SetDraft(*input.Draft)
+	}
+	prc.SetAuthorAssociation(input.AuthorAssociation)
+	return prc
+}
+
+// CopyPullRequest allows to update a PullRequest copying the existing
+// values of input.
+func (pruo *PullRequestUpdateOne) CopyPullRequest(input *PullRequest) *PullRequestUpdateOne {
+	pruo.SetURL(input.URL)
+	pruo.SetNodeID(input.NodeID)
+	pruo.SetHTMLURL(input.HTMLURL)
+	pruo.SetDiffURL(input.DiffURL)
+	pruo.SetPatchURL(input.PatchURL)
+	pruo.SetIssueURL(input.IssueURL)
+	pruo.SetCommitsURL(input.CommitsURL)
+	pruo.SetReviewCommentsURL(input.ReviewCommentsURL)
+	pruo.SetReviewCommentURL(input.ReviewCommentURL)
+	pruo.SetCommentsURL(input.CommentsURL)
+	pruo.SetStatusesURL(input.StatusesURL)
+	pruo.SetNumber(input.Number)
+	pruo.SetState(input.State)
+	pruo.SetLocked(input.Locked)
+	pruo.SetTitle(input.Title)
+	pruo.SetBody(input.Body)
+	pruo.SetCreatedAt(input.CreatedAt)
+	pruo.SetUpdatedAt(input.UpdatedAt)
+	pruo.SetClosedAt(input.ClosedAt)
+	pruo.SetMergedAt(input.MergedAt)
+	pruo.SetMergeCommitSha(input.MergeCommitSha)
+	pruo.SetHead(input.Head)
+	pruo.SetBase(input.Base)
+	if input.Draft != nil {
+		pruo.SetDraft(*input.Draft)
+	}
+	pruo.SetAuthorAssociation(input.AuthorAssociation)
+	return pruo
+}
+
 // CopyRepository allows to create a new Repository copying the existing
 // values of input.
 func (rc *RepositoryCreate) CopyRepository(input *Repository) *RepositoryCreate {

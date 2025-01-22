@@ -195,7 +195,7 @@ type timelineEvent struct{}
 
 func (timelineEvent) assertTimelineEvent() {}
 
-// SimpleEvent is used for the event which don't have additional information.
+// SimpleEvent is used for the events which don't have additional information.
 type SimpleEvent struct {
 	timelineEvent
 

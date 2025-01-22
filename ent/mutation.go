@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -31,6 +32,7 @@ const (
 	// Node types.
 	TypeIssue         = "Issue"
 	TypeIssueComment  = "IssueComment"
+	TypePullRequest   = "PullRequest"
 	TypeRepository    = "Repository"
 	TypeTimelineEvent = "TimelineEvent"
 	TypeUser          = "User"
@@ -39,49 +41,53 @@ const (
 // IssueMutation represents an operation that mutates the Issue nodes in the graph.
 type IssueMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int64
-	node_id            *string
-	url                *string
-	repository_url     *string
-	labels_url         *string
-	comments_url       *string
-	events_url         *string
-	html_url           *string
-	number             *int64
-	addnumber          *int64
-	state              *string
-	state_reason       *model.StateReason
-	title              *string
-	body               *string
-	locked             *bool
-	active_lock_reason *string
-	comments_count     *int64
-	addcomments_count  *int64
-	closed_at          *time.Time
-	created_at         *time.Time
-	updated_at         *time.Time
-	draft              *bool
-	author_association *model.AuthorAssociation
-	reactions          *model.ReactionRollup
-	clearedFields      map[string]struct{}
-	repository         *int64
-	clearedrepository  bool
-	user               *int64
-	cleareduser        bool
-	assignees          map[int64]struct{}
-	removedassignees   map[int64]struct{}
-	clearedassignees   bool
-	comments           map[int64]struct{}
-	removedcomments    map[int64]struct{}
-	clearedcomments    bool
-	timeline           map[string]struct{}
-	removedtimeline    map[string]struct{}
-	clearedtimeline    bool
-	done               bool
-	oldValue           func(context.Context) (*Issue, error)
-	predicates         []predicate.Issue
+	op                  Op
+	typ                 string
+	id                  *int64
+	node_id             *string
+	url                 *string
+	repository_url      *string
+	labels_url          *string
+	comments_url        *string
+	events_url          *string
+	html_url            *string
+	number              *int64
+	addnumber           *int64
+	state               *string
+	state_reason        *model.StateReason
+	title               *string
+	body                *string
+	locked              *bool
+	active_lock_reason  *string
+	comments_count      *int64
+	addcomments_count   *int64
+	closed_at           *time.Time
+	created_at          *time.Time
+	updated_at          *time.Time
+	draft               *bool
+	author_association  *model.AuthorAssociation
+	reactions           *model.ReactionRollup
+	clearedFields       map[string]struct{}
+	repository          *int64
+	clearedrepository   bool
+	user                *int64
+	cleareduser         bool
+	closed_by           *int64
+	clearedclosed_by    bool
+	assignees           map[int64]struct{}
+	removedassignees    map[int64]struct{}
+	clearedassignees    bool
+	comments            map[int64]struct{}
+	removedcomments     map[int64]struct{}
+	clearedcomments     bool
+	timeline            map[string]struct{}
+	removedtimeline     map[string]struct{}
+	clearedtimeline     bool
+	pull_request        *int64
+	clearedpull_request bool
+	done                bool
+	oldValue            func(context.Context) (*Issue, error)
+	predicates          []predicate.Issue
 }
 
 var _ ent.Mutation = (*IssueMutation)(nil)
@@ -1114,6 +1120,45 @@ func (m *IssueMutation) ResetUser() {
 	m.cleareduser = false
 }
 
+// SetClosedByID sets the "closed_by" edge to the User entity by id.
+func (m *IssueMutation) SetClosedByID(id int64) {
+	m.closed_by = &id
+}
+
+// ClearClosedBy clears the "closed_by" edge to the User entity.
+func (m *IssueMutation) ClearClosedBy() {
+	m.clearedclosed_by = true
+}
+
+// ClosedByCleared reports if the "closed_by" edge to the User entity was cleared.
+func (m *IssueMutation) ClosedByCleared() bool {
+	return m.clearedclosed_by
+}
+
+// ClosedByID returns the "closed_by" edge ID in the mutation.
+func (m *IssueMutation) ClosedByID() (id int64, exists bool) {
+	if m.closed_by != nil {
+		return *m.closed_by, true
+	}
+	return
+}
+
+// ClosedByIDs returns the "closed_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ClosedByID instead. It exists only for internal usage by the builders.
+func (m *IssueMutation) ClosedByIDs() (ids []int64) {
+	if id := m.closed_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetClosedBy resets all changes to the "closed_by" edge.
+func (m *IssueMutation) ResetClosedBy() {
+	m.closed_by = nil
+	m.clearedclosed_by = false
+}
+
 // AddAssigneeIDs adds the "assignees" edge to the User entity by ids.
 func (m *IssueMutation) AddAssigneeIDs(ids ...int64) {
 	if m.assignees == nil {
@@ -1274,6 +1319,45 @@ func (m *IssueMutation) ResetTimeline() {
 	m.timeline = nil
 	m.clearedtimeline = false
 	m.removedtimeline = nil
+}
+
+// SetPullRequestID sets the "pull_request" edge to the PullRequest entity by id.
+func (m *IssueMutation) SetPullRequestID(id int64) {
+	m.pull_request = &id
+}
+
+// ClearPullRequest clears the "pull_request" edge to the PullRequest entity.
+func (m *IssueMutation) ClearPullRequest() {
+	m.clearedpull_request = true
+}
+
+// PullRequestCleared reports if the "pull_request" edge to the PullRequest entity was cleared.
+func (m *IssueMutation) PullRequestCleared() bool {
+	return m.clearedpull_request
+}
+
+// PullRequestID returns the "pull_request" edge ID in the mutation.
+func (m *IssueMutation) PullRequestID() (id int64, exists bool) {
+	if m.pull_request != nil {
+		return *m.pull_request, true
+	}
+	return
+}
+
+// PullRequestIDs returns the "pull_request" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// PullRequestID instead. It exists only for internal usage by the builders.
+func (m *IssueMutation) PullRequestIDs() (ids []int64) {
+	if id := m.pull_request; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetPullRequest resets all changes to the "pull_request" edge.
+func (m *IssueMutation) ResetPullRequest() {
+	m.pull_request = nil
+	m.clearedpull_request = false
 }
 
 // Where appends a list predicates to the IssueMutation builder.
@@ -1803,12 +1887,15 @@ func (m *IssueMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *IssueMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 7)
 	if m.repository != nil {
 		edges = append(edges, issue.EdgeRepository)
 	}
 	if m.user != nil {
 		edges = append(edges, issue.EdgeUser)
+	}
+	if m.closed_by != nil {
+		edges = append(edges, issue.EdgeClosedBy)
 	}
 	if m.assignees != nil {
 		edges = append(edges, issue.EdgeAssignees)
@@ -1818,6 +1905,9 @@ func (m *IssueMutation) AddedEdges() []string {
 	}
 	if m.timeline != nil {
 		edges = append(edges, issue.EdgeTimeline)
+	}
+	if m.pull_request != nil {
+		edges = append(edges, issue.EdgePullRequest)
 	}
 	return edges
 }
@@ -1832,6 +1922,10 @@ func (m *IssueMutation) AddedIDs(name string) []ent.Value {
 		}
 	case issue.EdgeUser:
 		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case issue.EdgeClosedBy:
+		if id := m.closed_by; id != nil {
 			return []ent.Value{*id}
 		}
 	case issue.EdgeAssignees:
@@ -1852,13 +1946,17 @@ func (m *IssueMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case issue.EdgePullRequest:
+		if id := m.pull_request; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *IssueMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 7)
 	if m.removedassignees != nil {
 		edges = append(edges, issue.EdgeAssignees)
 	}
@@ -1899,12 +1997,15 @@ func (m *IssueMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *IssueMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 7)
 	if m.clearedrepository {
 		edges = append(edges, issue.EdgeRepository)
 	}
 	if m.cleareduser {
 		edges = append(edges, issue.EdgeUser)
+	}
+	if m.clearedclosed_by {
+		edges = append(edges, issue.EdgeClosedBy)
 	}
 	if m.clearedassignees {
 		edges = append(edges, issue.EdgeAssignees)
@@ -1914,6 +2015,9 @@ func (m *IssueMutation) ClearedEdges() []string {
 	}
 	if m.clearedtimeline {
 		edges = append(edges, issue.EdgeTimeline)
+	}
+	if m.clearedpull_request {
+		edges = append(edges, issue.EdgePullRequest)
 	}
 	return edges
 }
@@ -1926,12 +2030,16 @@ func (m *IssueMutation) EdgeCleared(name string) bool {
 		return m.clearedrepository
 	case issue.EdgeUser:
 		return m.cleareduser
+	case issue.EdgeClosedBy:
+		return m.clearedclosed_by
 	case issue.EdgeAssignees:
 		return m.clearedassignees
 	case issue.EdgeComments:
 		return m.clearedcomments
 	case issue.EdgeTimeline:
 		return m.clearedtimeline
+	case issue.EdgePullRequest:
+		return m.clearedpull_request
 	}
 	return false
 }
@@ -1945,6 +2053,12 @@ func (m *IssueMutation) ClearEdge(name string) error {
 		return nil
 	case issue.EdgeUser:
 		m.ClearUser()
+		return nil
+	case issue.EdgeClosedBy:
+		m.ClearClosedBy()
+		return nil
+	case issue.EdgePullRequest:
+		m.ClearPullRequest()
 		return nil
 	}
 	return fmt.Errorf("unknown Issue unique edge %s", name)
@@ -1960,6 +2074,9 @@ func (m *IssueMutation) ResetEdge(name string) error {
 	case issue.EdgeUser:
 		m.ResetUser()
 		return nil
+	case issue.EdgeClosedBy:
+		m.ResetClosedBy()
+		return nil
 	case issue.EdgeAssignees:
 		m.ResetAssignees()
 		return nil
@@ -1968,6 +2085,9 @@ func (m *IssueMutation) ResetEdge(name string) error {
 		return nil
 	case issue.EdgeTimeline:
 		m.ResetTimeline()
+		return nil
+	case issue.EdgePullRequest:
+		m.ResetPullRequest()
 		return nil
 	}
 	return fmt.Errorf("unknown Issue edge %s", name)
@@ -2863,6 +2983,2180 @@ func (m *IssueCommentMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown IssueComment edge %s", name)
 }
 
+// PullRequestMutation represents an operation that mutates the PullRequest nodes in the graph.
+type PullRequestMutation struct {
+	config
+	op                         Op
+	typ                        string
+	id                         *int64
+	url                        *string
+	node_id                    *string
+	html_url                   *string
+	diff_url                   *string
+	patch_url                  *string
+	issue_url                  *string
+	commits_url                *string
+	review_comments_url        *string
+	review_comment_url         *string
+	comments_url               *string
+	statuses_url               *string
+	number                     *int64
+	addnumber                  *int64
+	state                      *pullrequest.State
+	locked                     *bool
+	title                      *string
+	body                       *string
+	created_at                 *time.Time
+	updated_at                 *time.Time
+	closed_at                  *time.Time
+	merged_at                  *time.Time
+	merge_commit_sha           *string
+	head                       *model.PRBranch
+	base                       *model.PRBranch
+	draft                      *bool
+	author_association         *model.AuthorAssociation
+	clearedFields              map[string]struct{}
+	repository                 *int64
+	clearedrepository          bool
+	issue                      *int64
+	clearedissue               bool
+	user                       *int64
+	cleareduser                bool
+	merged_by                  *int64
+	clearedmerged_by           bool
+	assignees                  map[int64]struct{}
+	removedassignees           map[int64]struct{}
+	clearedassignees           bool
+	requested_reviewers        map[int64]struct{}
+	removedrequested_reviewers map[int64]struct{}
+	clearedrequested_reviewers bool
+	done                       bool
+	oldValue                   func(context.Context) (*PullRequest, error)
+	predicates                 []predicate.PullRequest
+}
+
+var _ ent.Mutation = (*PullRequestMutation)(nil)
+
+// pullrequestOption allows management of the mutation configuration using functional options.
+type pullrequestOption func(*PullRequestMutation)
+
+// newPullRequestMutation creates new mutation for the PullRequest entity.
+func newPullRequestMutation(c config, op Op, opts ...pullrequestOption) *PullRequestMutation {
+	m := &PullRequestMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePullRequest,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPullRequestID sets the ID field of the mutation.
+func withPullRequestID(id int64) pullrequestOption {
+	return func(m *PullRequestMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *PullRequest
+		)
+		m.oldValue = func(ctx context.Context) (*PullRequest, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().PullRequest.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPullRequest sets the old PullRequest of the mutation.
+func withPullRequest(node *PullRequest) pullrequestOption {
+	return func(m *PullRequestMutation) {
+		m.oldValue = func(context.Context) (*PullRequest, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PullRequestMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PullRequestMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of PullRequest entities.
+func (m *PullRequestMutation) SetID(id int64) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PullRequestMutation) ID() (id int64, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PullRequestMutation) IDs(ctx context.Context) ([]int64, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int64{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().PullRequest.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetURL sets the "url" field.
+func (m *PullRequestMutation) SetURL(s string) {
+	m.url = &s
+}
+
+// URL returns the value of the "url" field in the mutation.
+func (m *PullRequestMutation) URL() (r string, exists bool) {
+	v := m.url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURL returns the old "url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURL: %w", err)
+	}
+	return oldValue.URL, nil
+}
+
+// ResetURL resets all changes to the "url" field.
+func (m *PullRequestMutation) ResetURL() {
+	m.url = nil
+}
+
+// SetNodeID sets the "node_id" field.
+func (m *PullRequestMutation) SetNodeID(s string) {
+	m.node_id = &s
+}
+
+// NodeID returns the value of the "node_id" field in the mutation.
+func (m *PullRequestMutation) NodeID() (r string, exists bool) {
+	v := m.node_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNodeID returns the old "node_id" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldNodeID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNodeID: %w", err)
+	}
+	return oldValue.NodeID, nil
+}
+
+// ResetNodeID resets all changes to the "node_id" field.
+func (m *PullRequestMutation) ResetNodeID() {
+	m.node_id = nil
+}
+
+// SetHTMLURL sets the "html_url" field.
+func (m *PullRequestMutation) SetHTMLURL(s string) {
+	m.html_url = &s
+}
+
+// HTMLURL returns the value of the "html_url" field in the mutation.
+func (m *PullRequestMutation) HTMLURL() (r string, exists bool) {
+	v := m.html_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHTMLURL returns the old "html_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldHTMLURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHTMLURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHTMLURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHTMLURL: %w", err)
+	}
+	return oldValue.HTMLURL, nil
+}
+
+// ResetHTMLURL resets all changes to the "html_url" field.
+func (m *PullRequestMutation) ResetHTMLURL() {
+	m.html_url = nil
+}
+
+// SetDiffURL sets the "diff_url" field.
+func (m *PullRequestMutation) SetDiffURL(s string) {
+	m.diff_url = &s
+}
+
+// DiffURL returns the value of the "diff_url" field in the mutation.
+func (m *PullRequestMutation) DiffURL() (r string, exists bool) {
+	v := m.diff_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDiffURL returns the old "diff_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldDiffURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDiffURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDiffURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDiffURL: %w", err)
+	}
+	return oldValue.DiffURL, nil
+}
+
+// ResetDiffURL resets all changes to the "diff_url" field.
+func (m *PullRequestMutation) ResetDiffURL() {
+	m.diff_url = nil
+}
+
+// SetPatchURL sets the "patch_url" field.
+func (m *PullRequestMutation) SetPatchURL(s string) {
+	m.patch_url = &s
+}
+
+// PatchURL returns the value of the "patch_url" field in the mutation.
+func (m *PullRequestMutation) PatchURL() (r string, exists bool) {
+	v := m.patch_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPatchURL returns the old "patch_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldPatchURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPatchURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPatchURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPatchURL: %w", err)
+	}
+	return oldValue.PatchURL, nil
+}
+
+// ResetPatchURL resets all changes to the "patch_url" field.
+func (m *PullRequestMutation) ResetPatchURL() {
+	m.patch_url = nil
+}
+
+// SetIssueURL sets the "issue_url" field.
+func (m *PullRequestMutation) SetIssueURL(s string) {
+	m.issue_url = &s
+}
+
+// IssueURL returns the value of the "issue_url" field in the mutation.
+func (m *PullRequestMutation) IssueURL() (r string, exists bool) {
+	v := m.issue_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIssueURL returns the old "issue_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldIssueURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIssueURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIssueURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIssueURL: %w", err)
+	}
+	return oldValue.IssueURL, nil
+}
+
+// ResetIssueURL resets all changes to the "issue_url" field.
+func (m *PullRequestMutation) ResetIssueURL() {
+	m.issue_url = nil
+}
+
+// SetCommitsURL sets the "commits_url" field.
+func (m *PullRequestMutation) SetCommitsURL(s string) {
+	m.commits_url = &s
+}
+
+// CommitsURL returns the value of the "commits_url" field in the mutation.
+func (m *PullRequestMutation) CommitsURL() (r string, exists bool) {
+	v := m.commits_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommitsURL returns the old "commits_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldCommitsURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommitsURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommitsURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommitsURL: %w", err)
+	}
+	return oldValue.CommitsURL, nil
+}
+
+// ResetCommitsURL resets all changes to the "commits_url" field.
+func (m *PullRequestMutation) ResetCommitsURL() {
+	m.commits_url = nil
+}
+
+// SetReviewCommentsURL sets the "review_comments_url" field.
+func (m *PullRequestMutation) SetReviewCommentsURL(s string) {
+	m.review_comments_url = &s
+}
+
+// ReviewCommentsURL returns the value of the "review_comments_url" field in the mutation.
+func (m *PullRequestMutation) ReviewCommentsURL() (r string, exists bool) {
+	v := m.review_comments_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReviewCommentsURL returns the old "review_comments_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldReviewCommentsURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReviewCommentsURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReviewCommentsURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReviewCommentsURL: %w", err)
+	}
+	return oldValue.ReviewCommentsURL, nil
+}
+
+// ResetReviewCommentsURL resets all changes to the "review_comments_url" field.
+func (m *PullRequestMutation) ResetReviewCommentsURL() {
+	m.review_comments_url = nil
+}
+
+// SetReviewCommentURL sets the "review_comment_url" field.
+func (m *PullRequestMutation) SetReviewCommentURL(s string) {
+	m.review_comment_url = &s
+}
+
+// ReviewCommentURL returns the value of the "review_comment_url" field in the mutation.
+func (m *PullRequestMutation) ReviewCommentURL() (r string, exists bool) {
+	v := m.review_comment_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReviewCommentURL returns the old "review_comment_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldReviewCommentURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReviewCommentURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReviewCommentURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReviewCommentURL: %w", err)
+	}
+	return oldValue.ReviewCommentURL, nil
+}
+
+// ResetReviewCommentURL resets all changes to the "review_comment_url" field.
+func (m *PullRequestMutation) ResetReviewCommentURL() {
+	m.review_comment_url = nil
+}
+
+// SetCommentsURL sets the "comments_url" field.
+func (m *PullRequestMutation) SetCommentsURL(s string) {
+	m.comments_url = &s
+}
+
+// CommentsURL returns the value of the "comments_url" field in the mutation.
+func (m *PullRequestMutation) CommentsURL() (r string, exists bool) {
+	v := m.comments_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCommentsURL returns the old "comments_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldCommentsURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCommentsURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCommentsURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCommentsURL: %w", err)
+	}
+	return oldValue.CommentsURL, nil
+}
+
+// ResetCommentsURL resets all changes to the "comments_url" field.
+func (m *PullRequestMutation) ResetCommentsURL() {
+	m.comments_url = nil
+}
+
+// SetStatusesURL sets the "statuses_url" field.
+func (m *PullRequestMutation) SetStatusesURL(s string) {
+	m.statuses_url = &s
+}
+
+// StatusesURL returns the value of the "statuses_url" field in the mutation.
+func (m *PullRequestMutation) StatusesURL() (r string, exists bool) {
+	v := m.statuses_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatusesURL returns the old "statuses_url" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldStatusesURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatusesURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatusesURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatusesURL: %w", err)
+	}
+	return oldValue.StatusesURL, nil
+}
+
+// ResetStatusesURL resets all changes to the "statuses_url" field.
+func (m *PullRequestMutation) ResetStatusesURL() {
+	m.statuses_url = nil
+}
+
+// SetNumber sets the "number" field.
+func (m *PullRequestMutation) SetNumber(i int64) {
+	m.number = &i
+	m.addnumber = nil
+}
+
+// Number returns the value of the "number" field in the mutation.
+func (m *PullRequestMutation) Number() (r int64, exists bool) {
+	v := m.number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNumber returns the old "number" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldNumber(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNumber is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNumber requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNumber: %w", err)
+	}
+	return oldValue.Number, nil
+}
+
+// AddNumber adds i to the "number" field.
+func (m *PullRequestMutation) AddNumber(i int64) {
+	if m.addnumber != nil {
+		*m.addnumber += i
+	} else {
+		m.addnumber = &i
+	}
+}
+
+// AddedNumber returns the value that was added to the "number" field in this mutation.
+func (m *PullRequestMutation) AddedNumber() (r int64, exists bool) {
+	v := m.addnumber
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetNumber resets all changes to the "number" field.
+func (m *PullRequestMutation) ResetNumber() {
+	m.number = nil
+	m.addnumber = nil
+}
+
+// SetState sets the "state" field.
+func (m *PullRequestMutation) SetState(pu pullrequest.State) {
+	m.state = &pu
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *PullRequestMutation) State() (r pullrequest.State, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldState(ctx context.Context) (v pullrequest.State, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *PullRequestMutation) ResetState() {
+	m.state = nil
+}
+
+// SetLocked sets the "locked" field.
+func (m *PullRequestMutation) SetLocked(b bool) {
+	m.locked = &b
+}
+
+// Locked returns the value of the "locked" field in the mutation.
+func (m *PullRequestMutation) Locked() (r bool, exists bool) {
+	v := m.locked
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocked returns the old "locked" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldLocked(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocked is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocked requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocked: %w", err)
+	}
+	return oldValue.Locked, nil
+}
+
+// ResetLocked resets all changes to the "locked" field.
+func (m *PullRequestMutation) ResetLocked() {
+	m.locked = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *PullRequestMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *PullRequestMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *PullRequestMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetBody sets the "body" field.
+func (m *PullRequestMutation) SetBody(s string) {
+	m.body = &s
+}
+
+// Body returns the value of the "body" field in the mutation.
+func (m *PullRequestMutation) Body() (r string, exists bool) {
+	v := m.body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBody returns the old "body" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
+	}
+	return oldValue.Body, nil
+}
+
+// ClearBody clears the value of the "body" field.
+func (m *PullRequestMutation) ClearBody() {
+	m.body = nil
+	m.clearedFields[pullrequest.FieldBody] = struct{}{}
+}
+
+// BodyCleared returns if the "body" field was cleared in this mutation.
+func (m *PullRequestMutation) BodyCleared() bool {
+	_, ok := m.clearedFields[pullrequest.FieldBody]
+	return ok
+}
+
+// ResetBody resets all changes to the "body" field.
+func (m *PullRequestMutation) ResetBody() {
+	m.body = nil
+	delete(m.clearedFields, pullrequest.FieldBody)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *PullRequestMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *PullRequestMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *PullRequestMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *PullRequestMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *PullRequestMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *PullRequestMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetClosedAt sets the "closed_at" field.
+func (m *PullRequestMutation) SetClosedAt(t time.Time) {
+	m.closed_at = &t
+}
+
+// ClosedAt returns the value of the "closed_at" field in the mutation.
+func (m *PullRequestMutation) ClosedAt() (r time.Time, exists bool) {
+	v := m.closed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClosedAt returns the old "closed_at" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldClosedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClosedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClosedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClosedAt: %w", err)
+	}
+	return oldValue.ClosedAt, nil
+}
+
+// ClearClosedAt clears the value of the "closed_at" field.
+func (m *PullRequestMutation) ClearClosedAt() {
+	m.closed_at = nil
+	m.clearedFields[pullrequest.FieldClosedAt] = struct{}{}
+}
+
+// ClosedAtCleared returns if the "closed_at" field was cleared in this mutation.
+func (m *PullRequestMutation) ClosedAtCleared() bool {
+	_, ok := m.clearedFields[pullrequest.FieldClosedAt]
+	return ok
+}
+
+// ResetClosedAt resets all changes to the "closed_at" field.
+func (m *PullRequestMutation) ResetClosedAt() {
+	m.closed_at = nil
+	delete(m.clearedFields, pullrequest.FieldClosedAt)
+}
+
+// SetMergedAt sets the "merged_at" field.
+func (m *PullRequestMutation) SetMergedAt(t time.Time) {
+	m.merged_at = &t
+}
+
+// MergedAt returns the value of the "merged_at" field in the mutation.
+func (m *PullRequestMutation) MergedAt() (r time.Time, exists bool) {
+	v := m.merged_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMergedAt returns the old "merged_at" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldMergedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMergedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMergedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMergedAt: %w", err)
+	}
+	return oldValue.MergedAt, nil
+}
+
+// ClearMergedAt clears the value of the "merged_at" field.
+func (m *PullRequestMutation) ClearMergedAt() {
+	m.merged_at = nil
+	m.clearedFields[pullrequest.FieldMergedAt] = struct{}{}
+}
+
+// MergedAtCleared returns if the "merged_at" field was cleared in this mutation.
+func (m *PullRequestMutation) MergedAtCleared() bool {
+	_, ok := m.clearedFields[pullrequest.FieldMergedAt]
+	return ok
+}
+
+// ResetMergedAt resets all changes to the "merged_at" field.
+func (m *PullRequestMutation) ResetMergedAt() {
+	m.merged_at = nil
+	delete(m.clearedFields, pullrequest.FieldMergedAt)
+}
+
+// SetMergeCommitSha sets the "merge_commit_sha" field.
+func (m *PullRequestMutation) SetMergeCommitSha(s string) {
+	m.merge_commit_sha = &s
+}
+
+// MergeCommitSha returns the value of the "merge_commit_sha" field in the mutation.
+func (m *PullRequestMutation) MergeCommitSha() (r string, exists bool) {
+	v := m.merge_commit_sha
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMergeCommitSha returns the old "merge_commit_sha" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldMergeCommitSha(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMergeCommitSha is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMergeCommitSha requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMergeCommitSha: %w", err)
+	}
+	return oldValue.MergeCommitSha, nil
+}
+
+// ClearMergeCommitSha clears the value of the "merge_commit_sha" field.
+func (m *PullRequestMutation) ClearMergeCommitSha() {
+	m.merge_commit_sha = nil
+	m.clearedFields[pullrequest.FieldMergeCommitSha] = struct{}{}
+}
+
+// MergeCommitShaCleared returns if the "merge_commit_sha" field was cleared in this mutation.
+func (m *PullRequestMutation) MergeCommitShaCleared() bool {
+	_, ok := m.clearedFields[pullrequest.FieldMergeCommitSha]
+	return ok
+}
+
+// ResetMergeCommitSha resets all changes to the "merge_commit_sha" field.
+func (m *PullRequestMutation) ResetMergeCommitSha() {
+	m.merge_commit_sha = nil
+	delete(m.clearedFields, pullrequest.FieldMergeCommitSha)
+}
+
+// SetHead sets the "head" field.
+func (m *PullRequestMutation) SetHead(mb model.PRBranch) {
+	m.head = &mb
+}
+
+// Head returns the value of the "head" field in the mutation.
+func (m *PullRequestMutation) Head() (r model.PRBranch, exists bool) {
+	v := m.head
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHead returns the old "head" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldHead(ctx context.Context) (v model.PRBranch, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHead is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHead requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHead: %w", err)
+	}
+	return oldValue.Head, nil
+}
+
+// ResetHead resets all changes to the "head" field.
+func (m *PullRequestMutation) ResetHead() {
+	m.head = nil
+}
+
+// SetBase sets the "base" field.
+func (m *PullRequestMutation) SetBase(mb model.PRBranch) {
+	m.base = &mb
+}
+
+// Base returns the value of the "base" field in the mutation.
+func (m *PullRequestMutation) Base() (r model.PRBranch, exists bool) {
+	v := m.base
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBase returns the old "base" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldBase(ctx context.Context) (v model.PRBranch, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBase is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBase requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBase: %w", err)
+	}
+	return oldValue.Base, nil
+}
+
+// ResetBase resets all changes to the "base" field.
+func (m *PullRequestMutation) ResetBase() {
+	m.base = nil
+}
+
+// SetDraft sets the "draft" field.
+func (m *PullRequestMutation) SetDraft(b bool) {
+	m.draft = &b
+}
+
+// Draft returns the value of the "draft" field in the mutation.
+func (m *PullRequestMutation) Draft() (r bool, exists bool) {
+	v := m.draft
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDraft returns the old "draft" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldDraft(ctx context.Context) (v *bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDraft is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDraft requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDraft: %w", err)
+	}
+	return oldValue.Draft, nil
+}
+
+// ClearDraft clears the value of the "draft" field.
+func (m *PullRequestMutation) ClearDraft() {
+	m.draft = nil
+	m.clearedFields[pullrequest.FieldDraft] = struct{}{}
+}
+
+// DraftCleared returns if the "draft" field was cleared in this mutation.
+func (m *PullRequestMutation) DraftCleared() bool {
+	_, ok := m.clearedFields[pullrequest.FieldDraft]
+	return ok
+}
+
+// ResetDraft resets all changes to the "draft" field.
+func (m *PullRequestMutation) ResetDraft() {
+	m.draft = nil
+	delete(m.clearedFields, pullrequest.FieldDraft)
+}
+
+// SetAuthorAssociation sets the "author_association" field.
+func (m *PullRequestMutation) SetAuthorAssociation(ma model.AuthorAssociation) {
+	m.author_association = &ma
+}
+
+// AuthorAssociation returns the value of the "author_association" field in the mutation.
+func (m *PullRequestMutation) AuthorAssociation() (r model.AuthorAssociation, exists bool) {
+	v := m.author_association
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAuthorAssociation returns the old "author_association" field's value of the PullRequest entity.
+// If the PullRequest object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PullRequestMutation) OldAuthorAssociation(ctx context.Context) (v model.AuthorAssociation, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthorAssociation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthorAssociation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthorAssociation: %w", err)
+	}
+	return oldValue.AuthorAssociation, nil
+}
+
+// ResetAuthorAssociation resets all changes to the "author_association" field.
+func (m *PullRequestMutation) ResetAuthorAssociation() {
+	m.author_association = nil
+}
+
+// SetRepositoryID sets the "repository" edge to the Repository entity by id.
+func (m *PullRequestMutation) SetRepositoryID(id int64) {
+	m.repository = &id
+}
+
+// ClearRepository clears the "repository" edge to the Repository entity.
+func (m *PullRequestMutation) ClearRepository() {
+	m.clearedrepository = true
+}
+
+// RepositoryCleared reports if the "repository" edge to the Repository entity was cleared.
+func (m *PullRequestMutation) RepositoryCleared() bool {
+	return m.clearedrepository
+}
+
+// RepositoryID returns the "repository" edge ID in the mutation.
+func (m *PullRequestMutation) RepositoryID() (id int64, exists bool) {
+	if m.repository != nil {
+		return *m.repository, true
+	}
+	return
+}
+
+// RepositoryIDs returns the "repository" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RepositoryID instead. It exists only for internal usage by the builders.
+func (m *PullRequestMutation) RepositoryIDs() (ids []int64) {
+	if id := m.repository; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRepository resets all changes to the "repository" edge.
+func (m *PullRequestMutation) ResetRepository() {
+	m.repository = nil
+	m.clearedrepository = false
+}
+
+// SetIssueID sets the "issue" edge to the Issue entity by id.
+func (m *PullRequestMutation) SetIssueID(id int64) {
+	m.issue = &id
+}
+
+// ClearIssue clears the "issue" edge to the Issue entity.
+func (m *PullRequestMutation) ClearIssue() {
+	m.clearedissue = true
+}
+
+// IssueCleared reports if the "issue" edge to the Issue entity was cleared.
+func (m *PullRequestMutation) IssueCleared() bool {
+	return m.clearedissue
+}
+
+// IssueID returns the "issue" edge ID in the mutation.
+func (m *PullRequestMutation) IssueID() (id int64, exists bool) {
+	if m.issue != nil {
+		return *m.issue, true
+	}
+	return
+}
+
+// IssueIDs returns the "issue" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// IssueID instead. It exists only for internal usage by the builders.
+func (m *PullRequestMutation) IssueIDs() (ids []int64) {
+	if id := m.issue; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetIssue resets all changes to the "issue" edge.
+func (m *PullRequestMutation) ResetIssue() {
+	m.issue = nil
+	m.clearedissue = false
+}
+
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *PullRequestMutation) SetUserID(id int64) {
+	m.user = &id
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *PullRequestMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *PullRequestMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserID returns the "user" edge ID in the mutation.
+func (m *PullRequestMutation) UserID() (id int64, exists bool) {
+	if m.user != nil {
+		return *m.user, true
+	}
+	return
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *PullRequestMutation) UserIDs() (ids []int64) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *PullRequestMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// SetMergedByID sets the "merged_by" edge to the User entity by id.
+func (m *PullRequestMutation) SetMergedByID(id int64) {
+	m.merged_by = &id
+}
+
+// ClearMergedBy clears the "merged_by" edge to the User entity.
+func (m *PullRequestMutation) ClearMergedBy() {
+	m.clearedmerged_by = true
+}
+
+// MergedByCleared reports if the "merged_by" edge to the User entity was cleared.
+func (m *PullRequestMutation) MergedByCleared() bool {
+	return m.clearedmerged_by
+}
+
+// MergedByID returns the "merged_by" edge ID in the mutation.
+func (m *PullRequestMutation) MergedByID() (id int64, exists bool) {
+	if m.merged_by != nil {
+		return *m.merged_by, true
+	}
+	return
+}
+
+// MergedByIDs returns the "merged_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// MergedByID instead. It exists only for internal usage by the builders.
+func (m *PullRequestMutation) MergedByIDs() (ids []int64) {
+	if id := m.merged_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetMergedBy resets all changes to the "merged_by" edge.
+func (m *PullRequestMutation) ResetMergedBy() {
+	m.merged_by = nil
+	m.clearedmerged_by = false
+}
+
+// AddAssigneeIDs adds the "assignees" edge to the User entity by ids.
+func (m *PullRequestMutation) AddAssigneeIDs(ids ...int64) {
+	if m.assignees == nil {
+		m.assignees = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.assignees[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAssignees clears the "assignees" edge to the User entity.
+func (m *PullRequestMutation) ClearAssignees() {
+	m.clearedassignees = true
+}
+
+// AssigneesCleared reports if the "assignees" edge to the User entity was cleared.
+func (m *PullRequestMutation) AssigneesCleared() bool {
+	return m.clearedassignees
+}
+
+// RemoveAssigneeIDs removes the "assignees" edge to the User entity by IDs.
+func (m *PullRequestMutation) RemoveAssigneeIDs(ids ...int64) {
+	if m.removedassignees == nil {
+		m.removedassignees = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.assignees, ids[i])
+		m.removedassignees[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAssignees returns the removed IDs of the "assignees" edge to the User entity.
+func (m *PullRequestMutation) RemovedAssigneesIDs() (ids []int64) {
+	for id := range m.removedassignees {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AssigneesIDs returns the "assignees" edge IDs in the mutation.
+func (m *PullRequestMutation) AssigneesIDs() (ids []int64) {
+	for id := range m.assignees {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAssignees resets all changes to the "assignees" edge.
+func (m *PullRequestMutation) ResetAssignees() {
+	m.assignees = nil
+	m.clearedassignees = false
+	m.removedassignees = nil
+}
+
+// AddRequestedReviewerIDs adds the "requested_reviewers" edge to the User entity by ids.
+func (m *PullRequestMutation) AddRequestedReviewerIDs(ids ...int64) {
+	if m.requested_reviewers == nil {
+		m.requested_reviewers = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.requested_reviewers[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRequestedReviewers clears the "requested_reviewers" edge to the User entity.
+func (m *PullRequestMutation) ClearRequestedReviewers() {
+	m.clearedrequested_reviewers = true
+}
+
+// RequestedReviewersCleared reports if the "requested_reviewers" edge to the User entity was cleared.
+func (m *PullRequestMutation) RequestedReviewersCleared() bool {
+	return m.clearedrequested_reviewers
+}
+
+// RemoveRequestedReviewerIDs removes the "requested_reviewers" edge to the User entity by IDs.
+func (m *PullRequestMutation) RemoveRequestedReviewerIDs(ids ...int64) {
+	if m.removedrequested_reviewers == nil {
+		m.removedrequested_reviewers = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.requested_reviewers, ids[i])
+		m.removedrequested_reviewers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRequestedReviewers returns the removed IDs of the "requested_reviewers" edge to the User entity.
+func (m *PullRequestMutation) RemovedRequestedReviewersIDs() (ids []int64) {
+	for id := range m.removedrequested_reviewers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RequestedReviewersIDs returns the "requested_reviewers" edge IDs in the mutation.
+func (m *PullRequestMutation) RequestedReviewersIDs() (ids []int64) {
+	for id := range m.requested_reviewers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRequestedReviewers resets all changes to the "requested_reviewers" edge.
+func (m *PullRequestMutation) ResetRequestedReviewers() {
+	m.requested_reviewers = nil
+	m.clearedrequested_reviewers = false
+	m.removedrequested_reviewers = nil
+}
+
+// Where appends a list predicates to the PullRequestMutation builder.
+func (m *PullRequestMutation) Where(ps ...predicate.PullRequest) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PullRequestMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PullRequestMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.PullRequest, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PullRequestMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PullRequestMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (PullRequest).
+func (m *PullRequestMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PullRequestMutation) Fields() []string {
+	fields := make([]string, 0, 25)
+	if m.url != nil {
+		fields = append(fields, pullrequest.FieldURL)
+	}
+	if m.node_id != nil {
+		fields = append(fields, pullrequest.FieldNodeID)
+	}
+	if m.html_url != nil {
+		fields = append(fields, pullrequest.FieldHTMLURL)
+	}
+	if m.diff_url != nil {
+		fields = append(fields, pullrequest.FieldDiffURL)
+	}
+	if m.patch_url != nil {
+		fields = append(fields, pullrequest.FieldPatchURL)
+	}
+	if m.issue_url != nil {
+		fields = append(fields, pullrequest.FieldIssueURL)
+	}
+	if m.commits_url != nil {
+		fields = append(fields, pullrequest.FieldCommitsURL)
+	}
+	if m.review_comments_url != nil {
+		fields = append(fields, pullrequest.FieldReviewCommentsURL)
+	}
+	if m.review_comment_url != nil {
+		fields = append(fields, pullrequest.FieldReviewCommentURL)
+	}
+	if m.comments_url != nil {
+		fields = append(fields, pullrequest.FieldCommentsURL)
+	}
+	if m.statuses_url != nil {
+		fields = append(fields, pullrequest.FieldStatusesURL)
+	}
+	if m.number != nil {
+		fields = append(fields, pullrequest.FieldNumber)
+	}
+	if m.state != nil {
+		fields = append(fields, pullrequest.FieldState)
+	}
+	if m.locked != nil {
+		fields = append(fields, pullrequest.FieldLocked)
+	}
+	if m.title != nil {
+		fields = append(fields, pullrequest.FieldTitle)
+	}
+	if m.body != nil {
+		fields = append(fields, pullrequest.FieldBody)
+	}
+	if m.created_at != nil {
+		fields = append(fields, pullrequest.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, pullrequest.FieldUpdatedAt)
+	}
+	if m.closed_at != nil {
+		fields = append(fields, pullrequest.FieldClosedAt)
+	}
+	if m.merged_at != nil {
+		fields = append(fields, pullrequest.FieldMergedAt)
+	}
+	if m.merge_commit_sha != nil {
+		fields = append(fields, pullrequest.FieldMergeCommitSha)
+	}
+	if m.head != nil {
+		fields = append(fields, pullrequest.FieldHead)
+	}
+	if m.base != nil {
+		fields = append(fields, pullrequest.FieldBase)
+	}
+	if m.draft != nil {
+		fields = append(fields, pullrequest.FieldDraft)
+	}
+	if m.author_association != nil {
+		fields = append(fields, pullrequest.FieldAuthorAssociation)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PullRequestMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case pullrequest.FieldURL:
+		return m.URL()
+	case pullrequest.FieldNodeID:
+		return m.NodeID()
+	case pullrequest.FieldHTMLURL:
+		return m.HTMLURL()
+	case pullrequest.FieldDiffURL:
+		return m.DiffURL()
+	case pullrequest.FieldPatchURL:
+		return m.PatchURL()
+	case pullrequest.FieldIssueURL:
+		return m.IssueURL()
+	case pullrequest.FieldCommitsURL:
+		return m.CommitsURL()
+	case pullrequest.FieldReviewCommentsURL:
+		return m.ReviewCommentsURL()
+	case pullrequest.FieldReviewCommentURL:
+		return m.ReviewCommentURL()
+	case pullrequest.FieldCommentsURL:
+		return m.CommentsURL()
+	case pullrequest.FieldStatusesURL:
+		return m.StatusesURL()
+	case pullrequest.FieldNumber:
+		return m.Number()
+	case pullrequest.FieldState:
+		return m.State()
+	case pullrequest.FieldLocked:
+		return m.Locked()
+	case pullrequest.FieldTitle:
+		return m.Title()
+	case pullrequest.FieldBody:
+		return m.Body()
+	case pullrequest.FieldCreatedAt:
+		return m.CreatedAt()
+	case pullrequest.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case pullrequest.FieldClosedAt:
+		return m.ClosedAt()
+	case pullrequest.FieldMergedAt:
+		return m.MergedAt()
+	case pullrequest.FieldMergeCommitSha:
+		return m.MergeCommitSha()
+	case pullrequest.FieldHead:
+		return m.Head()
+	case pullrequest.FieldBase:
+		return m.Base()
+	case pullrequest.FieldDraft:
+		return m.Draft()
+	case pullrequest.FieldAuthorAssociation:
+		return m.AuthorAssociation()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PullRequestMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case pullrequest.FieldURL:
+		return m.OldURL(ctx)
+	case pullrequest.FieldNodeID:
+		return m.OldNodeID(ctx)
+	case pullrequest.FieldHTMLURL:
+		return m.OldHTMLURL(ctx)
+	case pullrequest.FieldDiffURL:
+		return m.OldDiffURL(ctx)
+	case pullrequest.FieldPatchURL:
+		return m.OldPatchURL(ctx)
+	case pullrequest.FieldIssueURL:
+		return m.OldIssueURL(ctx)
+	case pullrequest.FieldCommitsURL:
+		return m.OldCommitsURL(ctx)
+	case pullrequest.FieldReviewCommentsURL:
+		return m.OldReviewCommentsURL(ctx)
+	case pullrequest.FieldReviewCommentURL:
+		return m.OldReviewCommentURL(ctx)
+	case pullrequest.FieldCommentsURL:
+		return m.OldCommentsURL(ctx)
+	case pullrequest.FieldStatusesURL:
+		return m.OldStatusesURL(ctx)
+	case pullrequest.FieldNumber:
+		return m.OldNumber(ctx)
+	case pullrequest.FieldState:
+		return m.OldState(ctx)
+	case pullrequest.FieldLocked:
+		return m.OldLocked(ctx)
+	case pullrequest.FieldTitle:
+		return m.OldTitle(ctx)
+	case pullrequest.FieldBody:
+		return m.OldBody(ctx)
+	case pullrequest.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case pullrequest.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case pullrequest.FieldClosedAt:
+		return m.OldClosedAt(ctx)
+	case pullrequest.FieldMergedAt:
+		return m.OldMergedAt(ctx)
+	case pullrequest.FieldMergeCommitSha:
+		return m.OldMergeCommitSha(ctx)
+	case pullrequest.FieldHead:
+		return m.OldHead(ctx)
+	case pullrequest.FieldBase:
+		return m.OldBase(ctx)
+	case pullrequest.FieldDraft:
+		return m.OldDraft(ctx)
+	case pullrequest.FieldAuthorAssociation:
+		return m.OldAuthorAssociation(ctx)
+	}
+	return nil, fmt.Errorf("unknown PullRequest field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PullRequestMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case pullrequest.FieldURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURL(v)
+		return nil
+	case pullrequest.FieldNodeID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNodeID(v)
+		return nil
+	case pullrequest.FieldHTMLURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHTMLURL(v)
+		return nil
+	case pullrequest.FieldDiffURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDiffURL(v)
+		return nil
+	case pullrequest.FieldPatchURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPatchURL(v)
+		return nil
+	case pullrequest.FieldIssueURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIssueURL(v)
+		return nil
+	case pullrequest.FieldCommitsURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommitsURL(v)
+		return nil
+	case pullrequest.FieldReviewCommentsURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReviewCommentsURL(v)
+		return nil
+	case pullrequest.FieldReviewCommentURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReviewCommentURL(v)
+		return nil
+	case pullrequest.FieldCommentsURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCommentsURL(v)
+		return nil
+	case pullrequest.FieldStatusesURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatusesURL(v)
+		return nil
+	case pullrequest.FieldNumber:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNumber(v)
+		return nil
+	case pullrequest.FieldState:
+		v, ok := value.(pullrequest.State)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case pullrequest.FieldLocked:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocked(v)
+		return nil
+	case pullrequest.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case pullrequest.FieldBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBody(v)
+		return nil
+	case pullrequest.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case pullrequest.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case pullrequest.FieldClosedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClosedAt(v)
+		return nil
+	case pullrequest.FieldMergedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMergedAt(v)
+		return nil
+	case pullrequest.FieldMergeCommitSha:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMergeCommitSha(v)
+		return nil
+	case pullrequest.FieldHead:
+		v, ok := value.(model.PRBranch)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHead(v)
+		return nil
+	case pullrequest.FieldBase:
+		v, ok := value.(model.PRBranch)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBase(v)
+		return nil
+	case pullrequest.FieldDraft:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDraft(v)
+		return nil
+	case pullrequest.FieldAuthorAssociation:
+		v, ok := value.(model.AuthorAssociation)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthorAssociation(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PullRequest field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PullRequestMutation) AddedFields() []string {
+	var fields []string
+	if m.addnumber != nil {
+		fields = append(fields, pullrequest.FieldNumber)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PullRequestMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case pullrequest.FieldNumber:
+		return m.AddedNumber()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PullRequestMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case pullrequest.FieldNumber:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNumber(v)
+		return nil
+	}
+	return fmt.Errorf("unknown PullRequest numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PullRequestMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(pullrequest.FieldBody) {
+		fields = append(fields, pullrequest.FieldBody)
+	}
+	if m.FieldCleared(pullrequest.FieldClosedAt) {
+		fields = append(fields, pullrequest.FieldClosedAt)
+	}
+	if m.FieldCleared(pullrequest.FieldMergedAt) {
+		fields = append(fields, pullrequest.FieldMergedAt)
+	}
+	if m.FieldCleared(pullrequest.FieldMergeCommitSha) {
+		fields = append(fields, pullrequest.FieldMergeCommitSha)
+	}
+	if m.FieldCleared(pullrequest.FieldDraft) {
+		fields = append(fields, pullrequest.FieldDraft)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PullRequestMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PullRequestMutation) ClearField(name string) error {
+	switch name {
+	case pullrequest.FieldBody:
+		m.ClearBody()
+		return nil
+	case pullrequest.FieldClosedAt:
+		m.ClearClosedAt()
+		return nil
+	case pullrequest.FieldMergedAt:
+		m.ClearMergedAt()
+		return nil
+	case pullrequest.FieldMergeCommitSha:
+		m.ClearMergeCommitSha()
+		return nil
+	case pullrequest.FieldDraft:
+		m.ClearDraft()
+		return nil
+	}
+	return fmt.Errorf("unknown PullRequest nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PullRequestMutation) ResetField(name string) error {
+	switch name {
+	case pullrequest.FieldURL:
+		m.ResetURL()
+		return nil
+	case pullrequest.FieldNodeID:
+		m.ResetNodeID()
+		return nil
+	case pullrequest.FieldHTMLURL:
+		m.ResetHTMLURL()
+		return nil
+	case pullrequest.FieldDiffURL:
+		m.ResetDiffURL()
+		return nil
+	case pullrequest.FieldPatchURL:
+		m.ResetPatchURL()
+		return nil
+	case pullrequest.FieldIssueURL:
+		m.ResetIssueURL()
+		return nil
+	case pullrequest.FieldCommitsURL:
+		m.ResetCommitsURL()
+		return nil
+	case pullrequest.FieldReviewCommentsURL:
+		m.ResetReviewCommentsURL()
+		return nil
+	case pullrequest.FieldReviewCommentURL:
+		m.ResetReviewCommentURL()
+		return nil
+	case pullrequest.FieldCommentsURL:
+		m.ResetCommentsURL()
+		return nil
+	case pullrequest.FieldStatusesURL:
+		m.ResetStatusesURL()
+		return nil
+	case pullrequest.FieldNumber:
+		m.ResetNumber()
+		return nil
+	case pullrequest.FieldState:
+		m.ResetState()
+		return nil
+	case pullrequest.FieldLocked:
+		m.ResetLocked()
+		return nil
+	case pullrequest.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case pullrequest.FieldBody:
+		m.ResetBody()
+		return nil
+	case pullrequest.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case pullrequest.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case pullrequest.FieldClosedAt:
+		m.ResetClosedAt()
+		return nil
+	case pullrequest.FieldMergedAt:
+		m.ResetMergedAt()
+		return nil
+	case pullrequest.FieldMergeCommitSha:
+		m.ResetMergeCommitSha()
+		return nil
+	case pullrequest.FieldHead:
+		m.ResetHead()
+		return nil
+	case pullrequest.FieldBase:
+		m.ResetBase()
+		return nil
+	case pullrequest.FieldDraft:
+		m.ResetDraft()
+		return nil
+	case pullrequest.FieldAuthorAssociation:
+		m.ResetAuthorAssociation()
+		return nil
+	}
+	return fmt.Errorf("unknown PullRequest field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PullRequestMutation) AddedEdges() []string {
+	edges := make([]string, 0, 6)
+	if m.repository != nil {
+		edges = append(edges, pullrequest.EdgeRepository)
+	}
+	if m.issue != nil {
+		edges = append(edges, pullrequest.EdgeIssue)
+	}
+	if m.user != nil {
+		edges = append(edges, pullrequest.EdgeUser)
+	}
+	if m.merged_by != nil {
+		edges = append(edges, pullrequest.EdgeMergedBy)
+	}
+	if m.assignees != nil {
+		edges = append(edges, pullrequest.EdgeAssignees)
+	}
+	if m.requested_reviewers != nil {
+		edges = append(edges, pullrequest.EdgeRequestedReviewers)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PullRequestMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case pullrequest.EdgeRepository:
+		if id := m.repository; id != nil {
+			return []ent.Value{*id}
+		}
+	case pullrequest.EdgeIssue:
+		if id := m.issue; id != nil {
+			return []ent.Value{*id}
+		}
+	case pullrequest.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case pullrequest.EdgeMergedBy:
+		if id := m.merged_by; id != nil {
+			return []ent.Value{*id}
+		}
+	case pullrequest.EdgeAssignees:
+		ids := make([]ent.Value, 0, len(m.assignees))
+		for id := range m.assignees {
+			ids = append(ids, id)
+		}
+		return ids
+	case pullrequest.EdgeRequestedReviewers:
+		ids := make([]ent.Value, 0, len(m.requested_reviewers))
+		for id := range m.requested_reviewers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PullRequestMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 6)
+	if m.removedassignees != nil {
+		edges = append(edges, pullrequest.EdgeAssignees)
+	}
+	if m.removedrequested_reviewers != nil {
+		edges = append(edges, pullrequest.EdgeRequestedReviewers)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PullRequestMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case pullrequest.EdgeAssignees:
+		ids := make([]ent.Value, 0, len(m.removedassignees))
+		for id := range m.removedassignees {
+			ids = append(ids, id)
+		}
+		return ids
+	case pullrequest.EdgeRequestedReviewers:
+		ids := make([]ent.Value, 0, len(m.removedrequested_reviewers))
+		for id := range m.removedrequested_reviewers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PullRequestMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 6)
+	if m.clearedrepository {
+		edges = append(edges, pullrequest.EdgeRepository)
+	}
+	if m.clearedissue {
+		edges = append(edges, pullrequest.EdgeIssue)
+	}
+	if m.cleareduser {
+		edges = append(edges, pullrequest.EdgeUser)
+	}
+	if m.clearedmerged_by {
+		edges = append(edges, pullrequest.EdgeMergedBy)
+	}
+	if m.clearedassignees {
+		edges = append(edges, pullrequest.EdgeAssignees)
+	}
+	if m.clearedrequested_reviewers {
+		edges = append(edges, pullrequest.EdgeRequestedReviewers)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PullRequestMutation) EdgeCleared(name string) bool {
+	switch name {
+	case pullrequest.EdgeRepository:
+		return m.clearedrepository
+	case pullrequest.EdgeIssue:
+		return m.clearedissue
+	case pullrequest.EdgeUser:
+		return m.cleareduser
+	case pullrequest.EdgeMergedBy:
+		return m.clearedmerged_by
+	case pullrequest.EdgeAssignees:
+		return m.clearedassignees
+	case pullrequest.EdgeRequestedReviewers:
+		return m.clearedrequested_reviewers
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PullRequestMutation) ClearEdge(name string) error {
+	switch name {
+	case pullrequest.EdgeRepository:
+		m.ClearRepository()
+		return nil
+	case pullrequest.EdgeIssue:
+		m.ClearIssue()
+		return nil
+	case pullrequest.EdgeUser:
+		m.ClearUser()
+		return nil
+	case pullrequest.EdgeMergedBy:
+		m.ClearMergedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown PullRequest unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PullRequestMutation) ResetEdge(name string) error {
+	switch name {
+	case pullrequest.EdgeRepository:
+		m.ResetRepository()
+		return nil
+	case pullrequest.EdgeIssue:
+		m.ResetIssue()
+		return nil
+	case pullrequest.EdgeUser:
+		m.ResetUser()
+		return nil
+	case pullrequest.EdgeMergedBy:
+		m.ResetMergedBy()
+		return nil
+	case pullrequest.EdgeAssignees:
+		m.ResetAssignees()
+		return nil
+	case pullrequest.EdgeRequestedReviewers:
+		m.ResetRequestedReviewers()
+		return nil
+	}
+	return fmt.Errorf("unknown PullRequest edge %s", name)
+}
+
 // RepositoryMutation represents an operation that mutates the Repository nodes in the graph.
 type RepositoryMutation struct {
 	config
@@ -2963,6 +5257,9 @@ type RepositoryMutation struct {
 	issues               map[int64]struct{}
 	removedissues        map[int64]struct{}
 	clearedissues        bool
+	pull_requests        map[int64]struct{}
+	removedpull_requests map[int64]struct{}
+	clearedpull_requests bool
 	done                 bool
 	oldValue             func(context.Context) (*Repository, error)
 	predicates           []predicate.Repository
@@ -6230,6 +8527,60 @@ func (m *RepositoryMutation) ResetIssues() {
 	m.removedissues = nil
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by ids.
+func (m *RepositoryMutation) AddPullRequestIDs(ids ...int64) {
+	if m.pull_requests == nil {
+		m.pull_requests = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.pull_requests[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPullRequests clears the "pull_requests" edge to the PullRequest entity.
+func (m *RepositoryMutation) ClearPullRequests() {
+	m.clearedpull_requests = true
+}
+
+// PullRequestsCleared reports if the "pull_requests" edge to the PullRequest entity was cleared.
+func (m *RepositoryMutation) PullRequestsCleared() bool {
+	return m.clearedpull_requests
+}
+
+// RemovePullRequestIDs removes the "pull_requests" edge to the PullRequest entity by IDs.
+func (m *RepositoryMutation) RemovePullRequestIDs(ids ...int64) {
+	if m.removedpull_requests == nil {
+		m.removedpull_requests = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.pull_requests, ids[i])
+		m.removedpull_requests[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPullRequests returns the removed IDs of the "pull_requests" edge to the PullRequest entity.
+func (m *RepositoryMutation) RemovedPullRequestsIDs() (ids []int64) {
+	for id := range m.removedpull_requests {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PullRequestsIDs returns the "pull_requests" edge IDs in the mutation.
+func (m *RepositoryMutation) PullRequestsIDs() (ids []int64) {
+	for id := range m.pull_requests {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPullRequests resets all changes to the "pull_requests" edge.
+func (m *RepositoryMutation) ResetPullRequests() {
+	m.pull_requests = nil
+	m.clearedpull_requests = false
+	m.removedpull_requests = nil
+}
+
 // Where appends a list predicates to the RepositoryMutation builder.
 func (m *RepositoryMutation) Where(ps ...predicate.Repository) {
 	m.predicates = append(m.predicates, ps...)
@@ -7817,12 +10168,15 @@ func (m *RepositoryMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RepositoryMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.owner != nil {
 		edges = append(edges, repository.EdgeOwner)
 	}
 	if m.issues != nil {
 		edges = append(edges, repository.EdgeIssues)
+	}
+	if m.pull_requests != nil {
+		edges = append(edges, repository.EdgePullRequests)
 	}
 	return edges
 }
@@ -7841,15 +10195,24 @@ func (m *RepositoryMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgePullRequests:
+		ids := make([]ent.Value, 0, len(m.pull_requests))
+		for id := range m.pull_requests {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RepositoryMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedissues != nil {
 		edges = append(edges, repository.EdgeIssues)
+	}
+	if m.removedpull_requests != nil {
+		edges = append(edges, repository.EdgePullRequests)
 	}
 	return edges
 }
@@ -7864,18 +10227,27 @@ func (m *RepositoryMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case repository.EdgePullRequests:
+		ids := make([]ent.Value, 0, len(m.removedpull_requests))
+		for id := range m.removedpull_requests {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RepositoryMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedowner {
 		edges = append(edges, repository.EdgeOwner)
 	}
 	if m.clearedissues {
 		edges = append(edges, repository.EdgeIssues)
+	}
+	if m.clearedpull_requests {
+		edges = append(edges, repository.EdgePullRequests)
 	}
 	return edges
 }
@@ -7888,6 +10260,8 @@ func (m *RepositoryMutation) EdgeCleared(name string) bool {
 		return m.clearedowner
 	case repository.EdgeIssues:
 		return m.clearedissues
+	case repository.EdgePullRequests:
+		return m.clearedpull_requests
 	}
 	return false
 }
@@ -7912,6 +10286,9 @@ func (m *RepositoryMutation) ResetEdge(name string) error {
 		return nil
 	case repository.EdgeIssues:
 		m.ResetIssues()
+		return nil
+	case repository.EdgePullRequests:
+		m.ResetPullRequests()
 		return nil
 	}
 	return fmt.Errorf("unknown Repository edge %s", name)
@@ -8733,12 +11110,27 @@ type UserMutation struct {
 	issues_created                 map[int64]struct{}
 	removedissues_created          map[int64]struct{}
 	clearedissues_created          bool
+	issues_closed                  map[int64]struct{}
+	removedissues_closed           map[int64]struct{}
+	clearedissues_closed           bool
+	prs_created                    map[int64]struct{}
+	removedprs_created             map[int64]struct{}
+	clearedprs_created             bool
+	prs_merged                     map[int64]struct{}
+	removedprs_merged              map[int64]struct{}
+	clearedprs_merged              bool
 	comments_created               map[int64]struct{}
 	removedcomments_created        map[int64]struct{}
 	clearedcomments_created        bool
 	issues_assigned                map[int64]struct{}
 	removedissues_assigned         map[int64]struct{}
 	clearedissues_assigned         bool
+	prs_assigned                   map[int64]struct{}
+	removedprs_assigned            map[int64]struct{}
+	clearedprs_assigned            bool
+	prs_review_requested           map[int64]struct{}
+	removedprs_review_requested    map[int64]struct{}
+	clearedprs_review_requested    bool
 	timeline_events_created        map[string]struct{}
 	removedtimeline_events_created map[string]struct{}
 	clearedtimeline_events_created bool
@@ -10223,6 +12615,168 @@ func (m *UserMutation) ResetIssuesCreated() {
 	m.removedissues_created = nil
 }
 
+// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by ids.
+func (m *UserMutation) AddIssuesClosedIDs(ids ...int64) {
+	if m.issues_closed == nil {
+		m.issues_closed = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.issues_closed[ids[i]] = struct{}{}
+	}
+}
+
+// ClearIssuesClosed clears the "issues_closed" edge to the Issue entity.
+func (m *UserMutation) ClearIssuesClosed() {
+	m.clearedissues_closed = true
+}
+
+// IssuesClosedCleared reports if the "issues_closed" edge to the Issue entity was cleared.
+func (m *UserMutation) IssuesClosedCleared() bool {
+	return m.clearedissues_closed
+}
+
+// RemoveIssuesClosedIDs removes the "issues_closed" edge to the Issue entity by IDs.
+func (m *UserMutation) RemoveIssuesClosedIDs(ids ...int64) {
+	if m.removedissues_closed == nil {
+		m.removedissues_closed = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.issues_closed, ids[i])
+		m.removedissues_closed[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedIssuesClosed returns the removed IDs of the "issues_closed" edge to the Issue entity.
+func (m *UserMutation) RemovedIssuesClosedIDs() (ids []int64) {
+	for id := range m.removedissues_closed {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// IssuesClosedIDs returns the "issues_closed" edge IDs in the mutation.
+func (m *UserMutation) IssuesClosedIDs() (ids []int64) {
+	for id := range m.issues_closed {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetIssuesClosed resets all changes to the "issues_closed" edge.
+func (m *UserMutation) ResetIssuesClosed() {
+	m.issues_closed = nil
+	m.clearedissues_closed = false
+	m.removedissues_closed = nil
+}
+
+// AddPrsCreatedIDs adds the "prs_created" edge to the PullRequest entity by ids.
+func (m *UserMutation) AddPrsCreatedIDs(ids ...int64) {
+	if m.prs_created == nil {
+		m.prs_created = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.prs_created[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPrsCreated clears the "prs_created" edge to the PullRequest entity.
+func (m *UserMutation) ClearPrsCreated() {
+	m.clearedprs_created = true
+}
+
+// PrsCreatedCleared reports if the "prs_created" edge to the PullRequest entity was cleared.
+func (m *UserMutation) PrsCreatedCleared() bool {
+	return m.clearedprs_created
+}
+
+// RemovePrsCreatedIDs removes the "prs_created" edge to the PullRequest entity by IDs.
+func (m *UserMutation) RemovePrsCreatedIDs(ids ...int64) {
+	if m.removedprs_created == nil {
+		m.removedprs_created = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.prs_created, ids[i])
+		m.removedprs_created[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPrsCreated returns the removed IDs of the "prs_created" edge to the PullRequest entity.
+func (m *UserMutation) RemovedPrsCreatedIDs() (ids []int64) {
+	for id := range m.removedprs_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PrsCreatedIDs returns the "prs_created" edge IDs in the mutation.
+func (m *UserMutation) PrsCreatedIDs() (ids []int64) {
+	for id := range m.prs_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPrsCreated resets all changes to the "prs_created" edge.
+func (m *UserMutation) ResetPrsCreated() {
+	m.prs_created = nil
+	m.clearedprs_created = false
+	m.removedprs_created = nil
+}
+
+// AddPrsMergedIDs adds the "prs_merged" edge to the PullRequest entity by ids.
+func (m *UserMutation) AddPrsMergedIDs(ids ...int64) {
+	if m.prs_merged == nil {
+		m.prs_merged = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.prs_merged[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPrsMerged clears the "prs_merged" edge to the PullRequest entity.
+func (m *UserMutation) ClearPrsMerged() {
+	m.clearedprs_merged = true
+}
+
+// PrsMergedCleared reports if the "prs_merged" edge to the PullRequest entity was cleared.
+func (m *UserMutation) PrsMergedCleared() bool {
+	return m.clearedprs_merged
+}
+
+// RemovePrsMergedIDs removes the "prs_merged" edge to the PullRequest entity by IDs.
+func (m *UserMutation) RemovePrsMergedIDs(ids ...int64) {
+	if m.removedprs_merged == nil {
+		m.removedprs_merged = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.prs_merged, ids[i])
+		m.removedprs_merged[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPrsMerged returns the removed IDs of the "prs_merged" edge to the PullRequest entity.
+func (m *UserMutation) RemovedPrsMergedIDs() (ids []int64) {
+	for id := range m.removedprs_merged {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PrsMergedIDs returns the "prs_merged" edge IDs in the mutation.
+func (m *UserMutation) PrsMergedIDs() (ids []int64) {
+	for id := range m.prs_merged {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPrsMerged resets all changes to the "prs_merged" edge.
+func (m *UserMutation) ResetPrsMerged() {
+	m.prs_merged = nil
+	m.clearedprs_merged = false
+	m.removedprs_merged = nil
+}
+
 // AddCommentsCreatedIDs adds the "comments_created" edge to the IssueComment entity by ids.
 func (m *UserMutation) AddCommentsCreatedIDs(ids ...int64) {
 	if m.comments_created == nil {
@@ -10329,6 +12883,114 @@ func (m *UserMutation) ResetIssuesAssigned() {
 	m.issues_assigned = nil
 	m.clearedissues_assigned = false
 	m.removedissues_assigned = nil
+}
+
+// AddPrsAssignedIDs adds the "prs_assigned" edge to the PullRequest entity by ids.
+func (m *UserMutation) AddPrsAssignedIDs(ids ...int64) {
+	if m.prs_assigned == nil {
+		m.prs_assigned = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.prs_assigned[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPrsAssigned clears the "prs_assigned" edge to the PullRequest entity.
+func (m *UserMutation) ClearPrsAssigned() {
+	m.clearedprs_assigned = true
+}
+
+// PrsAssignedCleared reports if the "prs_assigned" edge to the PullRequest entity was cleared.
+func (m *UserMutation) PrsAssignedCleared() bool {
+	return m.clearedprs_assigned
+}
+
+// RemovePrsAssignedIDs removes the "prs_assigned" edge to the PullRequest entity by IDs.
+func (m *UserMutation) RemovePrsAssignedIDs(ids ...int64) {
+	if m.removedprs_assigned == nil {
+		m.removedprs_assigned = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.prs_assigned, ids[i])
+		m.removedprs_assigned[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPrsAssigned returns the removed IDs of the "prs_assigned" edge to the PullRequest entity.
+func (m *UserMutation) RemovedPrsAssignedIDs() (ids []int64) {
+	for id := range m.removedprs_assigned {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PrsAssignedIDs returns the "prs_assigned" edge IDs in the mutation.
+func (m *UserMutation) PrsAssignedIDs() (ids []int64) {
+	for id := range m.prs_assigned {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPrsAssigned resets all changes to the "prs_assigned" edge.
+func (m *UserMutation) ResetPrsAssigned() {
+	m.prs_assigned = nil
+	m.clearedprs_assigned = false
+	m.removedprs_assigned = nil
+}
+
+// AddPrsReviewRequestedIDs adds the "prs_review_requested" edge to the PullRequest entity by ids.
+func (m *UserMutation) AddPrsReviewRequestedIDs(ids ...int64) {
+	if m.prs_review_requested == nil {
+		m.prs_review_requested = make(map[int64]struct{})
+	}
+	for i := range ids {
+		m.prs_review_requested[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPrsReviewRequested clears the "prs_review_requested" edge to the PullRequest entity.
+func (m *UserMutation) ClearPrsReviewRequested() {
+	m.clearedprs_review_requested = true
+}
+
+// PrsReviewRequestedCleared reports if the "prs_review_requested" edge to the PullRequest entity was cleared.
+func (m *UserMutation) PrsReviewRequestedCleared() bool {
+	return m.clearedprs_review_requested
+}
+
+// RemovePrsReviewRequestedIDs removes the "prs_review_requested" edge to the PullRequest entity by IDs.
+func (m *UserMutation) RemovePrsReviewRequestedIDs(ids ...int64) {
+	if m.removedprs_review_requested == nil {
+		m.removedprs_review_requested = make(map[int64]struct{})
+	}
+	for i := range ids {
+		delete(m.prs_review_requested, ids[i])
+		m.removedprs_review_requested[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPrsReviewRequested returns the removed IDs of the "prs_review_requested" edge to the PullRequest entity.
+func (m *UserMutation) RemovedPrsReviewRequestedIDs() (ids []int64) {
+	for id := range m.removedprs_review_requested {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PrsReviewRequestedIDs returns the "prs_review_requested" edge IDs in the mutation.
+func (m *UserMutation) PrsReviewRequestedIDs() (ids []int64) {
+	for id := range m.prs_review_requested {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPrsReviewRequested resets all changes to the "prs_review_requested" edge.
+func (m *UserMutation) ResetPrsReviewRequested() {
+	m.prs_review_requested = nil
+	m.clearedprs_review_requested = false
+	m.removedprs_review_requested = nil
 }
 
 // AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by ids.
@@ -11113,18 +13775,33 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 10)
 	if m.repositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
 	if m.issues_created != nil {
 		edges = append(edges, user.EdgeIssuesCreated)
 	}
+	if m.issues_closed != nil {
+		edges = append(edges, user.EdgeIssuesClosed)
+	}
+	if m.prs_created != nil {
+		edges = append(edges, user.EdgePrsCreated)
+	}
+	if m.prs_merged != nil {
+		edges = append(edges, user.EdgePrsMerged)
+	}
 	if m.comments_created != nil {
 		edges = append(edges, user.EdgeCommentsCreated)
 	}
 	if m.issues_assigned != nil {
 		edges = append(edges, user.EdgeIssuesAssigned)
+	}
+	if m.prs_assigned != nil {
+		edges = append(edges, user.EdgePrsAssigned)
+	}
+	if m.prs_review_requested != nil {
+		edges = append(edges, user.EdgePrsReviewRequested)
 	}
 	if m.timeline_events_created != nil {
 		edges = append(edges, user.EdgeTimelineEventsCreated)
@@ -11148,6 +13825,24 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeIssuesClosed:
+		ids := make([]ent.Value, 0, len(m.issues_closed))
+		for id := range m.issues_closed {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsCreated:
+		ids := make([]ent.Value, 0, len(m.prs_created))
+		for id := range m.prs_created {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsMerged:
+		ids := make([]ent.Value, 0, len(m.prs_merged))
+		for id := range m.prs_merged {
+			ids = append(ids, id)
+		}
+		return ids
 	case user.EdgeCommentsCreated:
 		ids := make([]ent.Value, 0, len(m.comments_created))
 		for id := range m.comments_created {
@@ -11157,6 +13852,18 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 	case user.EdgeIssuesAssigned:
 		ids := make([]ent.Value, 0, len(m.issues_assigned))
 		for id := range m.issues_assigned {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsAssigned:
+		ids := make([]ent.Value, 0, len(m.prs_assigned))
+		for id := range m.prs_assigned {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsReviewRequested:
+		ids := make([]ent.Value, 0, len(m.prs_review_requested))
+		for id := range m.prs_review_requested {
 			ids = append(ids, id)
 		}
 		return ids
@@ -11172,18 +13879,33 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 10)
 	if m.removedrepositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
 	if m.removedissues_created != nil {
 		edges = append(edges, user.EdgeIssuesCreated)
 	}
+	if m.removedissues_closed != nil {
+		edges = append(edges, user.EdgeIssuesClosed)
+	}
+	if m.removedprs_created != nil {
+		edges = append(edges, user.EdgePrsCreated)
+	}
+	if m.removedprs_merged != nil {
+		edges = append(edges, user.EdgePrsMerged)
+	}
 	if m.removedcomments_created != nil {
 		edges = append(edges, user.EdgeCommentsCreated)
 	}
 	if m.removedissues_assigned != nil {
 		edges = append(edges, user.EdgeIssuesAssigned)
+	}
+	if m.removedprs_assigned != nil {
+		edges = append(edges, user.EdgePrsAssigned)
+	}
+	if m.removedprs_review_requested != nil {
+		edges = append(edges, user.EdgePrsReviewRequested)
 	}
 	if m.removedtimeline_events_created != nil {
 		edges = append(edges, user.EdgeTimelineEventsCreated)
@@ -11207,6 +13929,24 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeIssuesClosed:
+		ids := make([]ent.Value, 0, len(m.removedissues_closed))
+		for id := range m.removedissues_closed {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsCreated:
+		ids := make([]ent.Value, 0, len(m.removedprs_created))
+		for id := range m.removedprs_created {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsMerged:
+		ids := make([]ent.Value, 0, len(m.removedprs_merged))
+		for id := range m.removedprs_merged {
+			ids = append(ids, id)
+		}
+		return ids
 	case user.EdgeCommentsCreated:
 		ids := make([]ent.Value, 0, len(m.removedcomments_created))
 		for id := range m.removedcomments_created {
@@ -11216,6 +13956,18 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 	case user.EdgeIssuesAssigned:
 		ids := make([]ent.Value, 0, len(m.removedissues_assigned))
 		for id := range m.removedissues_assigned {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsAssigned:
+		ids := make([]ent.Value, 0, len(m.removedprs_assigned))
+		for id := range m.removedprs_assigned {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgePrsReviewRequested:
+		ids := make([]ent.Value, 0, len(m.removedprs_review_requested))
+		for id := range m.removedprs_review_requested {
 			ids = append(ids, id)
 		}
 		return ids
@@ -11231,18 +13983,33 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 10)
 	if m.clearedrepositories {
 		edges = append(edges, user.EdgeRepositories)
 	}
 	if m.clearedissues_created {
 		edges = append(edges, user.EdgeIssuesCreated)
 	}
+	if m.clearedissues_closed {
+		edges = append(edges, user.EdgeIssuesClosed)
+	}
+	if m.clearedprs_created {
+		edges = append(edges, user.EdgePrsCreated)
+	}
+	if m.clearedprs_merged {
+		edges = append(edges, user.EdgePrsMerged)
+	}
 	if m.clearedcomments_created {
 		edges = append(edges, user.EdgeCommentsCreated)
 	}
 	if m.clearedissues_assigned {
 		edges = append(edges, user.EdgeIssuesAssigned)
+	}
+	if m.clearedprs_assigned {
+		edges = append(edges, user.EdgePrsAssigned)
+	}
+	if m.clearedprs_review_requested {
+		edges = append(edges, user.EdgePrsReviewRequested)
 	}
 	if m.clearedtimeline_events_created {
 		edges = append(edges, user.EdgeTimelineEventsCreated)
@@ -11258,10 +14025,20 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedrepositories
 	case user.EdgeIssuesCreated:
 		return m.clearedissues_created
+	case user.EdgeIssuesClosed:
+		return m.clearedissues_closed
+	case user.EdgePrsCreated:
+		return m.clearedprs_created
+	case user.EdgePrsMerged:
+		return m.clearedprs_merged
 	case user.EdgeCommentsCreated:
 		return m.clearedcomments_created
 	case user.EdgeIssuesAssigned:
 		return m.clearedissues_assigned
+	case user.EdgePrsAssigned:
+		return m.clearedprs_assigned
+	case user.EdgePrsReviewRequested:
+		return m.clearedprs_review_requested
 	case user.EdgeTimelineEventsCreated:
 		return m.clearedtimeline_events_created
 	}
@@ -11286,11 +14063,26 @@ func (m *UserMutation) ResetEdge(name string) error {
 	case user.EdgeIssuesCreated:
 		m.ResetIssuesCreated()
 		return nil
+	case user.EdgeIssuesClosed:
+		m.ResetIssuesClosed()
+		return nil
+	case user.EdgePrsCreated:
+		m.ResetPrsCreated()
+		return nil
+	case user.EdgePrsMerged:
+		m.ResetPrsMerged()
+		return nil
 	case user.EdgeCommentsCreated:
 		m.ResetCommentsCreated()
 		return nil
 	case user.EdgeIssuesAssigned:
 		m.ResetIssuesAssigned()
+		return nil
+	case user.EdgePrsAssigned:
+		m.ResetPrsAssigned()
+		return nil
+	case user.EdgePrsReviewRequested:
+		m.ResetPrsReviewRequested()
 		return nil
 	case user.EdgeTimelineEventsCreated:
 		m.ResetTimelineEventsCreated()

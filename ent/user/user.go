@@ -76,10 +76,20 @@ const (
 	EdgeRepositories = "repositories"
 	// EdgeIssuesCreated holds the string denoting the issues_created edge name in mutations.
 	EdgeIssuesCreated = "issues_created"
+	// EdgeIssuesClosed holds the string denoting the issues_closed edge name in mutations.
+	EdgeIssuesClosed = "issues_closed"
+	// EdgePrsCreated holds the string denoting the prs_created edge name in mutations.
+	EdgePrsCreated = "prs_created"
+	// EdgePrsMerged holds the string denoting the prs_merged edge name in mutations.
+	EdgePrsMerged = "prs_merged"
 	// EdgeCommentsCreated holds the string denoting the comments_created edge name in mutations.
 	EdgeCommentsCreated = "comments_created"
 	// EdgeIssuesAssigned holds the string denoting the issues_assigned edge name in mutations.
 	EdgeIssuesAssigned = "issues_assigned"
+	// EdgePrsAssigned holds the string denoting the prs_assigned edge name in mutations.
+	EdgePrsAssigned = "prs_assigned"
+	// EdgePrsReviewRequested holds the string denoting the prs_review_requested edge name in mutations.
+	EdgePrsReviewRequested = "prs_review_requested"
 	// EdgeTimelineEventsCreated holds the string denoting the timeline_events_created edge name in mutations.
 	EdgeTimelineEventsCreated = "timeline_events_created"
 	// Table holds the table name of the user in the database.
@@ -98,6 +108,27 @@ const (
 	IssuesCreatedInverseTable = "issues"
 	// IssuesCreatedColumn is the table column denoting the issues_created relation/edge.
 	IssuesCreatedColumn = "user_issues_created"
+	// IssuesClosedTable is the table that holds the issues_closed relation/edge.
+	IssuesClosedTable = "issues"
+	// IssuesClosedInverseTable is the table name for the Issue entity.
+	// It exists in this package in order to avoid circular dependency with the "issue" package.
+	IssuesClosedInverseTable = "issues"
+	// IssuesClosedColumn is the table column denoting the issues_closed relation/edge.
+	IssuesClosedColumn = "user_issues_closed"
+	// PrsCreatedTable is the table that holds the prs_created relation/edge.
+	PrsCreatedTable = "pull_requests"
+	// PrsCreatedInverseTable is the table name for the PullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
+	PrsCreatedInverseTable = "pull_requests"
+	// PrsCreatedColumn is the table column denoting the prs_created relation/edge.
+	PrsCreatedColumn = "user_prs_created"
+	// PrsMergedTable is the table that holds the prs_merged relation/edge.
+	PrsMergedTable = "pull_requests"
+	// PrsMergedInverseTable is the table name for the PullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
+	PrsMergedInverseTable = "pull_requests"
+	// PrsMergedColumn is the table column denoting the prs_merged relation/edge.
+	PrsMergedColumn = "user_prs_merged"
 	// CommentsCreatedTable is the table that holds the comments_created relation/edge.
 	CommentsCreatedTable = "issue_comments"
 	// CommentsCreatedInverseTable is the table name for the IssueComment entity.
@@ -110,6 +141,16 @@ const (
 	// IssuesAssignedInverseTable is the table name for the Issue entity.
 	// It exists in this package in order to avoid circular dependency with the "issue" package.
 	IssuesAssignedInverseTable = "issues"
+	// PrsAssignedTable is the table that holds the prs_assigned relation/edge. The primary key declared below.
+	PrsAssignedTable = "pull_request_assignees"
+	// PrsAssignedInverseTable is the table name for the PullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
+	PrsAssignedInverseTable = "pull_requests"
+	// PrsReviewRequestedTable is the table that holds the prs_review_requested relation/edge. The primary key declared below.
+	PrsReviewRequestedTable = "pull_request_requested_reviewers"
+	// PrsReviewRequestedInverseTable is the table name for the PullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
+	PrsReviewRequestedInverseTable = "pull_requests"
 	// TimelineEventsCreatedTable is the table that holds the timeline_events_created relation/edge.
 	TimelineEventsCreatedTable = "timeline_events"
 	// TimelineEventsCreatedInverseTable is the table name for the TimelineEvent entity.
@@ -158,6 +199,12 @@ var (
 	// IssuesAssignedPrimaryKey and IssuesAssignedColumn2 are the table columns denoting the
 	// primary key for the issues_assigned relation (M2M).
 	IssuesAssignedPrimaryKey = []string{"issue_id", "user_id"}
+	// PrsAssignedPrimaryKey and PrsAssignedColumn2 are the table columns denoting the
+	// primary key for the prs_assigned relation (M2M).
+	PrsAssignedPrimaryKey = []string{"pull_request_id", "user_id"}
+	// PrsReviewRequestedPrimaryKey and PrsReviewRequestedColumn2 are the table columns denoting the
+	// primary key for the prs_review_requested relation (M2M).
+	PrsReviewRequestedPrimaryKey = []string{"pull_request_id", "user_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -356,6 +403,48 @@ func ByIssuesCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByIssuesClosedCount orders the results by issues_closed count.
+func ByIssuesClosedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newIssuesClosedStep(), opts...)
+	}
+}
+
+// ByIssuesClosed orders the results by issues_closed terms.
+func ByIssuesClosed(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newIssuesClosedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByPrsCreatedCount orders the results by prs_created count.
+func ByPrsCreatedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPrsCreatedStep(), opts...)
+	}
+}
+
+// ByPrsCreated orders the results by prs_created terms.
+func ByPrsCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPrsCreatedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByPrsMergedCount orders the results by prs_merged count.
+func ByPrsMergedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPrsMergedStep(), opts...)
+	}
+}
+
+// ByPrsMerged orders the results by prs_merged terms.
+func ByPrsMerged(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPrsMergedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByCommentsCreatedCount orders the results by comments_created count.
 func ByCommentsCreatedCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -381,6 +470,34 @@ func ByIssuesAssignedCount(opts ...sql.OrderTermOption) OrderOption {
 func ByIssuesAssigned(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newIssuesAssignedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByPrsAssignedCount orders the results by prs_assigned count.
+func ByPrsAssignedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPrsAssignedStep(), opts...)
+	}
+}
+
+// ByPrsAssigned orders the results by prs_assigned terms.
+func ByPrsAssigned(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPrsAssignedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByPrsReviewRequestedCount orders the results by prs_review_requested count.
+func ByPrsReviewRequestedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPrsReviewRequestedStep(), opts...)
+	}
+}
+
+// ByPrsReviewRequested orders the results by prs_review_requested terms.
+func ByPrsReviewRequested(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPrsReviewRequestedStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -411,6 +528,27 @@ func newIssuesCreatedStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, IssuesCreatedTable, IssuesCreatedColumn),
 	)
 }
+func newIssuesClosedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(IssuesClosedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, IssuesClosedTable, IssuesClosedColumn),
+	)
+}
+func newPrsCreatedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PrsCreatedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PrsCreatedTable, PrsCreatedColumn),
+	)
+}
+func newPrsMergedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PrsMergedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PrsMergedTable, PrsMergedColumn),
+	)
+}
 func newCommentsCreatedStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -423,6 +561,20 @@ func newIssuesAssignedStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IssuesAssignedInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, IssuesAssignedTable, IssuesAssignedPrimaryKey...),
+	)
+}
+func newPrsAssignedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PrsAssignedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, PrsAssignedTable, PrsAssignedPrimaryKey...),
+	)
+}
+func newPrsReviewRequestedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PrsReviewRequestedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, PrsReviewRequestedTable, PrsReviewRequestedPrimaryKey...),
 	)
 }
 func newTimelineEventsCreatedStep() *sqlgraph.Step {

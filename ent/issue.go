@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 	"github.com/gnolang/gh-sql/pkg/model"
@@ -68,6 +69,7 @@ type Issue struct {
 	Edges               IssueEdges `json:"-"`
 	repository_issues   *int64
 	user_issues_created *int64
+	user_issues_closed  *int64
 	selectValues        sql.SelectValues
 }
 
@@ -77,15 +79,19 @@ type IssueEdges struct {
 	Repository *Repository `json:"repository,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
+	// ClosedBy holds the value of the closed_by edge.
+	ClosedBy *User `json:"closed_by,omitempty"`
 	// Assignees holds the value of the assignees edge.
 	Assignees []*User `json:"assignees,omitempty"`
 	// Comments holds the value of the comments edge.
 	Comments []*IssueComment `json:"comments,omitempty"`
 	// Timeline holds the value of the timeline edge.
 	Timeline []*TimelineEvent `json:"timeline,omitempty"`
+	// PullRequest holds the value of the pull_request edge.
+	PullRequest *PullRequest `json:"pull_request,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [7]bool
 }
 
 // RepositoryOrErr returns the Repository value or an error if the edge
@@ -110,10 +116,21 @@ func (e IssueEdges) UserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "user"}
 }
 
+// ClosedByOrErr returns the ClosedBy value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e IssueEdges) ClosedByOrErr() (*User, error) {
+	if e.ClosedBy != nil {
+		return e.ClosedBy, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: user.Label}
+	}
+	return nil, &NotLoadedError{edge: "closed_by"}
+}
+
 // AssigneesOrErr returns the Assignees value or an error if the edge
 // was not loaded in eager-loading.
 func (e IssueEdges) AssigneesOrErr() ([]*User, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Assignees, nil
 	}
 	return nil, &NotLoadedError{edge: "assignees"}
@@ -122,7 +139,7 @@ func (e IssueEdges) AssigneesOrErr() ([]*User, error) {
 // CommentsOrErr returns the Comments value or an error if the edge
 // was not loaded in eager-loading.
 func (e IssueEdges) CommentsOrErr() ([]*IssueComment, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Comments, nil
 	}
 	return nil, &NotLoadedError{edge: "comments"}
@@ -131,10 +148,21 @@ func (e IssueEdges) CommentsOrErr() ([]*IssueComment, error) {
 // TimelineOrErr returns the Timeline value or an error if the edge
 // was not loaded in eager-loading.
 func (e IssueEdges) TimelineOrErr() ([]*TimelineEvent, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.Timeline, nil
 	}
 	return nil, &NotLoadedError{edge: "timeline"}
+}
+
+// PullRequestOrErr returns the PullRequest value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e IssueEdges) PullRequestOrErr() (*PullRequest, error) {
+	if e.PullRequest != nil {
+		return e.PullRequest, nil
+	} else if e.loadedTypes[6] {
+		return nil, &NotFoundError{label: pullrequest.Label}
+	}
+	return nil, &NotLoadedError{edge: "pull_request"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -155,6 +183,8 @@ func (*Issue) scanValues(columns []string) ([]any, error) {
 		case issue.ForeignKeys[0]: // repository_issues
 			values[i] = new(sql.NullInt64)
 		case issue.ForeignKeys[1]: // user_issues_created
+			values[i] = new(sql.NullInt64)
+		case issue.ForeignKeys[2]: // user_issues_closed
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -323,6 +353,13 @@ func (i *Issue) assignValues(columns []string, values []any) error {
 				i.user_issues_created = new(int64)
 				*i.user_issues_created = int64(value.Int64)
 			}
+		case issue.ForeignKeys[2]:
+			if value, ok := values[j].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_issues_closed", value)
+			} else if value.Valid {
+				i.user_issues_closed = new(int64)
+				*i.user_issues_closed = int64(value.Int64)
+			}
 		default:
 			i.selectValues.Set(columns[j], values[j])
 		}
@@ -346,6 +383,11 @@ func (i *Issue) QueryUser() *UserQuery {
 	return NewIssueClient(i.config).QueryUser(i)
 }
 
+// QueryClosedBy queries the "closed_by" edge of the Issue entity.
+func (i *Issue) QueryClosedBy() *UserQuery {
+	return NewIssueClient(i.config).QueryClosedBy(i)
+}
+
 // QueryAssignees queries the "assignees" edge of the Issue entity.
 func (i *Issue) QueryAssignees() *UserQuery {
 	return NewIssueClient(i.config).QueryAssignees(i)
@@ -359,6 +401,11 @@ func (i *Issue) QueryComments() *IssueCommentQuery {
 // QueryTimeline queries the "timeline" edge of the Issue entity.
 func (i *Issue) QueryTimeline() *TimelineEventQuery {
 	return NewIssueClient(i.config).QueryTimeline(i)
+}
+
+// QueryPullRequest queries the "pull_request" edge of the Issue entity.
+func (i *Issue) QueryPullRequest() *PullRequestQuery {
+	return NewIssueClient(i.config).QueryPullRequest(i)
 }
 
 // Update returns a builder for updating this Issue.

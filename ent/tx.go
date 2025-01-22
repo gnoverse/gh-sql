@@ -16,6 +16,8 @@ type Tx struct {
 	Issue *IssueClient
 	// IssueComment is the client for interacting with the IssueComment builders.
 	IssueComment *IssueCommentClient
+	// PullRequest is the client for interacting with the PullRequest builders.
+	PullRequest *PullRequestClient
 	// Repository is the client for interacting with the Repository builders.
 	Repository *RepositoryClient
 	// TimelineEvent is the client for interacting with the TimelineEvent builders.
@@ -155,6 +157,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Issue = NewIssueClient(tx.config)
 	tx.IssueComment = NewIssueCommentClient(tx.config)
+	tx.PullRequest = NewPullRequestClient(tx.config)
 	tx.Repository = NewRepositoryClient(tx.config)
 	tx.TimelineEvent = NewTimelineEventClient(tx.config)
 	tx.User = NewUserClient(tx.config)

@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -28,8 +29,13 @@ type UserQuery struct {
 	predicates                []predicate.User
 	withRepositories          *RepositoryQuery
 	withIssuesCreated         *IssueQuery
+	withIssuesClosed          *IssueQuery
+	withPrsCreated            *PullRequestQuery
+	withPrsMerged             *PullRequestQuery
 	withCommentsCreated       *IssueCommentQuery
 	withIssuesAssigned        *IssueQuery
+	withPrsAssigned           *PullRequestQuery
+	withPrsReviewRequested    *PullRequestQuery
 	withTimelineEventsCreated *TimelineEventQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -111,6 +117,72 @@ func (uq *UserQuery) QueryIssuesCreated() *IssueQuery {
 	return query
 }
 
+// QueryIssuesClosed chains the current query on the "issues_closed" edge.
+func (uq *UserQuery) QueryIssuesClosed() *IssueQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(issue.Table, issue.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.IssuesClosedTable, user.IssuesClosedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPrsCreated chains the current query on the "prs_created" edge.
+func (uq *UserQuery) QueryPrsCreated() *PullRequestQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PrsCreatedTable, user.PrsCreatedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPrsMerged chains the current query on the "prs_merged" edge.
+func (uq *UserQuery) QueryPrsMerged() *PullRequestQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PrsMergedTable, user.PrsMergedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryCommentsCreated chains the current query on the "comments_created" edge.
 func (uq *UserQuery) QueryCommentsCreated() *IssueCommentQuery {
 	query := (&IssueCommentClient{config: uq.config}).Query()
@@ -148,6 +220,50 @@ func (uq *UserQuery) QueryIssuesAssigned() *IssueQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(issue.Table, issue.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, user.IssuesAssignedTable, user.IssuesAssignedPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPrsAssigned chains the current query on the "prs_assigned" edge.
+func (uq *UserQuery) QueryPrsAssigned() *PullRequestQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.PrsAssignedTable, user.PrsAssignedPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPrsReviewRequested chains the current query on the "prs_review_requested" edge.
+func (uq *UserQuery) QueryPrsReviewRequested() *PullRequestQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, user.PrsReviewRequestedTable, user.PrsReviewRequestedPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -371,8 +487,13 @@ func (uq *UserQuery) Clone() *UserQuery {
 		predicates:                append([]predicate.User{}, uq.predicates...),
 		withRepositories:          uq.withRepositories.Clone(),
 		withIssuesCreated:         uq.withIssuesCreated.Clone(),
+		withIssuesClosed:          uq.withIssuesClosed.Clone(),
+		withPrsCreated:            uq.withPrsCreated.Clone(),
+		withPrsMerged:             uq.withPrsMerged.Clone(),
 		withCommentsCreated:       uq.withCommentsCreated.Clone(),
 		withIssuesAssigned:        uq.withIssuesAssigned.Clone(),
+		withPrsAssigned:           uq.withPrsAssigned.Clone(),
+		withPrsReviewRequested:    uq.withPrsReviewRequested.Clone(),
 		withTimelineEventsCreated: uq.withTimelineEventsCreated.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
@@ -402,6 +523,39 @@ func (uq *UserQuery) WithIssuesCreated(opts ...func(*IssueQuery)) *UserQuery {
 	return uq
 }
 
+// WithIssuesClosed tells the query-builder to eager-load the nodes that are connected to
+// the "issues_closed" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithIssuesClosed(opts ...func(*IssueQuery)) *UserQuery {
+	query := (&IssueClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withIssuesClosed = query
+	return uq
+}
+
+// WithPrsCreated tells the query-builder to eager-load the nodes that are connected to
+// the "prs_created" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithPrsCreated(opts ...func(*PullRequestQuery)) *UserQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withPrsCreated = query
+	return uq
+}
+
+// WithPrsMerged tells the query-builder to eager-load the nodes that are connected to
+// the "prs_merged" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithPrsMerged(opts ...func(*PullRequestQuery)) *UserQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withPrsMerged = query
+	return uq
+}
+
 // WithCommentsCreated tells the query-builder to eager-load the nodes that are connected to
 // the "comments_created" edge. The optional arguments are used to configure the query builder of the edge.
 func (uq *UserQuery) WithCommentsCreated(opts ...func(*IssueCommentQuery)) *UserQuery {
@@ -421,6 +575,28 @@ func (uq *UserQuery) WithIssuesAssigned(opts ...func(*IssueQuery)) *UserQuery {
 		opt(query)
 	}
 	uq.withIssuesAssigned = query
+	return uq
+}
+
+// WithPrsAssigned tells the query-builder to eager-load the nodes that are connected to
+// the "prs_assigned" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithPrsAssigned(opts ...func(*PullRequestQuery)) *UserQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withPrsAssigned = query
+	return uq
+}
+
+// WithPrsReviewRequested tells the query-builder to eager-load the nodes that are connected to
+// the "prs_review_requested" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithPrsReviewRequested(opts ...func(*PullRequestQuery)) *UserQuery {
+	query := (&PullRequestClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withPrsReviewRequested = query
 	return uq
 }
 
@@ -513,11 +689,16 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [10]bool{
 			uq.withRepositories != nil,
 			uq.withIssuesCreated != nil,
+			uq.withIssuesClosed != nil,
+			uq.withPrsCreated != nil,
+			uq.withPrsMerged != nil,
 			uq.withCommentsCreated != nil,
 			uq.withIssuesAssigned != nil,
+			uq.withPrsAssigned != nil,
+			uq.withPrsReviewRequested != nil,
 			uq.withTimelineEventsCreated != nil,
 		}
 	)
@@ -553,6 +734,27 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			return nil, err
 		}
 	}
+	if query := uq.withIssuesClosed; query != nil {
+		if err := uq.loadIssuesClosed(ctx, query, nodes,
+			func(n *User) { n.Edges.IssuesClosed = []*Issue{} },
+			func(n *User, e *Issue) { n.Edges.IssuesClosed = append(n.Edges.IssuesClosed, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withPrsCreated; query != nil {
+		if err := uq.loadPrsCreated(ctx, query, nodes,
+			func(n *User) { n.Edges.PrsCreated = []*PullRequest{} },
+			func(n *User, e *PullRequest) { n.Edges.PrsCreated = append(n.Edges.PrsCreated, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withPrsMerged; query != nil {
+		if err := uq.loadPrsMerged(ctx, query, nodes,
+			func(n *User) { n.Edges.PrsMerged = []*PullRequest{} },
+			func(n *User, e *PullRequest) { n.Edges.PrsMerged = append(n.Edges.PrsMerged, e) }); err != nil {
+			return nil, err
+		}
+	}
 	if query := uq.withCommentsCreated; query != nil {
 		if err := uq.loadCommentsCreated(ctx, query, nodes,
 			func(n *User) { n.Edges.CommentsCreated = []*IssueComment{} },
@@ -564,6 +766,20 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := uq.loadIssuesAssigned(ctx, query, nodes,
 			func(n *User) { n.Edges.IssuesAssigned = []*Issue{} },
 			func(n *User, e *Issue) { n.Edges.IssuesAssigned = append(n.Edges.IssuesAssigned, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withPrsAssigned; query != nil {
+		if err := uq.loadPrsAssigned(ctx, query, nodes,
+			func(n *User) { n.Edges.PrsAssigned = []*PullRequest{} },
+			func(n *User, e *PullRequest) { n.Edges.PrsAssigned = append(n.Edges.PrsAssigned, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withPrsReviewRequested; query != nil {
+		if err := uq.loadPrsReviewRequested(ctx, query, nodes,
+			func(n *User) { n.Edges.PrsReviewRequested = []*PullRequest{} },
+			func(n *User, e *PullRequest) { n.Edges.PrsReviewRequested = append(n.Edges.PrsReviewRequested, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -636,6 +852,99 @@ func (uq *UserQuery) loadIssuesCreated(ctx context.Context, query *IssueQuery, n
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_issues_created" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadIssuesClosed(ctx context.Context, query *IssueQuery, nodes []*User, init func(*User), assign func(*User, *Issue)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Issue(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.IssuesClosedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_issues_closed
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_issues_closed" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_issues_closed" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadPrsCreated(ctx context.Context, query *PullRequestQuery, nodes []*User, init func(*User), assign func(*User, *PullRequest)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.PullRequest(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.PrsCreatedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_prs_created
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_prs_created" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_prs_created" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadPrsMerged(ctx context.Context, query *PullRequestQuery, nodes []*User, init func(*User), assign func(*User, *PullRequest)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.PullRequest(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.PrsMergedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_prs_merged
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_prs_merged" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_prs_merged" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
@@ -726,6 +1035,128 @@ func (uq *UserQuery) loadIssuesAssigned(ctx context.Context, query *IssueQuery, 
 		nodes, ok := nids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected "issues_assigned" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uq *UserQuery) loadPrsAssigned(ctx context.Context, query *PullRequestQuery, nodes []*User, init func(*User), assign func(*User, *PullRequest)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int64]*User)
+	nids := make(map[int64]map[*User]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(user.PrsAssignedTable)
+		s.Join(joinT).On(s.C(pullrequest.FieldID), joinT.C(user.PrsAssignedPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(user.PrsAssignedPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(user.PrsAssignedPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := values[0].(*sql.NullInt64).Int64
+				inValue := values[1].(*sql.NullInt64).Int64
+				if nids[inValue] == nil {
+					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*PullRequest](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "prs_assigned" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (uq *UserQuery) loadPrsReviewRequested(ctx context.Context, query *PullRequestQuery, nodes []*User, init func(*User), assign func(*User, *PullRequest)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int64]*User)
+	nids := make(map[int64]map[*User]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(user.PrsReviewRequestedTable)
+		s.Join(joinT).On(s.C(pullrequest.FieldID), joinT.C(user.PrsReviewRequestedPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(user.PrsReviewRequestedPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(user.PrsReviewRequestedPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := values[0].(*sql.NullInt64).Int64
+				inValue := values[1].(*sql.NullInt64).Int64
+				if nids[inValue] == nil {
+					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*PullRequest](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "prs_review_requested" node returned %v`, n.ID)
 		}
 		for kn := range nodes {
 			assign(kn, n)

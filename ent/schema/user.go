@@ -61,9 +61,15 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("repositories", Repository.Type),
 		edge.To("issues_created", Issue.Type),
+		edge.To("issues_closed", Issue.Type),
+		edge.To("prs_created", PullRequest.Type),
 		edge.To("comments_created", IssueComment.Type),
 		edge.From("issues_assigned", Issue.Type).
 			Ref("assignees"),
+		edge.From("prs_assigned", PullRequest.Type).
+			Ref("assignees"),
+		edge.From("prs_review_requested", PullRequest.Type).
+			Ref("requested_reviewers"),
 		edge.From("timeline_events_created", TimelineEvent.Type).
 			Ref("actor"),
 	}

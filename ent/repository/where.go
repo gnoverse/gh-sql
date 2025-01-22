@@ -4431,6 +4431,29 @@ func HasIssuesWith(preds ...predicate.Issue) predicate.Repository {
 	})
 }
 
+// HasPullRequests applies the HasEdge predicate on the "pull_requests" edge.
+func HasPullRequests() predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PullRequestsTable, PullRequestsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPullRequestsWith applies the HasEdge predicate on the "pull_requests" edge with a given conditions (other predicates).
+func HasPullRequestsWith(preds ...predicate.PullRequest) predicate.Repository {
+	return predicate.Repository(func(s *sql.Selector) {
+		step := newPullRequestsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Repository) predicate.Repository {
 	return predicate.Repository(sql.AndPredicates(predicates...))

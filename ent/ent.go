@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -79,6 +80,7 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			issue.Table:         issue.ValidColumn,
 			issuecomment.Table:  issuecomment.ValidColumn,
+			pullrequest.Table:   pullrequest.ValidColumn,
 			repository.Table:    repository.ValidColumn,
 			timelineevent.Table: timelineevent.ValidColumn,
 			user.Table:          user.ValidColumn,

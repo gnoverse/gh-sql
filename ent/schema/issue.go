@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"entgo.io/ent/schema/index"
 	"github.com/gnolang/gh-sql/pkg/model"
 )
 
@@ -58,7 +59,6 @@ func (Issue) Edges() []ent.Edge {
 	// edge: labels
 	// edge: pull_request
 	// edge: milestone (#/components/schemas/nullable-milestone)
-	// edge: closed_by (#/components/schemas/nullable-user) (redundant with timeline)
 	// edge: performed_via_github_app (#/components/schemas/nullable-integration)
 	return []ent.Edge{
 		edge.From("repository", Repository.Type).
@@ -68,8 +68,18 @@ func (Issue) Edges() []ent.Edge {
 		edge.From("user", User.Type).
 			Ref("issues_created").
 			Unique(),
+		edge.From("closed_by", User.Type).
+			Ref("issues_closed").
+			Unique(),
 		edge.To("assignees", User.Type),
 		edge.To("comments", IssueComment.Type),
 		edge.To("timeline", TimelineEvent.Type),
+		edge.To("pull_request", PullRequest.Type).Unique(),
+	}
+}
+
+func (Issue) Indexes() []ent.Index {
+	return []ent.Index{
+		index.Fields("number").Edges("repository").Unique(),
 	}
 }

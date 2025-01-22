@@ -61,12 +61,16 @@ const (
 	EdgeRepository = "repository"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
+	// EdgeClosedBy holds the string denoting the closed_by edge name in mutations.
+	EdgeClosedBy = "closed_by"
 	// EdgeAssignees holds the string denoting the assignees edge name in mutations.
 	EdgeAssignees = "assignees"
 	// EdgeComments holds the string denoting the comments edge name in mutations.
 	EdgeComments = "comments"
 	// EdgeTimeline holds the string denoting the timeline edge name in mutations.
 	EdgeTimeline = "timeline"
+	// EdgePullRequest holds the string denoting the pull_request edge name in mutations.
+	EdgePullRequest = "pull_request"
 	// Table holds the table name of the issue in the database.
 	Table = "issues"
 	// RepositoryTable is the table that holds the repository relation/edge.
@@ -83,6 +87,13 @@ const (
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
 	UserColumn = "user_issues_created"
+	// ClosedByTable is the table that holds the closed_by relation/edge.
+	ClosedByTable = "issues"
+	// ClosedByInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	ClosedByInverseTable = "users"
+	// ClosedByColumn is the table column denoting the closed_by relation/edge.
+	ClosedByColumn = "user_issues_closed"
 	// AssigneesTable is the table that holds the assignees relation/edge. The primary key declared below.
 	AssigneesTable = "issue_assignees"
 	// AssigneesInverseTable is the table name for the User entity.
@@ -102,6 +113,13 @@ const (
 	TimelineInverseTable = "timeline_events"
 	// TimelineColumn is the table column denoting the timeline relation/edge.
 	TimelineColumn = "issue_timeline"
+	// PullRequestTable is the table that holds the pull_request relation/edge.
+	PullRequestTable = "pull_requests"
+	// PullRequestInverseTable is the table name for the PullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
+	PullRequestInverseTable = "pull_requests"
+	// PullRequestColumn is the table column denoting the pull_request relation/edge.
+	PullRequestColumn = "issue_pull_request"
 )
 
 // Columns holds all SQL columns for issue fields.
@@ -135,6 +153,7 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"repository_issues",
 	"user_issues_created",
+	"user_issues_closed",
 }
 
 var (
@@ -300,6 +319,13 @@ func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
+// ByClosedByField orders the results by closed_by field.
+func ByClosedByField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newClosedByStep(), sql.OrderByField(field, opts...))
+	}
+}
+
 // ByAssigneesCount orders the results by assignees count.
 func ByAssigneesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -341,6 +367,13 @@ func ByTimeline(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTimelineStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByPullRequestField orders the results by pull_request field.
+func ByPullRequestField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPullRequestStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newRepositoryStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -353,6 +386,13 @@ func newUserStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+	)
+}
+func newClosedByStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ClosedByInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, ClosedByTable, ClosedByColumn),
 	)
 }
 func newAssigneesStep() *sqlgraph.Step {
@@ -374,5 +414,12 @@ func newTimelineStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TimelineInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, TimelineTable, TimelineColumn),
+	)
+}
+func newPullRequestStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PullRequestInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, PullRequestTable, PullRequestColumn),
 	)
 }

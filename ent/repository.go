@@ -187,9 +187,11 @@ type RepositoryEdges struct {
 	Owner *User `json:"owner,omitempty"`
 	// Issues holds the value of the issues edge.
 	Issues []*Issue `json:"issues,omitempty"`
+	// PullRequests holds the value of the pull_requests edge.
+	PullRequests []*PullRequest `json:"pull_requests,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -210,6 +212,15 @@ func (e RepositoryEdges) IssuesOrErr() ([]*Issue, error) {
 		return e.Issues, nil
 	}
 	return nil, &NotLoadedError{edge: "issues"}
+}
+
+// PullRequestsOrErr returns the PullRequests value or an error if the edge
+// was not loaded in eager-loading.
+func (e RepositoryEdges) PullRequestsOrErr() ([]*PullRequest, error) {
+	if e.loadedTypes[2] {
+		return e.PullRequests, nil
+	}
+	return nil, &NotLoadedError{edge: "pull_requests"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -746,6 +757,11 @@ func (r *Repository) QueryOwner() *UserQuery {
 // QueryIssues queries the "issues" edge of the Repository entity.
 func (r *Repository) QueryIssues() *IssueQuery {
 	return NewRepositoryClient(r.config).QueryIssues(r)
+}
+
+// QueryPullRequests queries the "pull_requests" edge of the Repository entity.
+func (r *Repository) QueryPullRequests() *PullRequestQuery {
+	return NewRepositoryClient(r.config).QueryPullRequests(r)
 }
 
 // Update returns a builder for updating this Repository.

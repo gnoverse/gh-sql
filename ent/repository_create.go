@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 	"github.com/gnolang/gh-sql/pkg/model"
@@ -565,6 +566,21 @@ func (rc *RepositoryCreate) AddIssues(i ...*Issue) *RepositoryCreate {
 		ids[j] = i[j].ID
 	}
 	return rc.AddIssueIDs(ids...)
+}
+
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (rc *RepositoryCreate) AddPullRequestIDs(ids ...int64) *RepositoryCreate {
+	rc.mutation.AddPullRequestIDs(ids...)
+	return rc
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (rc *RepositoryCreate) AddPullRequests(p ...*PullRequest) *RepositoryCreate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return rc.AddPullRequestIDs(ids...)
 }
 
 // Mutation returns the RepositoryMutation object of the builder.
@@ -1186,6 +1202,22 @@ func (rc *RepositoryCreate) createSpec() (*Repository, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := rc.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.PullRequestsTable,
+			Columns: []string{repository.PullRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

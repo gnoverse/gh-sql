@@ -12,6 +12,9 @@ type Issue func(*sql.Selector)
 // IssueComment is the predicate function for issuecomment builders.
 type IssueComment func(*sql.Selector)
 
+// PullRequest is the predicate function for pullrequest builders.
+type PullRequest func(*sql.Selector)
+
 // Repository is the predicate function for repository builders.
 type Repository func(*sql.Selector)
 

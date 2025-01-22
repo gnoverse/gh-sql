@@ -2021,6 +2021,75 @@ func HasIssuesCreatedWith(preds ...predicate.Issue) predicate.User {
 	})
 }
 
+// HasIssuesClosed applies the HasEdge predicate on the "issues_closed" edge.
+func HasIssuesClosed() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, IssuesClosedTable, IssuesClosedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasIssuesClosedWith applies the HasEdge predicate on the "issues_closed" edge with a given conditions (other predicates).
+func HasIssuesClosedWith(preds ...predicate.Issue) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newIssuesClosedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPrsCreated applies the HasEdge predicate on the "prs_created" edge.
+func HasPrsCreated() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PrsCreatedTable, PrsCreatedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPrsCreatedWith applies the HasEdge predicate on the "prs_created" edge with a given conditions (other predicates).
+func HasPrsCreatedWith(preds ...predicate.PullRequest) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newPrsCreatedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPrsMerged applies the HasEdge predicate on the "prs_merged" edge.
+func HasPrsMerged() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PrsMergedTable, PrsMergedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPrsMergedWith applies the HasEdge predicate on the "prs_merged" edge with a given conditions (other predicates).
+func HasPrsMergedWith(preds ...predicate.PullRequest) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newPrsMergedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasCommentsCreated applies the HasEdge predicate on the "comments_created" edge.
 func HasCommentsCreated() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
@@ -2059,6 +2128,52 @@ func HasIssuesAssigned() predicate.User {
 func HasIssuesAssignedWith(preds ...predicate.Issue) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newIssuesAssignedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPrsAssigned applies the HasEdge predicate on the "prs_assigned" edge.
+func HasPrsAssigned() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, PrsAssignedTable, PrsAssignedPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPrsAssignedWith applies the HasEdge predicate on the "prs_assigned" edge with a given conditions (other predicates).
+func HasPrsAssignedWith(preds ...predicate.PullRequest) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newPrsAssignedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPrsReviewRequested applies the HasEdge predicate on the "prs_review_requested" edge.
+func HasPrsReviewRequested() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, PrsReviewRequestedTable, PrsReviewRequestedPrimaryKey...),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPrsReviewRequestedWith applies the HasEdge predicate on the "prs_review_requested" edge with a given conditions (other predicates).
+func HasPrsReviewRequestedWith(preds ...predicate.PullRequest) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newPrsReviewRequestedStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

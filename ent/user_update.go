@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -558,6 +559,51 @@ func (uu *UserUpdate) AddIssuesCreated(i ...*Issue) *UserUpdate {
 	return uu.AddIssuesCreatedIDs(ids...)
 }
 
+// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
+func (uu *UserUpdate) AddIssuesClosedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.AddIssuesClosedIDs(ids...)
+	return uu
+}
+
+// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
+func (uu *UserUpdate) AddIssuesClosed(i ...*Issue) *UserUpdate {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.AddIssuesClosedIDs(ids...)
+}
+
+// AddPrsCreatedIDs adds the "prs_created" edge to the PullRequest entity by IDs.
+func (uu *UserUpdate) AddPrsCreatedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.AddPrsCreatedIDs(ids...)
+	return uu
+}
+
+// AddPrsCreated adds the "prs_created" edges to the PullRequest entity.
+func (uu *UserUpdate) AddPrsCreated(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddPrsCreatedIDs(ids...)
+}
+
+// AddPrsMergedIDs adds the "prs_merged" edge to the PullRequest entity by IDs.
+func (uu *UserUpdate) AddPrsMergedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.AddPrsMergedIDs(ids...)
+	return uu
+}
+
+// AddPrsMerged adds the "prs_merged" edges to the PullRequest entity.
+func (uu *UserUpdate) AddPrsMerged(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddPrsMergedIDs(ids...)
+}
+
 // AddCommentsCreatedIDs adds the "comments_created" edge to the IssueComment entity by IDs.
 func (uu *UserUpdate) AddCommentsCreatedIDs(ids ...int64) *UserUpdate {
 	uu.mutation.AddCommentsCreatedIDs(ids...)
@@ -586,6 +632,36 @@ func (uu *UserUpdate) AddIssuesAssigned(i ...*Issue) *UserUpdate {
 		ids[j] = i[j].ID
 	}
 	return uu.AddIssuesAssignedIDs(ids...)
+}
+
+// AddPrsAssignedIDs adds the "prs_assigned" edge to the PullRequest entity by IDs.
+func (uu *UserUpdate) AddPrsAssignedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.AddPrsAssignedIDs(ids...)
+	return uu
+}
+
+// AddPrsAssigned adds the "prs_assigned" edges to the PullRequest entity.
+func (uu *UserUpdate) AddPrsAssigned(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddPrsAssignedIDs(ids...)
+}
+
+// AddPrsReviewRequestedIDs adds the "prs_review_requested" edge to the PullRequest entity by IDs.
+func (uu *UserUpdate) AddPrsReviewRequestedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.AddPrsReviewRequestedIDs(ids...)
+	return uu
+}
+
+// AddPrsReviewRequested adds the "prs_review_requested" edges to the PullRequest entity.
+func (uu *UserUpdate) AddPrsReviewRequested(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.AddPrsReviewRequestedIDs(ids...)
 }
 
 // AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by IDs.
@@ -650,6 +726,69 @@ func (uu *UserUpdate) RemoveIssuesCreated(i ...*Issue) *UserUpdate {
 	return uu.RemoveIssuesCreatedIDs(ids...)
 }
 
+// ClearIssuesClosed clears all "issues_closed" edges to the Issue entity.
+func (uu *UserUpdate) ClearIssuesClosed() *UserUpdate {
+	uu.mutation.ClearIssuesClosed()
+	return uu
+}
+
+// RemoveIssuesClosedIDs removes the "issues_closed" edge to Issue entities by IDs.
+func (uu *UserUpdate) RemoveIssuesClosedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.RemoveIssuesClosedIDs(ids...)
+	return uu
+}
+
+// RemoveIssuesClosed removes "issues_closed" edges to Issue entities.
+func (uu *UserUpdate) RemoveIssuesClosed(i ...*Issue) *UserUpdate {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uu.RemoveIssuesClosedIDs(ids...)
+}
+
+// ClearPrsCreated clears all "prs_created" edges to the PullRequest entity.
+func (uu *UserUpdate) ClearPrsCreated() *UserUpdate {
+	uu.mutation.ClearPrsCreated()
+	return uu
+}
+
+// RemovePrsCreatedIDs removes the "prs_created" edge to PullRequest entities by IDs.
+func (uu *UserUpdate) RemovePrsCreatedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.RemovePrsCreatedIDs(ids...)
+	return uu
+}
+
+// RemovePrsCreated removes "prs_created" edges to PullRequest entities.
+func (uu *UserUpdate) RemovePrsCreated(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemovePrsCreatedIDs(ids...)
+}
+
+// ClearPrsMerged clears all "prs_merged" edges to the PullRequest entity.
+func (uu *UserUpdate) ClearPrsMerged() *UserUpdate {
+	uu.mutation.ClearPrsMerged()
+	return uu
+}
+
+// RemovePrsMergedIDs removes the "prs_merged" edge to PullRequest entities by IDs.
+func (uu *UserUpdate) RemovePrsMergedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.RemovePrsMergedIDs(ids...)
+	return uu
+}
+
+// RemovePrsMerged removes "prs_merged" edges to PullRequest entities.
+func (uu *UserUpdate) RemovePrsMerged(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemovePrsMergedIDs(ids...)
+}
+
 // ClearCommentsCreated clears all "comments_created" edges to the IssueComment entity.
 func (uu *UserUpdate) ClearCommentsCreated() *UserUpdate {
 	uu.mutation.ClearCommentsCreated()
@@ -690,6 +829,48 @@ func (uu *UserUpdate) RemoveIssuesAssigned(i ...*Issue) *UserUpdate {
 		ids[j] = i[j].ID
 	}
 	return uu.RemoveIssuesAssignedIDs(ids...)
+}
+
+// ClearPrsAssigned clears all "prs_assigned" edges to the PullRequest entity.
+func (uu *UserUpdate) ClearPrsAssigned() *UserUpdate {
+	uu.mutation.ClearPrsAssigned()
+	return uu
+}
+
+// RemovePrsAssignedIDs removes the "prs_assigned" edge to PullRequest entities by IDs.
+func (uu *UserUpdate) RemovePrsAssignedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.RemovePrsAssignedIDs(ids...)
+	return uu
+}
+
+// RemovePrsAssigned removes "prs_assigned" edges to PullRequest entities.
+func (uu *UserUpdate) RemovePrsAssigned(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemovePrsAssignedIDs(ids...)
+}
+
+// ClearPrsReviewRequested clears all "prs_review_requested" edges to the PullRequest entity.
+func (uu *UserUpdate) ClearPrsReviewRequested() *UserUpdate {
+	uu.mutation.ClearPrsReviewRequested()
+	return uu
+}
+
+// RemovePrsReviewRequestedIDs removes the "prs_review_requested" edge to PullRequest entities by IDs.
+func (uu *UserUpdate) RemovePrsReviewRequestedIDs(ids ...int64) *UserUpdate {
+	uu.mutation.RemovePrsReviewRequestedIDs(ids...)
+	return uu
+}
+
+// RemovePrsReviewRequested removes "prs_review_requested" edges to PullRequest entities.
+func (uu *UserUpdate) RemovePrsReviewRequested(p ...*PullRequest) *UserUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uu.RemovePrsReviewRequestedIDs(ids...)
 }
 
 // ClearTimelineEventsCreated clears all "timeline_events_created" edges to the TimelineEvent entity.
@@ -965,6 +1146,141 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uu.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedIssuesClosedIDs(); len(nodes) > 0 && !uu.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.IssuesClosedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.PrsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsCreatedTable,
+			Columns: []string{user.PrsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedPrsCreatedIDs(); len(nodes) > 0 && !uu.mutation.PrsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsCreatedTable,
+			Columns: []string{user.PrsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.PrsCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsCreatedTable,
+			Columns: []string{user.PrsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.PrsMergedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsMergedTable,
+			Columns: []string{user.PrsMergedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedPrsMergedIDs(); len(nodes) > 0 && !uu.mutation.PrsMergedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsMergedTable,
+			Columns: []string{user.PrsMergedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.PrsMergedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsMergedTable,
+			Columns: []string{user.PrsMergedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if uu.mutation.CommentsCreatedCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -1048,6 +1364,96 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.PrsAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsAssignedTable,
+			Columns: user.PrsAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedPrsAssignedIDs(); len(nodes) > 0 && !uu.mutation.PrsAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsAssignedTable,
+			Columns: user.PrsAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.PrsAssignedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsAssignedTable,
+			Columns: user.PrsAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.PrsReviewRequestedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsReviewRequestedTable,
+			Columns: user.PrsReviewRequestedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedPrsReviewRequestedIDs(); len(nodes) > 0 && !uu.mutation.PrsReviewRequestedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsReviewRequestedTable,
+			Columns: user.PrsReviewRequestedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.PrsReviewRequestedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsReviewRequestedTable,
+			Columns: user.PrsReviewRequestedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1646,6 +2052,51 @@ func (uuo *UserUpdateOne) AddIssuesCreated(i ...*Issue) *UserUpdateOne {
 	return uuo.AddIssuesCreatedIDs(ids...)
 }
 
+// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
+func (uuo *UserUpdateOne) AddIssuesClosedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.AddIssuesClosedIDs(ids...)
+	return uuo
+}
+
+// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
+func (uuo *UserUpdateOne) AddIssuesClosed(i ...*Issue) *UserUpdateOne {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.AddIssuesClosedIDs(ids...)
+}
+
+// AddPrsCreatedIDs adds the "prs_created" edge to the PullRequest entity by IDs.
+func (uuo *UserUpdateOne) AddPrsCreatedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.AddPrsCreatedIDs(ids...)
+	return uuo
+}
+
+// AddPrsCreated adds the "prs_created" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) AddPrsCreated(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddPrsCreatedIDs(ids...)
+}
+
+// AddPrsMergedIDs adds the "prs_merged" edge to the PullRequest entity by IDs.
+func (uuo *UserUpdateOne) AddPrsMergedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.AddPrsMergedIDs(ids...)
+	return uuo
+}
+
+// AddPrsMerged adds the "prs_merged" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) AddPrsMerged(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddPrsMergedIDs(ids...)
+}
+
 // AddCommentsCreatedIDs adds the "comments_created" edge to the IssueComment entity by IDs.
 func (uuo *UserUpdateOne) AddCommentsCreatedIDs(ids ...int64) *UserUpdateOne {
 	uuo.mutation.AddCommentsCreatedIDs(ids...)
@@ -1674,6 +2125,36 @@ func (uuo *UserUpdateOne) AddIssuesAssigned(i ...*Issue) *UserUpdateOne {
 		ids[j] = i[j].ID
 	}
 	return uuo.AddIssuesAssignedIDs(ids...)
+}
+
+// AddPrsAssignedIDs adds the "prs_assigned" edge to the PullRequest entity by IDs.
+func (uuo *UserUpdateOne) AddPrsAssignedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.AddPrsAssignedIDs(ids...)
+	return uuo
+}
+
+// AddPrsAssigned adds the "prs_assigned" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) AddPrsAssigned(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddPrsAssignedIDs(ids...)
+}
+
+// AddPrsReviewRequestedIDs adds the "prs_review_requested" edge to the PullRequest entity by IDs.
+func (uuo *UserUpdateOne) AddPrsReviewRequestedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.AddPrsReviewRequestedIDs(ids...)
+	return uuo
+}
+
+// AddPrsReviewRequested adds the "prs_review_requested" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) AddPrsReviewRequested(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.AddPrsReviewRequestedIDs(ids...)
 }
 
 // AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by IDs.
@@ -1738,6 +2219,69 @@ func (uuo *UserUpdateOne) RemoveIssuesCreated(i ...*Issue) *UserUpdateOne {
 	return uuo.RemoveIssuesCreatedIDs(ids...)
 }
 
+// ClearIssuesClosed clears all "issues_closed" edges to the Issue entity.
+func (uuo *UserUpdateOne) ClearIssuesClosed() *UserUpdateOne {
+	uuo.mutation.ClearIssuesClosed()
+	return uuo
+}
+
+// RemoveIssuesClosedIDs removes the "issues_closed" edge to Issue entities by IDs.
+func (uuo *UserUpdateOne) RemoveIssuesClosedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.RemoveIssuesClosedIDs(ids...)
+	return uuo
+}
+
+// RemoveIssuesClosed removes "issues_closed" edges to Issue entities.
+func (uuo *UserUpdateOne) RemoveIssuesClosed(i ...*Issue) *UserUpdateOne {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uuo.RemoveIssuesClosedIDs(ids...)
+}
+
+// ClearPrsCreated clears all "prs_created" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) ClearPrsCreated() *UserUpdateOne {
+	uuo.mutation.ClearPrsCreated()
+	return uuo
+}
+
+// RemovePrsCreatedIDs removes the "prs_created" edge to PullRequest entities by IDs.
+func (uuo *UserUpdateOne) RemovePrsCreatedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.RemovePrsCreatedIDs(ids...)
+	return uuo
+}
+
+// RemovePrsCreated removes "prs_created" edges to PullRequest entities.
+func (uuo *UserUpdateOne) RemovePrsCreated(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemovePrsCreatedIDs(ids...)
+}
+
+// ClearPrsMerged clears all "prs_merged" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) ClearPrsMerged() *UserUpdateOne {
+	uuo.mutation.ClearPrsMerged()
+	return uuo
+}
+
+// RemovePrsMergedIDs removes the "prs_merged" edge to PullRequest entities by IDs.
+func (uuo *UserUpdateOne) RemovePrsMergedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.RemovePrsMergedIDs(ids...)
+	return uuo
+}
+
+// RemovePrsMerged removes "prs_merged" edges to PullRequest entities.
+func (uuo *UserUpdateOne) RemovePrsMerged(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemovePrsMergedIDs(ids...)
+}
+
 // ClearCommentsCreated clears all "comments_created" edges to the IssueComment entity.
 func (uuo *UserUpdateOne) ClearCommentsCreated() *UserUpdateOne {
 	uuo.mutation.ClearCommentsCreated()
@@ -1778,6 +2322,48 @@ func (uuo *UserUpdateOne) RemoveIssuesAssigned(i ...*Issue) *UserUpdateOne {
 		ids[j] = i[j].ID
 	}
 	return uuo.RemoveIssuesAssignedIDs(ids...)
+}
+
+// ClearPrsAssigned clears all "prs_assigned" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) ClearPrsAssigned() *UserUpdateOne {
+	uuo.mutation.ClearPrsAssigned()
+	return uuo
+}
+
+// RemovePrsAssignedIDs removes the "prs_assigned" edge to PullRequest entities by IDs.
+func (uuo *UserUpdateOne) RemovePrsAssignedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.RemovePrsAssignedIDs(ids...)
+	return uuo
+}
+
+// RemovePrsAssigned removes "prs_assigned" edges to PullRequest entities.
+func (uuo *UserUpdateOne) RemovePrsAssigned(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemovePrsAssignedIDs(ids...)
+}
+
+// ClearPrsReviewRequested clears all "prs_review_requested" edges to the PullRequest entity.
+func (uuo *UserUpdateOne) ClearPrsReviewRequested() *UserUpdateOne {
+	uuo.mutation.ClearPrsReviewRequested()
+	return uuo
+}
+
+// RemovePrsReviewRequestedIDs removes the "prs_review_requested" edge to PullRequest entities by IDs.
+func (uuo *UserUpdateOne) RemovePrsReviewRequestedIDs(ids ...int64) *UserUpdateOne {
+	uuo.mutation.RemovePrsReviewRequestedIDs(ids...)
+	return uuo
+}
+
+// RemovePrsReviewRequested removes "prs_review_requested" edges to PullRequest entities.
+func (uuo *UserUpdateOne) RemovePrsReviewRequested(p ...*PullRequest) *UserUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uuo.RemovePrsReviewRequestedIDs(ids...)
 }
 
 // ClearTimelineEventsCreated clears all "timeline_events_created" edges to the TimelineEvent entity.
@@ -2083,6 +2669,141 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uuo.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedIssuesClosedIDs(); len(nodes) > 0 && !uuo.mutation.IssuesClosedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.IssuesClosedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.PrsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsCreatedTable,
+			Columns: []string{user.PrsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedPrsCreatedIDs(); len(nodes) > 0 && !uuo.mutation.PrsCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsCreatedTable,
+			Columns: []string{user.PrsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.PrsCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsCreatedTable,
+			Columns: []string{user.PrsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.PrsMergedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsMergedTable,
+			Columns: []string{user.PrsMergedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedPrsMergedIDs(); len(nodes) > 0 && !uuo.mutation.PrsMergedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsMergedTable,
+			Columns: []string{user.PrsMergedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.PrsMergedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsMergedTable,
+			Columns: []string{user.PrsMergedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if uuo.mutation.CommentsCreatedCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -2166,6 +2887,96 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.PrsAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsAssignedTable,
+			Columns: user.PrsAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedPrsAssignedIDs(); len(nodes) > 0 && !uuo.mutation.PrsAssignedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsAssignedTable,
+			Columns: user.PrsAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.PrsAssignedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsAssignedTable,
+			Columns: user.PrsAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.PrsReviewRequestedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsReviewRequestedTable,
+			Columns: user.PrsReviewRequestedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedPrsReviewRequestedIDs(); len(nodes) > 0 && !uuo.mutation.PrsReviewRequestedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsReviewRequestedTable,
+			Columns: user.PrsReviewRequestedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.PrsReviewRequestedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsReviewRequestedTable,
+			Columns: user.PrsReviewRequestedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

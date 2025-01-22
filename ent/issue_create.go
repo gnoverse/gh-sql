@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -221,6 +222,25 @@ func (ic *IssueCreate) SetUser(u *User) *IssueCreate {
 	return ic.SetUserID(u.ID)
 }
 
+// SetClosedByID sets the "closed_by" edge to the User entity by ID.
+func (ic *IssueCreate) SetClosedByID(id int64) *IssueCreate {
+	ic.mutation.SetClosedByID(id)
+	return ic
+}
+
+// SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
+func (ic *IssueCreate) SetNillableClosedByID(id *int64) *IssueCreate {
+	if id != nil {
+		ic = ic.SetClosedByID(*id)
+	}
+	return ic
+}
+
+// SetClosedBy sets the "closed_by" edge to the User entity.
+func (ic *IssueCreate) SetClosedBy(u *User) *IssueCreate {
+	return ic.SetClosedByID(u.ID)
+}
+
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
 func (ic *IssueCreate) AddAssigneeIDs(ids ...int64) *IssueCreate {
 	ic.mutation.AddAssigneeIDs(ids...)
@@ -264,6 +284,25 @@ func (ic *IssueCreate) AddTimeline(t ...*TimelineEvent) *IssueCreate {
 		ids[i] = t[i].ID
 	}
 	return ic.AddTimelineIDs(ids...)
+}
+
+// SetPullRequestID sets the "pull_request" edge to the PullRequest entity by ID.
+func (ic *IssueCreate) SetPullRequestID(id int64) *IssueCreate {
+	ic.mutation.SetPullRequestID(id)
+	return ic
+}
+
+// SetNillablePullRequestID sets the "pull_request" edge to the PullRequest entity by ID if the given value is not nil.
+func (ic *IssueCreate) SetNillablePullRequestID(id *int64) *IssueCreate {
+	if id != nil {
+		ic = ic.SetPullRequestID(*id)
+	}
+	return ic
+}
+
+// SetPullRequest sets the "pull_request" edge to the PullRequest entity.
+func (ic *IssueCreate) SetPullRequest(p *PullRequest) *IssueCreate {
+	return ic.SetPullRequestID(p.ID)
 }
 
 // Mutation returns the IssueMutation object of the builder.
@@ -515,6 +554,23 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 		_node.user_issues_created = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := ic.mutation.ClosedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   issue.ClosedByTable,
+			Columns: []string{issue.ClosedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_issues_closed = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := ic.mutation.AssigneesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -556,6 +612,22 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ic.mutation.PullRequestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   issue.PullRequestTable,
+			Columns: []string{issue.PullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

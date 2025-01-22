@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/user"
 	"github.com/gnolang/gh-sql/pkg/model"
@@ -1240,6 +1241,21 @@ func (ru *RepositoryUpdate) AddIssues(i ...*Issue) *RepositoryUpdate {
 	return ru.AddIssueIDs(ids...)
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (ru *RepositoryUpdate) AddPullRequestIDs(ids ...int64) *RepositoryUpdate {
+	ru.mutation.AddPullRequestIDs(ids...)
+	return ru
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (ru *RepositoryUpdate) AddPullRequests(p ...*PullRequest) *RepositoryUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ru.AddPullRequestIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ru *RepositoryUpdate) Mutation() *RepositoryMutation {
 	return ru.mutation
@@ -1270,6 +1286,27 @@ func (ru *RepositoryUpdate) RemoveIssues(i ...*Issue) *RepositoryUpdate {
 		ids[j] = i[j].ID
 	}
 	return ru.RemoveIssueIDs(ids...)
+}
+
+// ClearPullRequests clears all "pull_requests" edges to the PullRequest entity.
+func (ru *RepositoryUpdate) ClearPullRequests() *RepositoryUpdate {
+	ru.mutation.ClearPullRequests()
+	return ru
+}
+
+// RemovePullRequestIDs removes the "pull_requests" edge to PullRequest entities by IDs.
+func (ru *RepositoryUpdate) RemovePullRequestIDs(ids ...int64) *RepositoryUpdate {
+	ru.mutation.RemovePullRequestIDs(ids...)
+	return ru
+}
+
+// RemovePullRequests removes "pull_requests" edges to PullRequest entities.
+func (ru *RepositoryUpdate) RemovePullRequests(p ...*PullRequest) *RepositoryUpdate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ru.RemovePullRequestIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1672,6 +1709,51 @@ func (ru *RepositoryUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ru.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.PullRequestsTable,
+			Columns: []string{repository.PullRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.RemovedPullRequestsIDs(); len(nodes) > 0 && !ru.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.PullRequestsTable,
+			Columns: []string{repository.PullRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ru.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.PullRequestsTable,
+			Columns: []string{repository.PullRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -2907,6 +2989,21 @@ func (ruo *RepositoryUpdateOne) AddIssues(i ...*Issue) *RepositoryUpdateOne {
 	return ruo.AddIssueIDs(ids...)
 }
 
+// AddPullRequestIDs adds the "pull_requests" edge to the PullRequest entity by IDs.
+func (ruo *RepositoryUpdateOne) AddPullRequestIDs(ids ...int64) *RepositoryUpdateOne {
+	ruo.mutation.AddPullRequestIDs(ids...)
+	return ruo
+}
+
+// AddPullRequests adds the "pull_requests" edges to the PullRequest entity.
+func (ruo *RepositoryUpdateOne) AddPullRequests(p ...*PullRequest) *RepositoryUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ruo.AddPullRequestIDs(ids...)
+}
+
 // Mutation returns the RepositoryMutation object of the builder.
 func (ruo *RepositoryUpdateOne) Mutation() *RepositoryMutation {
 	return ruo.mutation
@@ -2937,6 +3034,27 @@ func (ruo *RepositoryUpdateOne) RemoveIssues(i ...*Issue) *RepositoryUpdateOne {
 		ids[j] = i[j].ID
 	}
 	return ruo.RemoveIssueIDs(ids...)
+}
+
+// ClearPullRequests clears all "pull_requests" edges to the PullRequest entity.
+func (ruo *RepositoryUpdateOne) ClearPullRequests() *RepositoryUpdateOne {
+	ruo.mutation.ClearPullRequests()
+	return ruo
+}
+
+// RemovePullRequestIDs removes the "pull_requests" edge to PullRequest entities by IDs.
+func (ruo *RepositoryUpdateOne) RemovePullRequestIDs(ids ...int64) *RepositoryUpdateOne {
+	ruo.mutation.RemovePullRequestIDs(ids...)
+	return ruo
+}
+
+// RemovePullRequests removes "pull_requests" edges to PullRequest entities.
+func (ruo *RepositoryUpdateOne) RemovePullRequests(p ...*PullRequest) *RepositoryUpdateOne {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return ruo.RemovePullRequestIDs(ids...)
 }
 
 // Where appends a list predicates to the RepositoryUpdate builder.
@@ -3369,6 +3487,51 @@ func (ruo *RepositoryUpdateOne) sqlSave(ctx context.Context) (_node *Repository,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ruo.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.PullRequestsTable,
+			Columns: []string{repository.PullRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.RemovedPullRequestsIDs(); len(nodes) > 0 && !ruo.mutation.PullRequestsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.PullRequestsTable,
+			Columns: []string{repository.PullRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ruo.mutation.PullRequestsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   repository.PullRequestsTable,
+			Columns: []string{repository.PullRequestsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

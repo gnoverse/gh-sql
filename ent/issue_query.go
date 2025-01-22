@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -22,16 +23,18 @@ import (
 // IssueQuery is the builder for querying Issue entities.
 type IssueQuery struct {
 	config
-	ctx            *QueryContext
-	order          []issue.OrderOption
-	inters         []Interceptor
-	predicates     []predicate.Issue
-	withRepository *RepositoryQuery
-	withUser       *UserQuery
-	withAssignees  *UserQuery
-	withComments   *IssueCommentQuery
-	withTimeline   *TimelineEventQuery
-	withFKs        bool
+	ctx             *QueryContext
+	order           []issue.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.Issue
+	withRepository  *RepositoryQuery
+	withUser        *UserQuery
+	withClosedBy    *UserQuery
+	withAssignees   *UserQuery
+	withComments    *IssueCommentQuery
+	withTimeline    *TimelineEventQuery
+	withPullRequest *PullRequestQuery
+	withFKs         bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -112,6 +115,28 @@ func (iq *IssueQuery) QueryUser() *UserQuery {
 	return query
 }
 
+// QueryClosedBy chains the current query on the "closed_by" edge.
+func (iq *IssueQuery) QueryClosedBy() *UserQuery {
+	query := (&UserClient{config: iq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := iq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := iq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, issue.ClosedByTable, issue.ClosedByColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // QueryAssignees chains the current query on the "assignees" edge.
 func (iq *IssueQuery) QueryAssignees() *UserQuery {
 	query := (&UserClient{config: iq.config}).Query()
@@ -171,6 +196,28 @@ func (iq *IssueQuery) QueryTimeline() *TimelineEventQuery {
 			sqlgraph.From(issue.Table, issue.FieldID, selector),
 			sqlgraph.To(timelineevent.Table, timelineevent.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, issue.TimelineTable, issue.TimelineColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryPullRequest chains the current query on the "pull_request" edge.
+func (iq *IssueQuery) QueryPullRequest() *PullRequestQuery {
+	query := (&PullRequestClient{config: iq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := iq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := iq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(issue.Table, issue.FieldID, selector),
+			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, issue.PullRequestTable, issue.PullRequestColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(iq.driver.Dialect(), step)
 		return fromU, nil
@@ -365,16 +412,18 @@ func (iq *IssueQuery) Clone() *IssueQuery {
 		return nil
 	}
 	return &IssueQuery{
-		config:         iq.config,
-		ctx:            iq.ctx.Clone(),
-		order:          append([]issue.OrderOption{}, iq.order...),
-		inters:         append([]Interceptor{}, iq.inters...),
-		predicates:     append([]predicate.Issue{}, iq.predicates...),
-		withRepository: iq.withRepository.Clone(),
-		withUser:       iq.withUser.Clone(),
-		withAssignees:  iq.withAssignees.Clone(),
-		withComments:   iq.withComments.Clone(),
-		withTimeline:   iq.withTimeline.Clone(),
+		config:          iq.config,
+		ctx:             iq.ctx.Clone(),
+		order:           append([]issue.OrderOption{}, iq.order...),
+		inters:          append([]Interceptor{}, iq.inters...),
+		predicates:      append([]predicate.Issue{}, iq.predicates...),
+		withRepository:  iq.withRepository.Clone(),
+		withUser:        iq.withUser.Clone(),
+		withClosedBy:    iq.withClosedBy.Clone(),
+		withAssignees:   iq.withAssignees.Clone(),
+		withComments:    iq.withComments.Clone(),
+		withTimeline:    iq.withTimeline.Clone(),
+		withPullRequest: iq.withPullRequest.Clone(),
 		// clone intermediate query.
 		sql:  iq.sql.Clone(),
 		path: iq.path,
@@ -400,6 +449,17 @@ func (iq *IssueQuery) WithUser(opts ...func(*UserQuery)) *IssueQuery {
 		opt(query)
 	}
 	iq.withUser = query
+	return iq
+}
+
+// WithClosedBy tells the query-builder to eager-load the nodes that are connected to
+// the "closed_by" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *IssueQuery) WithClosedBy(opts ...func(*UserQuery)) *IssueQuery {
+	query := (&UserClient{config: iq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	iq.withClosedBy = query
 	return iq
 }
 
@@ -433,6 +493,17 @@ func (iq *IssueQuery) WithTimeline(opts ...func(*TimelineEventQuery)) *IssueQuer
 		opt(query)
 	}
 	iq.withTimeline = query
+	return iq
+}
+
+// WithPullRequest tells the query-builder to eager-load the nodes that are connected to
+// the "pull_request" edge. The optional arguments are used to configure the query builder of the edge.
+func (iq *IssueQuery) WithPullRequest(opts ...func(*PullRequestQuery)) *IssueQuery {
+	query := (&PullRequestClient{config: iq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	iq.withPullRequest = query
 	return iq
 }
 
@@ -515,15 +586,17 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 		nodes       = []*Issue{}
 		withFKs     = iq.withFKs
 		_spec       = iq.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [7]bool{
 			iq.withRepository != nil,
 			iq.withUser != nil,
+			iq.withClosedBy != nil,
 			iq.withAssignees != nil,
 			iq.withComments != nil,
 			iq.withTimeline != nil,
+			iq.withPullRequest != nil,
 		}
 	)
-	if iq.withRepository != nil || iq.withUser != nil {
+	if iq.withRepository != nil || iq.withUser != nil || iq.withClosedBy != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -559,6 +632,12 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 			return nil, err
 		}
 	}
+	if query := iq.withClosedBy; query != nil {
+		if err := iq.loadClosedBy(ctx, query, nodes, nil,
+			func(n *Issue, e *User) { n.Edges.ClosedBy = e }); err != nil {
+			return nil, err
+		}
+	}
 	if query := iq.withAssignees; query != nil {
 		if err := iq.loadAssignees(ctx, query, nodes,
 			func(n *Issue) { n.Edges.Assignees = []*User{} },
@@ -577,6 +656,12 @@ func (iq *IssueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Issue,
 		if err := iq.loadTimeline(ctx, query, nodes,
 			func(n *Issue) { n.Edges.Timeline = []*TimelineEvent{} },
 			func(n *Issue, e *TimelineEvent) { n.Edges.Timeline = append(n.Edges.Timeline, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := iq.withPullRequest; query != nil {
+		if err := iq.loadPullRequest(ctx, query, nodes, nil,
+			func(n *Issue, e *PullRequest) { n.Edges.PullRequest = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -640,6 +725,38 @@ func (iq *IssueQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*I
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "user_issues_created" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (iq *IssueQuery) loadClosedBy(ctx context.Context, query *UserQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *User)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Issue)
+	for i := range nodes {
+		if nodes[i].user_issues_closed == nil {
+			continue
+		}
+		fk := *nodes[i].user_issues_closed
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_issues_closed" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -765,6 +882,34 @@ func (iq *IssueQuery) loadTimeline(ctx context.Context, query *TimelineEventQuer
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "issue_timeline" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (iq *IssueQuery) loadPullRequest(ctx context.Context, query *PullRequestQuery, nodes []*Issue, init func(*Issue), assign func(*Issue, *PullRequest)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Issue)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	query.withFKs = true
+	query.Where(predicate.PullRequest(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(issue.PullRequestColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.issue_pull_request
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "issue_pull_request" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "issue_pull_request" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

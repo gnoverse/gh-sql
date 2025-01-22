@@ -14,6 +14,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
 	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -387,6 +388,25 @@ func (iu *IssueUpdate) SetUser(u *User) *IssueUpdate {
 	return iu.SetUserID(u.ID)
 }
 
+// SetClosedByID sets the "closed_by" edge to the User entity by ID.
+func (iu *IssueUpdate) SetClosedByID(id int64) *IssueUpdate {
+	iu.mutation.SetClosedByID(id)
+	return iu
+}
+
+// SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
+func (iu *IssueUpdate) SetNillableClosedByID(id *int64) *IssueUpdate {
+	if id != nil {
+		iu = iu.SetClosedByID(*id)
+	}
+	return iu
+}
+
+// SetClosedBy sets the "closed_by" edge to the User entity.
+func (iu *IssueUpdate) SetClosedBy(u *User) *IssueUpdate {
+	return iu.SetClosedByID(u.ID)
+}
+
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
 func (iu *IssueUpdate) AddAssigneeIDs(ids ...int64) *IssueUpdate {
 	iu.mutation.AddAssigneeIDs(ids...)
@@ -432,6 +452,25 @@ func (iu *IssueUpdate) AddTimeline(t ...*TimelineEvent) *IssueUpdate {
 	return iu.AddTimelineIDs(ids...)
 }
 
+// SetPullRequestID sets the "pull_request" edge to the PullRequest entity by ID.
+func (iu *IssueUpdate) SetPullRequestID(id int64) *IssueUpdate {
+	iu.mutation.SetPullRequestID(id)
+	return iu
+}
+
+// SetNillablePullRequestID sets the "pull_request" edge to the PullRequest entity by ID if the given value is not nil.
+func (iu *IssueUpdate) SetNillablePullRequestID(id *int64) *IssueUpdate {
+	if id != nil {
+		iu = iu.SetPullRequestID(*id)
+	}
+	return iu
+}
+
+// SetPullRequest sets the "pull_request" edge to the PullRequest entity.
+func (iu *IssueUpdate) SetPullRequest(p *PullRequest) *IssueUpdate {
+	return iu.SetPullRequestID(p.ID)
+}
+
 // Mutation returns the IssueMutation object of the builder.
 func (iu *IssueUpdate) Mutation() *IssueMutation {
 	return iu.mutation
@@ -446,6 +485,12 @@ func (iu *IssueUpdate) ClearRepository() *IssueUpdate {
 // ClearUser clears the "user" edge to the User entity.
 func (iu *IssueUpdate) ClearUser() *IssueUpdate {
 	iu.mutation.ClearUser()
+	return iu
+}
+
+// ClearClosedBy clears the "closed_by" edge to the User entity.
+func (iu *IssueUpdate) ClearClosedBy() *IssueUpdate {
+	iu.mutation.ClearClosedBy()
 	return iu
 }
 
@@ -510,6 +555,12 @@ func (iu *IssueUpdate) RemoveTimeline(t ...*TimelineEvent) *IssueUpdate {
 		ids[i] = t[i].ID
 	}
 	return iu.RemoveTimelineIDs(ids...)
+}
+
+// ClearPullRequest clears the "pull_request" edge to the PullRequest entity.
+func (iu *IssueUpdate) ClearPullRequest() *IssueUpdate {
+	iu.mutation.ClearPullRequest()
+	return iu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -708,6 +759,35 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if iu.mutation.ClosedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   issue.ClosedByTable,
+			Columns: []string{issue.ClosedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.ClosedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   issue.ClosedByTable,
+			Columns: []string{issue.ClosedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if iu.mutation.AssigneesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -836,6 +916,35 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if iu.mutation.PullRequestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   issue.PullRequestTable,
+			Columns: []string{issue.PullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iu.mutation.PullRequestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   issue.PullRequestTable,
+			Columns: []string{issue.PullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1217,6 +1326,25 @@ func (iuo *IssueUpdateOne) SetUser(u *User) *IssueUpdateOne {
 	return iuo.SetUserID(u.ID)
 }
 
+// SetClosedByID sets the "closed_by" edge to the User entity by ID.
+func (iuo *IssueUpdateOne) SetClosedByID(id int64) *IssueUpdateOne {
+	iuo.mutation.SetClosedByID(id)
+	return iuo
+}
+
+// SetNillableClosedByID sets the "closed_by" edge to the User entity by ID if the given value is not nil.
+func (iuo *IssueUpdateOne) SetNillableClosedByID(id *int64) *IssueUpdateOne {
+	if id != nil {
+		iuo = iuo.SetClosedByID(*id)
+	}
+	return iuo
+}
+
+// SetClosedBy sets the "closed_by" edge to the User entity.
+func (iuo *IssueUpdateOne) SetClosedBy(u *User) *IssueUpdateOne {
+	return iuo.SetClosedByID(u.ID)
+}
+
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
 func (iuo *IssueUpdateOne) AddAssigneeIDs(ids ...int64) *IssueUpdateOne {
 	iuo.mutation.AddAssigneeIDs(ids...)
@@ -1262,6 +1390,25 @@ func (iuo *IssueUpdateOne) AddTimeline(t ...*TimelineEvent) *IssueUpdateOne {
 	return iuo.AddTimelineIDs(ids...)
 }
 
+// SetPullRequestID sets the "pull_request" edge to the PullRequest entity by ID.
+func (iuo *IssueUpdateOne) SetPullRequestID(id int64) *IssueUpdateOne {
+	iuo.mutation.SetPullRequestID(id)
+	return iuo
+}
+
+// SetNillablePullRequestID sets the "pull_request" edge to the PullRequest entity by ID if the given value is not nil.
+func (iuo *IssueUpdateOne) SetNillablePullRequestID(id *int64) *IssueUpdateOne {
+	if id != nil {
+		iuo = iuo.SetPullRequestID(*id)
+	}
+	return iuo
+}
+
+// SetPullRequest sets the "pull_request" edge to the PullRequest entity.
+func (iuo *IssueUpdateOne) SetPullRequest(p *PullRequest) *IssueUpdateOne {
+	return iuo.SetPullRequestID(p.ID)
+}
+
 // Mutation returns the IssueMutation object of the builder.
 func (iuo *IssueUpdateOne) Mutation() *IssueMutation {
 	return iuo.mutation
@@ -1276,6 +1423,12 @@ func (iuo *IssueUpdateOne) ClearRepository() *IssueUpdateOne {
 // ClearUser clears the "user" edge to the User entity.
 func (iuo *IssueUpdateOne) ClearUser() *IssueUpdateOne {
 	iuo.mutation.ClearUser()
+	return iuo
+}
+
+// ClearClosedBy clears the "closed_by" edge to the User entity.
+func (iuo *IssueUpdateOne) ClearClosedBy() *IssueUpdateOne {
+	iuo.mutation.ClearClosedBy()
 	return iuo
 }
 
@@ -1340,6 +1493,12 @@ func (iuo *IssueUpdateOne) RemoveTimeline(t ...*TimelineEvent) *IssueUpdateOne {
 		ids[i] = t[i].ID
 	}
 	return iuo.RemoveTimelineIDs(ids...)
+}
+
+// ClearPullRequest clears the "pull_request" edge to the PullRequest entity.
+func (iuo *IssueUpdateOne) ClearPullRequest() *IssueUpdateOne {
+	iuo.mutation.ClearPullRequest()
+	return iuo
 }
 
 // Where appends a list predicates to the IssueUpdate builder.
@@ -1568,6 +1727,35 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if iuo.mutation.ClosedByCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   issue.ClosedByTable,
+			Columns: []string{issue.ClosedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.ClosedByIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   issue.ClosedByTable,
+			Columns: []string{issue.ClosedByColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if iuo.mutation.AssigneesCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
@@ -1696,6 +1884,35 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if iuo.mutation.PullRequestCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   issue.PullRequestTable,
+			Columns: []string{issue.PullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := iuo.mutation.PullRequestIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   issue.PullRequestTable,
+			Columns: []string{issue.PullRequestColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

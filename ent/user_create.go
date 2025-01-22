@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/gnolang/gh-sql/ent/issue"
 	"github.com/gnolang/gh-sql/ent/issuecomment"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/ent/timelineevent"
 	"github.com/gnolang/gh-sql/ent/user"
@@ -306,6 +307,51 @@ func (uc *UserCreate) AddIssuesCreated(i ...*Issue) *UserCreate {
 	return uc.AddIssuesCreatedIDs(ids...)
 }
 
+// AddIssuesClosedIDs adds the "issues_closed" edge to the Issue entity by IDs.
+func (uc *UserCreate) AddIssuesClosedIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddIssuesClosedIDs(ids...)
+	return uc
+}
+
+// AddIssuesClosed adds the "issues_closed" edges to the Issue entity.
+func (uc *UserCreate) AddIssuesClosed(i ...*Issue) *UserCreate {
+	ids := make([]int64, len(i))
+	for j := range i {
+		ids[j] = i[j].ID
+	}
+	return uc.AddIssuesClosedIDs(ids...)
+}
+
+// AddPrsCreatedIDs adds the "prs_created" edge to the PullRequest entity by IDs.
+func (uc *UserCreate) AddPrsCreatedIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddPrsCreatedIDs(ids...)
+	return uc
+}
+
+// AddPrsCreated adds the "prs_created" edges to the PullRequest entity.
+func (uc *UserCreate) AddPrsCreated(p ...*PullRequest) *UserCreate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddPrsCreatedIDs(ids...)
+}
+
+// AddPrsMergedIDs adds the "prs_merged" edge to the PullRequest entity by IDs.
+func (uc *UserCreate) AddPrsMergedIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddPrsMergedIDs(ids...)
+	return uc
+}
+
+// AddPrsMerged adds the "prs_merged" edges to the PullRequest entity.
+func (uc *UserCreate) AddPrsMerged(p ...*PullRequest) *UserCreate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddPrsMergedIDs(ids...)
+}
+
 // AddCommentsCreatedIDs adds the "comments_created" edge to the IssueComment entity by IDs.
 func (uc *UserCreate) AddCommentsCreatedIDs(ids ...int64) *UserCreate {
 	uc.mutation.AddCommentsCreatedIDs(ids...)
@@ -334,6 +380,36 @@ func (uc *UserCreate) AddIssuesAssigned(i ...*Issue) *UserCreate {
 		ids[j] = i[j].ID
 	}
 	return uc.AddIssuesAssignedIDs(ids...)
+}
+
+// AddPrsAssignedIDs adds the "prs_assigned" edge to the PullRequest entity by IDs.
+func (uc *UserCreate) AddPrsAssignedIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddPrsAssignedIDs(ids...)
+	return uc
+}
+
+// AddPrsAssigned adds the "prs_assigned" edges to the PullRequest entity.
+func (uc *UserCreate) AddPrsAssigned(p ...*PullRequest) *UserCreate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddPrsAssignedIDs(ids...)
+}
+
+// AddPrsReviewRequestedIDs adds the "prs_review_requested" edge to the PullRequest entity by IDs.
+func (uc *UserCreate) AddPrsReviewRequestedIDs(ids ...int64) *UserCreate {
+	uc.mutation.AddPrsReviewRequestedIDs(ids...)
+	return uc
+}
+
+// AddPrsReviewRequested adds the "prs_review_requested" edges to the PullRequest entity.
+func (uc *UserCreate) AddPrsReviewRequested(p ...*PullRequest) *UserCreate {
+	ids := make([]int64, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return uc.AddPrsReviewRequestedIDs(ids...)
 }
 
 // AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by IDs.
@@ -636,6 +712,54 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
+	if nodes := uc.mutation.IssuesClosedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.IssuesClosedTable,
+			Columns: []string{user.IssuesClosedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.PrsCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsCreatedTable,
+			Columns: []string{user.PrsCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.PrsMergedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PrsMergedTable,
+			Columns: []string{user.PrsMergedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	if nodes := uc.mutation.CommentsCreatedIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -661,6 +785,38 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(issue.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.PrsAssignedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsAssignedTable,
+			Columns: user.PrsAssignedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.PrsReviewRequestedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   user.PrsReviewRequestedTable,
+			Columns: user.PrsReviewRequestedPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

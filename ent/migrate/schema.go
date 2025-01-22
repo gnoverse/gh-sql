@@ -34,6 +34,7 @@ var (
 		{Name: "reactions", Type: field.TypeJSON},
 		{Name: "repository_issues", Type: field.TypeInt64},
 		{Name: "user_issues_created", Type: field.TypeInt64, Nullable: true},
+		{Name: "user_issues_closed", Type: field.TypeInt64, Nullable: true},
 	}
 	// IssuesTable holds the schema information for the "issues" table.
 	IssuesTable = &schema.Table{
@@ -52,6 +53,19 @@ var (
 				Columns:    []*schema.Column{IssuesColumns[23]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "issues_users_issues_closed",
+				Columns:    []*schema.Column{IssuesColumns[24]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "issue_number_repository_issues",
+				Unique:  true,
+				Columns: []*schema.Column{IssuesColumns[8], IssuesColumns[22]},
 			},
 		},
 	}
@@ -85,6 +99,71 @@ var (
 			{
 				Symbol:     "issue_comments_users_comments_created",
 				Columns:    []*schema.Column{IssueCommentsColumns[11]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// PullRequestsColumns holds the columns for the "pull_requests" table.
+	PullRequestsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "url", Type: field.TypeString},
+		{Name: "node_id", Type: field.TypeString},
+		{Name: "html_url", Type: field.TypeString},
+		{Name: "diff_url", Type: field.TypeString},
+		{Name: "patch_url", Type: field.TypeString},
+		{Name: "issue_url", Type: field.TypeString},
+		{Name: "commits_url", Type: field.TypeString},
+		{Name: "review_comments_url", Type: field.TypeString},
+		{Name: "review_comment_url", Type: field.TypeString},
+		{Name: "comments_url", Type: field.TypeString},
+		{Name: "statuses_url", Type: field.TypeString},
+		{Name: "number", Type: field.TypeInt64},
+		{Name: "state", Type: field.TypeEnum, Enums: []string{"open", "closed"}},
+		{Name: "locked", Type: field.TypeBool},
+		{Name: "title", Type: field.TypeString},
+		{Name: "body", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "closed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "merged_at", Type: field.TypeTime, Nullable: true},
+		{Name: "merge_commit_sha", Type: field.TypeString, Nullable: true},
+		{Name: "head", Type: field.TypeJSON},
+		{Name: "base", Type: field.TypeJSON},
+		{Name: "draft", Type: field.TypeBool, Nullable: true},
+		{Name: "author_association", Type: field.TypeEnum, Enums: []string{"COLLABORATOR", "CONTRIBUTOR", "FIRST_TIMER", "FIRST_TIME_CONTRIBUTOR", "MANNEQUIN", "MEMBER", "OWNER", "NONE"}},
+		{Name: "issue_pull_request", Type: field.TypeInt64, Unique: true},
+		{Name: "repository_pull_requests", Type: field.TypeInt64},
+		{Name: "user_prs_created", Type: field.TypeInt64, Nullable: true},
+		{Name: "user_prs_merged", Type: field.TypeInt64, Nullable: true},
+	}
+	// PullRequestsTable holds the schema information for the "pull_requests" table.
+	PullRequestsTable = &schema.Table{
+		Name:       "pull_requests",
+		Columns:    PullRequestsColumns,
+		PrimaryKey: []*schema.Column{PullRequestsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pull_requests_issues_pull_request",
+				Columns:    []*schema.Column{PullRequestsColumns[26]},
+				RefColumns: []*schema.Column{IssuesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "pull_requests_repositories_pull_requests",
+				Columns:    []*schema.Column{PullRequestsColumns[27]},
+				RefColumns: []*schema.Column{RepositoriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "pull_requests_users_prs_created",
+				Columns:    []*schema.Column{PullRequestsColumns[28]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "pull_requests_users_prs_merged",
+				Columns:    []*schema.Column{PullRequestsColumns[29]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -283,25 +362,87 @@ var (
 			},
 		},
 	}
+	// PullRequestAssigneesColumns holds the columns for the "pull_request_assignees" table.
+	PullRequestAssigneesColumns = []*schema.Column{
+		{Name: "pull_request_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+	}
+	// PullRequestAssigneesTable holds the schema information for the "pull_request_assignees" table.
+	PullRequestAssigneesTable = &schema.Table{
+		Name:       "pull_request_assignees",
+		Columns:    PullRequestAssigneesColumns,
+		PrimaryKey: []*schema.Column{PullRequestAssigneesColumns[0], PullRequestAssigneesColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pull_request_assignees_pull_request_id",
+				Columns:    []*schema.Column{PullRequestAssigneesColumns[0]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "pull_request_assignees_user_id",
+				Columns:    []*schema.Column{PullRequestAssigneesColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// PullRequestRequestedReviewersColumns holds the columns for the "pull_request_requested_reviewers" table.
+	PullRequestRequestedReviewersColumns = []*schema.Column{
+		{Name: "pull_request_id", Type: field.TypeInt64},
+		{Name: "user_id", Type: field.TypeInt64},
+	}
+	// PullRequestRequestedReviewersTable holds the schema information for the "pull_request_requested_reviewers" table.
+	PullRequestRequestedReviewersTable = &schema.Table{
+		Name:       "pull_request_requested_reviewers",
+		Columns:    PullRequestRequestedReviewersColumns,
+		PrimaryKey: []*schema.Column{PullRequestRequestedReviewersColumns[0], PullRequestRequestedReviewersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pull_request_requested_reviewers_pull_request_id",
+				Columns:    []*schema.Column{PullRequestRequestedReviewersColumns[0]},
+				RefColumns: []*schema.Column{PullRequestsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "pull_request_requested_reviewers_user_id",
+				Columns:    []*schema.Column{PullRequestRequestedReviewersColumns[1]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		IssuesTable,
 		IssueCommentsTable,
+		PullRequestsTable,
 		RepositoriesTable,
 		TimelineEventsTable,
 		UsersTable,
 		IssueAssigneesTable,
+		PullRequestAssigneesTable,
+		PullRequestRequestedReviewersTable,
 	}
 )
 
 func init() {
 	IssuesTable.ForeignKeys[0].RefTable = RepositoriesTable
 	IssuesTable.ForeignKeys[1].RefTable = UsersTable
+	IssuesTable.ForeignKeys[2].RefTable = UsersTable
 	IssueCommentsTable.ForeignKeys[0].RefTable = IssuesTable
 	IssueCommentsTable.ForeignKeys[1].RefTable = UsersTable
+	PullRequestsTable.ForeignKeys[0].RefTable = IssuesTable
+	PullRequestsTable.ForeignKeys[1].RefTable = RepositoriesTable
+	PullRequestsTable.ForeignKeys[2].RefTable = UsersTable
+	PullRequestsTable.ForeignKeys[3].RefTable = UsersTable
 	RepositoriesTable.ForeignKeys[0].RefTable = UsersTable
 	TimelineEventsTable.ForeignKeys[0].RefTable = IssuesTable
 	TimelineEventsTable.ForeignKeys[1].RefTable = UsersTable
 	IssueAssigneesTable.ForeignKeys[0].RefTable = IssuesTable
 	IssueAssigneesTable.ForeignKeys[1].RefTable = UsersTable
+	PullRequestAssigneesTable.ForeignKeys[0].RefTable = PullRequestsTable
+	PullRequestAssigneesTable.ForeignKeys[1].RefTable = UsersTable
+	PullRequestRequestedReviewersTable.ForeignKeys[0].RefTable = PullRequestsTable
+	PullRequestRequestedReviewersTable.ForeignKeys[1].RefTable = UsersTable
 }

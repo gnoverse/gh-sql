@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/gnolang/gh-sql/ent"
 	"github.com/gnolang/gh-sql/ent/issue"
+	"github.com/gnolang/gh-sql/ent/pullrequest"
+	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/pkg/model"
 	"golang.org/x/sync/errgroup"
 )
@@ -47,7 +50,10 @@ func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, er
 	}
 
 	h.Go(func() error {
-		fetchIssues(ctx, h, f.owner, f.repo)
+		// Pulls are fetched after issues, so that pulls already have all of the
+		// PRs they link to fetched into the database.
+		fetchIssues(ctx, h, r.Owner.Login, r.Name)
+		fetchPulls(ctx, h, r.Owner.Login, r.Name)
 		return nil
 	})
 
@@ -112,9 +118,13 @@ func (fi fetchIssue) ID() string {
 
 type issueAndEdges struct {
 	ent.Issue
+
 	User *struct {
 		Login string `json:"login"`
 	} `json:"user"`
+	ClosedBy *struct {
+		Login string `json:"login"`
+	} `json:"closed_by"`
 	Assignees []struct {
 		Login string `json:"login"`
 	} `json:"assignees"`
@@ -131,32 +141,40 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
 func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.Issue, error) {
 	cr := h.DB.Issue.Create().CopyIssue(&i.Issue)
 
-	eg, egCtx := errgroup.WithContext(ctx)
+	// Note: we don't pass the resulting context, as otherwise any `fetches`
+	// originating from the `fetch` would fail once the errgroup here has terminated.
+	eg, _ := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		// Fetch repository and set repo ID.
-		repo, err := fetch(egCtx, h, fetchRepository{fi.owner, fi.repo})
+		repo, err := fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
 		if err != nil {
 			return err
 		}
 		cr.SetRepositoryID(repo.ID)
 		return nil
 	})
+	var setterLock sync.Mutex
 	localGetUser := func(login string, setter func(id int64) *ent.IssueCreate) {
 		if login == "" {
 			return
 		}
 		eg.Go(func() error {
 			// Fetch creator
-			user, err := fetch(egCtx, h, fetchUser{login})
+			user, err := fetch(ctx, h, fetchUser{login})
 			if err != nil {
 				return err
 			}
+			setterLock.Lock()
+			defer setterLock.Unlock()
 			setter(user.ID)
 			return nil
 		})
 	}
 	if i.User != nil {
 		localGetUser(i.User.Login, cr.SetUserID)
+	}
+	if i.ClosedBy != nil {
+		localGetUser(i.ClosedBy.Login, cr.SetClosedByID)
 	}
 	for _, assignee := range i.Assignees {
 		login := assignee.Login
@@ -212,7 +230,9 @@ func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 				return fi.fetch(ctx, h, i)
 			})
 			if created {
-				fn()
+				if _, err := fn(); err != nil {
+					h.warn(err)
+				}
 			}
 		}
 		return nil
@@ -319,4 +339,149 @@ func fetchIssueEvents(ctx context.Context, h *hub, fi fetchIssue) error {
 		return fmt.Errorf("fetchIssueEvents(%q): %w", fi.ID(), err)
 	}
 	return nil
+}
+
+// fetchPullRequest can be used to retrive an issue, knowing its repo and issue number.
+type fetchPullRequest struct {
+	owner      string
+	repo       string
+	pullNumber int64
+}
+
+var _ resource[*ent.PullRequest] = fetchPullRequest{}
+
+func (fi fetchPullRequest) ID() string {
+	return fmt.Sprintf("/repos/%s/%s/pulls/%d",
+		fi.owner, fi.repo, fi.pullNumber)
+}
+
+func (fi fetchPullRequest) Fetch(ctx context.Context, h *hub) (*ent.PullRequest, error) {
+	var pr pullAndEdges
+	if err := httpGet(ctx, h, fi.ID(), &pr); err != nil {
+		return nil, fmt.Errorf("fetchPullRequest%+v get: %w", fi, err)
+	}
+	return fi.fetch(ctx, h, pr)
+}
+
+type pullAndEdges struct {
+	ent.PullRequest
+
+	User *struct {
+		Login string `json:"login"`
+	} `json:"user"`
+	Assignees []struct {
+		Login string `json:"login"`
+	} `json:"assignees"`
+	RequestedReviewers []struct {
+		Login string `json:"login"`
+	} `json:"requested_reviewers"`
+}
+
+func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (*ent.PullRequest, error) {
+	cr := h.DB.PullRequest.Create().CopyPullRequest(&pr.PullRequest)
+
+	eg, _ := errgroup.WithContext(ctx)
+	iss, err := h.DB.Issue.Query().
+		Where(
+			issue.HasRepositoryWith(repository.FullName(fi.owner+"/"+fi.repo)),
+			issue.Number(pr.Number),
+		).
+		Only(ctx)
+	if err != nil && !ent.IsNotFound(err) {
+		return nil, err
+	}
+	if iss == nil || iss.UpdatedAt.Before(pr.UpdatedAt) {
+		// Fetch issue.
+		eg.Go(func() error {
+			iss, err := fetch(ctx, h, fetchIssue{fi.owner, fi.repo, fi.pullNumber})
+			if err != nil {
+				return err
+			}
+			cr.SetIssueID(iss.ID)
+			return nil
+		})
+	} else {
+		cr.SetIssueID(iss.ID)
+	}
+	eg.Go(func() error {
+		// Fetch repository and set repo ID.
+		repo, err := fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
+		if err != nil {
+			return err
+		}
+		cr.SetRepositoryID(repo.ID)
+		return nil
+	})
+	var setterLock sync.Mutex
+	localGetUser := func(login string, setter func(id int64) *ent.PullRequestCreate) {
+		if login == "" {
+			return
+		}
+		eg.Go(func() error {
+			// Fetch creator
+			user, err := fetch(ctx, h, fetchUser{login})
+			if err != nil {
+				return err
+			}
+			setterLock.Lock()
+			defer setterLock.Unlock()
+			setter(user.ID)
+			return nil
+		})
+	}
+	if pr.User != nil {
+		localGetUser(pr.User.Login, cr.SetUserID)
+	}
+	for _, assignee := range pr.Assignees {
+		login := assignee.Login
+		localGetUser(login, func(i int64) *ent.PullRequestCreate { return cr.AddAssigneeIDs(i) })
+	}
+	for _, reviewer := range pr.RequestedReviewers {
+		login := reviewer.Login
+		localGetUser(login, func(i int64) *ent.PullRequestCreate { return cr.AddRequestedReviewerIDs(i) })
+	}
+
+	err = eg.Wait()
+	if err != nil {
+		return nil, fmt.Errorf("fetchPullRequest%+v fetch deps: %w", fi, err)
+	}
+
+	err = cr.OnConflict().UpdateNewValues().
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fetchPullRequest%+v save: %w", fi, err)
+	}
+
+	return h.DB.PullRequest.Get(ctx, pr.ID)
+}
+
+func fetchPulls(ctx context.Context, h *hub, repoOwner, repoName string) {
+	err := httpGetIterate(ctx, h, fmt.Sprintf("/repos/%s/%s/pulls?state=all&per_page=100", repoOwner, repoName),
+		func(pr pullAndEdges) error {
+			oldPR, err := h.DB.PullRequest.Query().
+				Select(pullrequest.FieldUpdatedAt).
+				Where(pullrequest.ID(pr.ID)).
+				Only(ctx)
+			if err != nil && !ent.IsNotFound(err) {
+				return err
+			}
+
+			if oldPR == nil || !oldPR.UpdatedAt.Equal(pr.UpdatedAt) {
+				// this does not incur in an additional request; we have all the data
+				// we want from this request already
+				fi := fetchPullRequest{repoOwner, repoName, pr.Number}
+				fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.PullRequest, error) {
+					return fi.fetch(ctx, h, pr)
+				})
+				if created {
+					if _, err := fn(); err != nil {
+						h.warn(err)
+					}
+				}
+			}
+			return nil
+		})
+	if err != nil {
+		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, err))
+	}
 }

@@ -63,3 +63,11 @@ var stateReasons = [...]string{
 func (StateReason) Values() []string {
 	return stateReasons[:]
 }
+
+type PRBranch struct {
+	Label string `json:"label"`
+	Ref   string `json:"ref"`
+	Sha   string `json:"sha"`
+	// NOTE: there is also repo, user,
+	// but we don't implement those for our use case.
+}

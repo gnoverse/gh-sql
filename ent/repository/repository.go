@@ -172,6 +172,8 @@ const (
 	EdgeOwner = "owner"
 	// EdgeIssues holds the string denoting the issues edge name in mutations.
 	EdgeIssues = "issues"
+	// EdgePullRequests holds the string denoting the pull_requests edge name in mutations.
+	EdgePullRequests = "pull_requests"
 	// Table holds the table name of the repository in the database.
 	Table = "repositories"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -188,6 +190,13 @@ const (
 	IssuesInverseTable = "issues"
 	// IssuesColumn is the table column denoting the issues relation/edge.
 	IssuesColumn = "repository_issues"
+	// PullRequestsTable is the table that holds the pull_requests relation/edge.
+	PullRequestsTable = "pull_requests"
+	// PullRequestsInverseTable is the table name for the PullRequest entity.
+	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
+	PullRequestsInverseTable = "pull_requests"
+	// PullRequestsColumn is the table column denoting the pull_requests relation/edge.
+	PullRequestsColumn = "repository_pull_requests"
 )
 
 // Columns holds all SQL columns for repository fields.
@@ -720,6 +729,20 @@ func ByIssues(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newIssuesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByPullRequestsCount orders the results by pull_requests count.
+func ByPullRequestsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPullRequestsStep(), opts...)
+	}
+}
+
+// ByPullRequests orders the results by pull_requests terms.
+func ByPullRequests(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPullRequestsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -732,5 +755,12 @@ func newIssuesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IssuesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, IssuesTable, IssuesColumn),
+	)
+}
+func newPullRequestsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PullRequestsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PullRequestsTable, PullRequestsColumn),
 	)
 }

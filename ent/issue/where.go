@@ -1227,6 +1227,29 @@ func HasUserWith(preds ...predicate.User) predicate.Issue {
 	})
 }
 
+// HasClosedBy applies the HasEdge predicate on the "closed_by" edge.
+func HasClosedBy() predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, ClosedByTable, ClosedByColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasClosedByWith applies the HasEdge predicate on the "closed_by" edge with a given conditions (other predicates).
+func HasClosedByWith(preds ...predicate.User) predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := newClosedByStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasAssignees applies the HasEdge predicate on the "assignees" edge.
 func HasAssignees() predicate.Issue {
 	return predicate.Issue(func(s *sql.Selector) {
@@ -1288,6 +1311,29 @@ func HasTimeline() predicate.Issue {
 func HasTimelineWith(preds ...predicate.TimelineEvent) predicate.Issue {
 	return predicate.Issue(func(s *sql.Selector) {
 		step := newTimelineStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasPullRequest applies the HasEdge predicate on the "pull_request" edge.
+func HasPullRequest() predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, PullRequestTable, PullRequestColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPullRequestWith applies the HasEdge predicate on the "pull_request" edge with a given conditions (other predicates).
+func HasPullRequestWith(preds ...predicate.PullRequest) predicate.Issue {
+	return predicate.Issue(func(s *sql.Selector) {
+		step := newPullRequestStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

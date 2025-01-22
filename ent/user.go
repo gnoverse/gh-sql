@@ -90,15 +90,25 @@ type UserEdges struct {
 	Repositories []*Repository `json:"repositories,omitempty"`
 	// IssuesCreated holds the value of the issues_created edge.
 	IssuesCreated []*Issue `json:"issues_created,omitempty"`
+	// IssuesClosed holds the value of the issues_closed edge.
+	IssuesClosed []*Issue `json:"issues_closed,omitempty"`
+	// PrsCreated holds the value of the prs_created edge.
+	PrsCreated []*PullRequest `json:"prs_created,omitempty"`
+	// PrsMerged holds the value of the prs_merged edge.
+	PrsMerged []*PullRequest `json:"prs_merged,omitempty"`
 	// CommentsCreated holds the value of the comments_created edge.
 	CommentsCreated []*IssueComment `json:"comments_created,omitempty"`
 	// IssuesAssigned holds the value of the issues_assigned edge.
 	IssuesAssigned []*Issue `json:"issues_assigned,omitempty"`
+	// PrsAssigned holds the value of the prs_assigned edge.
+	PrsAssigned []*PullRequest `json:"prs_assigned,omitempty"`
+	// PrsReviewRequested holds the value of the prs_review_requested edge.
+	PrsReviewRequested []*PullRequest `json:"prs_review_requested,omitempty"`
 	// TimelineEventsCreated holds the value of the timeline_events_created edge.
 	TimelineEventsCreated []*TimelineEvent `json:"timeline_events_created,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [10]bool
 }
 
 // RepositoriesOrErr returns the Repositories value or an error if the edge
@@ -119,10 +129,37 @@ func (e UserEdges) IssuesCreatedOrErr() ([]*Issue, error) {
 	return nil, &NotLoadedError{edge: "issues_created"}
 }
 
+// IssuesClosedOrErr returns the IssuesClosed value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) IssuesClosedOrErr() ([]*Issue, error) {
+	if e.loadedTypes[2] {
+		return e.IssuesClosed, nil
+	}
+	return nil, &NotLoadedError{edge: "issues_closed"}
+}
+
+// PrsCreatedOrErr returns the PrsCreated value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PrsCreatedOrErr() ([]*PullRequest, error) {
+	if e.loadedTypes[3] {
+		return e.PrsCreated, nil
+	}
+	return nil, &NotLoadedError{edge: "prs_created"}
+}
+
+// PrsMergedOrErr returns the PrsMerged value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PrsMergedOrErr() ([]*PullRequest, error) {
+	if e.loadedTypes[4] {
+		return e.PrsMerged, nil
+	}
+	return nil, &NotLoadedError{edge: "prs_merged"}
+}
+
 // CommentsCreatedOrErr returns the CommentsCreated value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) CommentsCreatedOrErr() ([]*IssueComment, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[5] {
 		return e.CommentsCreated, nil
 	}
 	return nil, &NotLoadedError{edge: "comments_created"}
@@ -131,16 +168,34 @@ func (e UserEdges) CommentsCreatedOrErr() ([]*IssueComment, error) {
 // IssuesAssignedOrErr returns the IssuesAssigned value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) IssuesAssignedOrErr() ([]*Issue, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[6] {
 		return e.IssuesAssigned, nil
 	}
 	return nil, &NotLoadedError{edge: "issues_assigned"}
 }
 
+// PrsAssignedOrErr returns the PrsAssigned value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PrsAssignedOrErr() ([]*PullRequest, error) {
+	if e.loadedTypes[7] {
+		return e.PrsAssigned, nil
+	}
+	return nil, &NotLoadedError{edge: "prs_assigned"}
+}
+
+// PrsReviewRequestedOrErr returns the PrsReviewRequested value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PrsReviewRequestedOrErr() ([]*PullRequest, error) {
+	if e.loadedTypes[8] {
+		return e.PrsReviewRequested, nil
+	}
+	return nil, &NotLoadedError{edge: "prs_review_requested"}
+}
+
 // TimelineEventsCreatedOrErr returns the TimelineEventsCreated value or an error if the edge
 // was not loaded in eager-loading.
 func (e UserEdges) TimelineEventsCreatedOrErr() ([]*TimelineEvent, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[9] {
 		return e.TimelineEventsCreated, nil
 	}
 	return nil, &NotLoadedError{edge: "timeline_events_created"}
@@ -383,6 +438,21 @@ func (u *User) QueryIssuesCreated() *IssueQuery {
 	return NewUserClient(u.config).QueryIssuesCreated(u)
 }
 
+// QueryIssuesClosed queries the "issues_closed" edge of the User entity.
+func (u *User) QueryIssuesClosed() *IssueQuery {
+	return NewUserClient(u.config).QueryIssuesClosed(u)
+}
+
+// QueryPrsCreated queries the "prs_created" edge of the User entity.
+func (u *User) QueryPrsCreated() *PullRequestQuery {
+	return NewUserClient(u.config).QueryPrsCreated(u)
+}
+
+// QueryPrsMerged queries the "prs_merged" edge of the User entity.
+func (u *User) QueryPrsMerged() *PullRequestQuery {
+	return NewUserClient(u.config).QueryPrsMerged(u)
+}
+
 // QueryCommentsCreated queries the "comments_created" edge of the User entity.
 func (u *User) QueryCommentsCreated() *IssueCommentQuery {
 	return NewUserClient(u.config).QueryCommentsCreated(u)
@@ -391,6 +461,16 @@ func (u *User) QueryCommentsCreated() *IssueCommentQuery {
 // QueryIssuesAssigned queries the "issues_assigned" edge of the User entity.
 func (u *User) QueryIssuesAssigned() *IssueQuery {
 	return NewUserClient(u.config).QueryIssuesAssigned(u)
+}
+
+// QueryPrsAssigned queries the "prs_assigned" edge of the User entity.
+func (u *User) QueryPrsAssigned() *PullRequestQuery {
+	return NewUserClient(u.config).QueryPrsAssigned(u)
+}
+
+// QueryPrsReviewRequested queries the "prs_review_requested" edge of the User entity.
+func (u *User) QueryPrsReviewRequested() *PullRequestQuery {
+	return NewUserClient(u.config).QueryPrsReviewRequested(u)
 }
 
 // QueryTimelineEventsCreated queries the "timeline_events_created" edge of the User entity.

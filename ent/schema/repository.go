@@ -135,6 +135,7 @@ func (Repository) Edges() []ent.Edge {
 			Ref("repositories").
 			Unique(),
 		edge.To("issues", Issue.Type),
+		edge.To("pull_requests", PullRequest.Type),
 		// edge: template_repository (#/components/schemas/nullable-repository)
 		// edge: organization (#/components/schemas/nullable-simple-user)
 		// edge: parent (#/components/schemas/repository)

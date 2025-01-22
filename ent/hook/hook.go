@@ -33,6 +33,18 @@ func (f IssueCommentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.IssueCommentMutation", m)
 }
 
+// The PullRequestFunc type is an adapter to allow the use of ordinary
+// function as PullRequest mutator.
+type PullRequestFunc func(context.Context, *ent.PullRequestMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PullRequestFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PullRequestMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PullRequestMutation", m)
+}
+
 // The RepositoryFunc type is an adapter to allow the use of ordinary
 // function as Repository mutator.
 type RepositoryFunc func(context.Context, *ent.RepositoryMutation) (ent.Value, error)
