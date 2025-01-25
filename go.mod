@@ -1,4 +1,4 @@
-module github.com/gnolang/gh-sql
+module github.com/gnoverse/gh-sql
 
 go 1.23.2
 

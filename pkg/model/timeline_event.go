@@ -15,7 +15,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/gnolang/gh-sql/pkg/model/internal/jsoncatcher"
+	"github.com/gnoverse/gh-sql/pkg/model/internal/jsoncatcher"
 )
 
 // TimelineEventWrapper wraps all TimelineEvents, unmarshaling JSON data

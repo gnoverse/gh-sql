@@ -9,18 +9,18 @@ import (
 	"log"
 	"reflect"
 
-	"github.com/gnolang/gh-sql/ent/migrate"
+	"github.com/gnoverse/gh-sql/ent/migrate"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/gnolang/gh-sql/ent/issue"
-	"github.com/gnolang/gh-sql/ent/issuecomment"
-	"github.com/gnolang/gh-sql/ent/pullrequest"
-	"github.com/gnolang/gh-sql/ent/repository"
-	"github.com/gnolang/gh-sql/ent/timelineevent"
-	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnoverse/gh-sql/ent/issue"
+	"github.com/gnoverse/gh-sql/ent/issuecomment"
+	"github.com/gnoverse/gh-sql/ent/pullrequest"
+	"github.com/gnoverse/gh-sql/ent/repository"
+	"github.com/gnoverse/gh-sql/ent/timelineevent"
+	"github.com/gnoverse/gh-sql/ent/user"
 )
 
 // Client is the client that holds all ent builders.

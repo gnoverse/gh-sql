@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/gnolang/gh-sql/ent/issuecomment"
-	"github.com/gnolang/gh-sql/ent/predicate"
+	"github.com/gnoverse/gh-sql/ent/issuecomment"
+	"github.com/gnoverse/gh-sql/ent/predicate"
 )
 
 // IssueCommentDelete is the builder for deleting a IssueComment entity.

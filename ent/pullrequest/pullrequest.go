@@ -7,7 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/gnolang/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/pkg/model"
 )
 
 const (

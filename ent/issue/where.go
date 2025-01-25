@@ -7,8 +7,8 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/gnolang/gh-sql/ent/predicate"
-	"github.com/gnolang/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/ent/predicate"
+	"github.com/gnoverse/gh-sql/pkg/model"
 )
 
 // ID filters vertices based on their ID field.

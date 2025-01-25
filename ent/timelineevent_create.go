@@ -12,10 +12,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/gnolang/gh-sql/ent/issue"
-	"github.com/gnolang/gh-sql/ent/timelineevent"
-	"github.com/gnolang/gh-sql/ent/user"
-	"github.com/gnolang/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/ent/issue"
+	"github.com/gnoverse/gh-sql/ent/timelineevent"
+	"github.com/gnoverse/gh-sql/ent/user"
+	"github.com/gnoverse/gh-sql/pkg/model"
 )
 
 // TimelineEventCreate is the builder for creating a TimelineEvent entity.

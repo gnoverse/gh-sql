@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/gnolang/gh-sql/ent"
-	"github.com/gnolang/gh-sql/ent/issue"
-	"github.com/gnolang/gh-sql/ent/pullrequest"
-	"github.com/gnolang/gh-sql/ent/repository"
-	"github.com/gnolang/gh-sql/pkg/model"
-	"github.com/gnolang/gh-sql/pkg/sync/internal/synchub"
+	"github.com/gnoverse/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/ent/issue"
+	"github.com/gnoverse/gh-sql/ent/pullrequest"
+	"github.com/gnoverse/gh-sql/ent/repository"
+	"github.com/gnoverse/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/pkg/sync/internal/synchub"
 	"golang.org/x/sync/errgroup"
 )
 

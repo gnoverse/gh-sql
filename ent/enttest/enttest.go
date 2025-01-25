@@ -5,12 +5,12 @@ package enttest
 import (
 	"context"
 
-	"github.com/gnolang/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/ent"
 	// required by schema hooks.
-	_ "github.com/gnolang/gh-sql/ent/runtime"
+	_ "github.com/gnoverse/gh-sql/ent/runtime"
 
 	"entgo.io/ent/dialect/sql/schema"
-	"github.com/gnolang/gh-sql/ent/migrate"
+	"github.com/gnoverse/gh-sql/ent/migrate"
 )
 
 type (

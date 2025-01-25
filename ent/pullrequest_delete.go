@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/gnolang/gh-sql/ent/predicate"
-	"github.com/gnolang/gh-sql/ent/pullrequest"
+	"github.com/gnoverse/gh-sql/ent/predicate"
+	"github.com/gnoverse/gh-sql/ent/pullrequest"
 )
 
 // PullRequestDelete is the builder for deleting a PullRequest entity.

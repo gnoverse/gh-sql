@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/gnolang/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/pkg/model"
 )
 
 // Repository holds the schema definition for the Repository entity.

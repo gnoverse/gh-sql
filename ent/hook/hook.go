@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gnolang/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/ent"
 )
 
 // The IssueFunc type is an adapter to allow the use of ordinary

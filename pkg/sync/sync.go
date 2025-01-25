@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/gnolang/gh-sql/ent"
-	"github.com/gnolang/gh-sql/pkg/model"
-	"github.com/gnolang/gh-sql/pkg/sync/internal/synchub"
+	"github.com/gnoverse/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/pkg/sync/internal/synchub"
 )
 
 // Options repsent the options to run Sync. These match the flags provided on

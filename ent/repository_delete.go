@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/gnolang/gh-sql/ent/predicate"
-	"github.com/gnolang/gh-sql/ent/repository"
+	"github.com/gnoverse/gh-sql/ent/predicate"
+	"github.com/gnoverse/gh-sql/ent/repository"
 )
 
 // RepositoryDelete is the builder for deleting a Repository entity.

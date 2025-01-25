@@ -11,11 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/gnolang/gh-sql/ent/issue"
-	"github.com/gnolang/gh-sql/ent/predicate"
-	"github.com/gnolang/gh-sql/ent/pullrequest"
-	"github.com/gnolang/gh-sql/ent/repository"
-	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnoverse/gh-sql/ent/issue"
+	"github.com/gnoverse/gh-sql/ent/predicate"
+	"github.com/gnoverse/gh-sql/ent/pullrequest"
+	"github.com/gnoverse/gh-sql/ent/repository"
+	"github.com/gnoverse/gh-sql/ent/user"
 )
 
 // PullRequestQuery is the builder for querying PullRequest entities.

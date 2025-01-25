@@ -11,11 +11,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gnolang/gh-sql/ent"
-	"github.com/gnolang/gh-sql/ent/migrate"
-	"github.com/gnolang/gh-sql/pkg/model"
-	"github.com/gnolang/gh-sql/pkg/rest"
-	"github.com/gnolang/gh-sql/pkg/sync"
+	"github.com/gnoverse/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/ent/migrate"
+	"github.com/gnoverse/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/pkg/rest"
+	"github.com/gnoverse/gh-sql/pkg/sync"
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
 

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"runtime/debug"
 
-	"github.com/gnolang/gh-sql/ent"
-	"github.com/gnolang/gh-sql/ent/repository"
-	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnoverse/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/ent/repository"
+	"github.com/gnoverse/gh-sql/ent/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -124,7 +124,7 @@ func handleNotFound(err error) error {
 }
 
 func (s *server) handleRoot(w http.ResponseWriter, _ *http.Request) {
-	w.Write([]byte("gh-sql serve\nhttps://github.com/gnolang/gh-sql\n"))
+	w.Write([]byte("gh-sql serve\nhttps://github.com/gnoverse/gh-sql\n"))
 }
 
 func encodeJSON(w http.ResponseWriter, v any) error {

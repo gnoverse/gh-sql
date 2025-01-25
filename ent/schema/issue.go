@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"github.com/gnolang/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/pkg/model"
 )
 
 // Issue holds the schema definition for the Issue entity.

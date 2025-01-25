@@ -10,7 +10,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/gnolang/gh-sql/ent/user"
+	"github.com/gnoverse/gh-sql/ent/user"
 )
 
 // User is the model entity for the User schema.

@@ -10,9 +10,9 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/gnolang/gh-sql/ent/repository"
-	"github.com/gnolang/gh-sql/ent/user"
-	"github.com/gnolang/gh-sql/pkg/model"
+	"github.com/gnoverse/gh-sql/ent/repository"
+	"github.com/gnoverse/gh-sql/ent/user"
+	"github.com/gnoverse/gh-sql/pkg/model"
 )
 
 // Repository is the model entity for the Repository schema.

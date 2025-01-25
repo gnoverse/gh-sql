@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gnolang/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/ent"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -187,7 +187,7 @@ func httpInternal(ctx context.Context, h *Hub, method, uri string, body io.Reade
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("X-GitHub-Api-Version", apiVersion)
-	req.Header.Set("User-Agent", "gnolang/gh-sql")
+	req.Header.Set("User-Agent", "gnoverse/gh-sql")
 	if h.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+h.Token)
 	}
