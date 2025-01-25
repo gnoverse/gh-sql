@@ -15,6 +15,7 @@ import (
 
 // fetchIssue can be used to retrive an issue, knowing its repo and issue number.
 type fetchIssue struct {
+	Options
 	owner       string
 	repo        string
 	issueNumber int64
@@ -44,14 +45,18 @@ func (fi fetchIssue) Fetch(ctx context.Context, h *synchub.Hub) (*ent.Issue, err
 }
 
 func (fi fetchIssue) fetch(ctx context.Context, h *synchub.Hub, i issueAndEdges) (*ent.Issue, error) {
-	cr := h.DB.Issue.Create().CopyIssue(&i.Issue)
+	cr := fi.DB.Issue.Create().CopyIssue(&i.Issue)
 
 	// Note: we don't pass the resulting context, as otherwise any `fetches`
 	// originating from the `fetch` would fail once the errgroup here has terminated.
 	eg, _ := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		// Fetch repository and set repo ID.
-		repo, err := synchub.Fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
+		repo, err := synchub.Fetch(ctx, h, fetchRepository{
+			Options: fi.Options,
+			owner:   fi.owner,
+			repo:    fi.repo,
+		})
 		if err != nil {
 			return err
 		}
@@ -65,7 +70,7 @@ func (fi fetchIssue) fetch(ctx context.Context, h *synchub.Hub, i issueAndEdges)
 		}
 		eg.Go(func() error {
 			// Fetch creator
-			user, err := synchub.Fetch(ctx, h, fetchUser{login})
+			user, err := synchub.Fetch(ctx, h, fetchUser{fi.Options, login})
 			if err != nil {
 				return err
 			}
@@ -114,15 +119,18 @@ func (fi fetchIssue) fetch(ctx context.Context, h *synchub.Hub, i issueAndEdges)
 		return nil
 	})
 
-	return h.DB.Issue.Get(ctx, i.ID)
+	return fi.DB.Issue.Get(ctx, i.ID)
 }
 
-func fetchIssues(ctx context.Context, h *synchub.Hub, repoOwner, repoName string) {
+func fetchIssues(ctx context.Context, h *synchub.Hub, opts Options, repoOwner, repoName string) {
 	iter := synchub.GetIterate[issueAndEdges](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName))
 	for i := range iter.Values {
-		iss, err := h.DB.Issue.Query().
+		if !opts.CreatedAfter.IsZero() && i.CreatedAt.Before(opts.CreatedAfter) {
+			break
+		}
+		iss, err := opts.DB.Issue.Query().
 			Select(issue.FieldUpdatedAt).
 			Where(issue.ID(i.ID)).
 			Only(ctx)
@@ -134,7 +142,12 @@ func fetchIssues(ctx context.Context, h *synchub.Hub, repoOwner, repoName string
 		if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
 			// this does not incur in an additional request; we have all the data
 			// we want from this request already
-			fi := fetchIssue{repoOwner, repoName, i.Number}
+			fi := fetchIssue{
+				Options:     opts,
+				owner:       repoOwner,
+				repo:        repoName,
+				issueNumber: i.Number,
+			}
 			fn, created := synchub.SetGetter(h, fi.ID(), func() (*ent.Issue, error) {
 				return fi.fetch(ctx, h, i)
 			})
@@ -166,12 +179,12 @@ func fetchIssueComments(ctx context.Context, h *synchub.Hub, fi fetchIssue) erro
 	)
 	for ic := range iter.Values {
 		// Create issue comment
-		cr := h.DB.IssueComment.Create().
+		cr := fi.DB.IssueComment.Create().
 			CopyIssueComment(&ic.IssueComment).
 			SetIssueID(iss.ID)
 		// Assign user if possible.
 		if ic.User != nil && ic.User.Login != "" {
-			us, err := synchub.Fetch(ctx, h, fetchUser{ic.User.Login})
+			us, err := synchub.Fetch(ctx, h, fetchUser{fi.Options, ic.User.Login})
 			if err != nil {
 				h.Warn(err)
 				continue
@@ -226,7 +239,7 @@ func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error 
 	)
 	for iev := range iter.Values {
 		// Create issue event.
-		cr := h.DB.TimelineEvent.Create().
+		cr := fi.DB.TimelineEvent.Create().
 			CopyTimelineEvent(&iev.TimelineEvent).
 			SetIssueID(iss.ID)
 
@@ -241,7 +254,7 @@ func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error 
 
 		// Assign user if possible.
 		if actor != nil {
-			us, err := synchub.Fetch(ctx, h, fetchUser{actor.Login})
+			us, err := synchub.Fetch(ctx, h, fetchUser{fi.Options, actor.Login})
 			if err != nil {
 				return err
 			}

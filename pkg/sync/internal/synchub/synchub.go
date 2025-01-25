@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gnoverse/gh-sql/ent"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -30,7 +29,6 @@ const (
 
 // Options repsent the options for creating a hub.
 type Options struct {
-	DB    *ent.Client // TODO: find a way to move it out of this package.
 	Token string
 
 	DebugHTTP bool

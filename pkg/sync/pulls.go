@@ -16,6 +16,7 @@ import (
 
 // fetchPullRequest can be used to retrive an issue, knowing its repo and issue number.
 type fetchPullRequest struct {
+	Options
 	owner      string
 	repo       string
 	pullNumber int64
@@ -44,13 +45,13 @@ type pullAndEdges struct {
 	RequestedReviewers []model.SimpleUser `json:"requested_reviewers"`
 }
 
-func (fi fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAndEdges) (*ent.PullRequest, error) {
-	cr := h.DB.PullRequest.Create().CopyPullRequest(&pr.PullRequest)
+func (fpr fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAndEdges) (*ent.PullRequest, error) {
+	cr := fpr.DB.PullRequest.Create().CopyPullRequest(&pr.PullRequest)
 
 	eg, _ := errgroup.WithContext(ctx)
-	iss, err := h.DB.Issue.Query().
+	iss, err := fpr.DB.Issue.Query().
 		Where(
-			issue.HasRepositoryWith(repository.FullName(fi.owner+"/"+fi.repo)),
+			issue.HasRepositoryWith(repository.FullName(fpr.owner+"/"+fpr.repo)),
 			issue.Number(pr.Number),
 		).
 		Only(ctx)
@@ -60,7 +61,12 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAnd
 	if iss == nil || iss.UpdatedAt.Before(pr.UpdatedAt) {
 		// Fetch issue.
 		eg.Go(func() error {
-			iss, err := synchub.Fetch(ctx, h, fetchIssue{fi.owner, fi.repo, fi.pullNumber})
+			iss, err := synchub.Fetch(ctx, h, fetchIssue{
+				Options:     fpr.Options,
+				owner:       fpr.owner,
+				repo:        fpr.repo,
+				issueNumber: fpr.pullNumber,
+			})
 			if err != nil {
 				return err
 			}
@@ -72,7 +78,11 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAnd
 	}
 	eg.Go(func() error {
 		// Fetch repository and set repo ID.
-		repo, err := synchub.Fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
+		repo, err := synchub.Fetch(ctx, h, fetchRepository{
+			Options: fpr.Options,
+			owner:   fpr.owner,
+			repo:    fpr.repo,
+		})
 		if err != nil {
 			return err
 		}
@@ -86,7 +96,7 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAnd
 		}
 		eg.Go(func() error {
 			// Fetch creator
-			user, err := synchub.Fetch(ctx, h, fetchUser{login})
+			user, err := synchub.Fetch(ctx, h, fetchUser{fpr.Options, login})
 			if err != nil {
 				return err
 			}
@@ -110,24 +120,27 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAnd
 
 	err = eg.Wait()
 	if err != nil {
-		return nil, fmt.Errorf("fetchPullRequest%+v fetch deps: %w", fi, err)
+		return nil, fmt.Errorf("fetchPullRequest%+v fetch deps: %w", fpr, err)
 	}
 
 	err = cr.OnConflict().UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("fetchPullRequest%+v save: %w", fi, err)
+		return nil, fmt.Errorf("fetchPullRequest%+v save: %w", fpr, err)
 	}
 
-	return h.DB.PullRequest.Get(ctx, pr.ID)
+	return fpr.DB.PullRequest.Get(ctx, pr.ID)
 }
 
-func fetchPulls(ctx context.Context, h *synchub.Hub, repoOwner, repoName string) {
+func fetchPulls(ctx context.Context, h *synchub.Hub, opts Options, repoOwner, repoName string) {
 	iter := synchub.GetIterate[pullAndEdges](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/pulls?state=all&per_page=100", repoOwner, repoName))
 	for pr := range iter.Values {
-		oldPR, err := h.DB.PullRequest.Query().
+		if !opts.CreatedAfter.IsZero() && pr.CreatedAt.Before(opts.CreatedAfter) {
+			break
+		}
+		oldPR, err := opts.DB.PullRequest.Query().
 			Select(pullrequest.FieldUpdatedAt).
 			Where(pullrequest.ID(pr.ID)).
 			Only(ctx)
@@ -139,7 +152,7 @@ func fetchPulls(ctx context.Context, h *synchub.Hub, repoOwner, repoName string)
 		if oldPR == nil || !oldPR.UpdatedAt.Equal(pr.UpdatedAt) {
 			// this does not incur in an additional request; we have all the data
 			// we want from this request already
-			fi := fetchPullRequest{repoOwner, repoName, pr.Number}
+			fi := fetchPullRequest{opts, repoOwner, repoName, pr.Number}
 			fn, created := synchub.SetGetter(h, fi.ID(), func() (*ent.PullRequest, error) {
 				return fi.fetch(ctx, h, pr)
 			})

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gnoverse/gh-sql/ent"
 	"github.com/gnoverse/gh-sql/ent/migrate"
@@ -106,7 +107,8 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 	var (
 		fset = ff.NewFlagSet("gh-sql sync").SetParent(fs)
 
-		token = fset.StringLong("token", "", "github personal access token to use (heavily suggested)")
+		token        = fset.StringLong("token", "", "github personal access token to use (heavily suggested)")
+		createdAfter = fset.StringLong("created-after", "", "only inspect issues and PRs created after this date (YYYY-MM-DD)")
 
 		debugHTTP        = fset.BoolLong("debug.http", "log http requests")
 		debugJSONCatcher = fset.StringLong(
@@ -131,10 +133,20 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 				model.EventsMissedData = &onDemandFile{fileName: *debugJSONCatcher}
 			}
 
+			var ca time.Time
+			if *createdAfter != "" {
+				var err error
+				ca, err = time.Parse(time.DateOnly, *createdAfter)
+				if err != nil {
+					return err
+				}
+			}
+
 			return sync.Sync(ctx, args, sync.Options{
-				DB:        ec.db,
-				Token:     *token,
-				DebugHTTP: *debugHTTP,
+				DB:           ec.db,
+				Token:        *token,
+				CreatedAfter: ca,
+				DebugHTTP:    *debugHTTP,
 			})
 		},
 	}

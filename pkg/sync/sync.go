@@ -7,6 +7,7 @@ import (
 	"log"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gnoverse/gh-sql/ent"
 	"github.com/gnoverse/gh-sql/pkg/model"
@@ -16,8 +17,9 @@ import (
 // Options repsent the options to run Sync. These match the flags provided on
 // the command line.
 type Options struct {
-	DB    *ent.Client
-	Token string
+	DB           *ent.Client
+	Token        string
+	CreatedAfter time.Time
 
 	DebugHTTP bool
 }
@@ -25,7 +27,10 @@ type Options struct {
 // Sync performs the synchronisation of repositories to the database provided
 // in the options.
 func Sync(ctx context.Context, repositories []string, opts Options) error {
-	h := synchub.New(ctx, synchub.Options(opts))
+	h := synchub.New(ctx, synchub.Options{
+		Token:     opts.Token,
+		DebugHTTP: opts.DebugHTTP,
+	})
 
 	// execute
 	for _, repo := range repositories {
@@ -41,10 +46,14 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 			shouldFetch := func(r *ent.Repository) bool {
 				return re.MatchString(r.Name)
 			}
-			fetchRepositories(ctx, h, parts[0], shouldFetch)
+			fetchRepositories(ctx, h, opts, parts[0], shouldFetch)
 		} else {
 			// no wildcards; fetch repo directly.
-			synchub.FetchAsync(ctx, h, fetchRepository{owner: parts[0], repo: parts[1]})
+			synchub.FetchAsync(ctx, h, fetchRepository{
+				Options: opts,
+				owner:   parts[0],
+				repo:    parts[1],
+			})
 		}
 	}
 
@@ -55,6 +64,7 @@ func Sync(ctx context.Context, repositories []string, opts Options) error {
 // fetchRepository can be used to fetch a GitHub repository, knowing its
 // owner and name
 type fetchRepository struct {
+	Options
 	owner, repo string
 }
 
@@ -71,12 +81,15 @@ func (f fetchRepository) Fetch(ctx context.Context, h *synchub.Hub) (*ent.Reposi
 		return nil, fmt.Errorf("fetchRepository%+v fetch: %w", f, err)
 	}
 
-	u, err := synchub.Fetch(ctx, h, fetchUser{username: r.Owner.Login})
+	u, err := synchub.Fetch(ctx, h, fetchUser{
+		Options:  f.Options,
+		username: r.Owner.Login,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	err = h.DB.Repository.Create().
+	err = f.DB.Repository.Create().
 		CopyRepository(&r.Repository).
 		SetOwnerID(u.ID).
 		OnConflict().UpdateNewValues().
@@ -88,24 +101,28 @@ func (f fetchRepository) Fetch(ctx context.Context, h *synchub.Hub) (*ent.Reposi
 	h.Go(func() error {
 		// Pulls are fetched after issues, so that pulls already have all of the
 		// PRs they link to fetched into the database.
-		fetchIssues(ctx, h, r.Owner.Login, r.Name)
-		fetchPulls(ctx, h, r.Owner.Login, r.Name)
+		fetchIssues(ctx, h, f.Options, r.Owner.Login, r.Name)
+		fetchPulls(ctx, h, f.Options, r.Owner.Login, r.Name)
 		// TODO: fetch review comments - we can fetch these at repo level and
 		// concurrently with pulls, most likely.
 		// /repos/{owner}/{repo}/pulls/comments
 		return nil
 	})
 
-	return h.DB.Repository.Get(ctx, r.ID)
+	return f.DB.Repository.Get(ctx, r.ID)
 }
 
-func fetchRepositories(ctx context.Context, h *synchub.Hub, owner string, shouldFetch func(*ent.Repository) bool) {
+func fetchRepositories(ctx context.Context, h *synchub.Hub, opts Options, owner string, shouldFetch func(*ent.Repository) bool) {
 	iter := synchub.GetIterate[*ent.Repository](
 		ctx, h,
 		fmt.Sprintf("/users/%s/repos?per_page=100", owner))
 	for r := range iter.Values {
 		if shouldFetch(r) {
-			synchub.FetchAsync(ctx, h, fetchRepository{owner, r.Name})
+			synchub.FetchAsync(ctx, h, fetchRepository{
+				Options: opts,
+				owner:   owner,
+				repo:    r.Name,
+			})
 		}
 	}
 	if iter.Err() != nil {
@@ -115,6 +132,7 @@ func fetchRepositories(ctx context.Context, h *synchub.Hub, owner string, should
 
 // fetchUser can be used to retrive a user, knowing its username.
 type fetchUser struct {
+	Options
 	username string
 }
 
@@ -128,7 +146,7 @@ func (fu fetchUser) Fetch(ctx context.Context, h *synchub.Hub) (*ent.User, error
 		return nil, fmt.Errorf("fetchUser%+v get: %w", fu, err)
 	}
 
-	err := h.DB.User.Create().
+	err := fu.DB.User.Create().
 		CopyUser(&u).
 		OnConflict().UpdateNewValues().
 		Exec(ctx)
@@ -136,5 +154,5 @@ func (fu fetchUser) Fetch(ctx context.Context, h *synchub.Hub) (*ent.User, error
 		return nil, fmt.Errorf("fetchUser%+v save: %w", fu, err)
 	}
 
-	return h.DB.User.Get(ctx, u.ID)
+	return fu.DB.User.Get(ctx, u.ID)
 }
