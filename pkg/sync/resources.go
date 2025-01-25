@@ -11,6 +11,7 @@ import (
 	"github.com/gnolang/gh-sql/ent/pullrequest"
 	"github.com/gnolang/gh-sql/ent/repository"
 	"github.com/gnolang/gh-sql/pkg/model"
+	"github.com/gnolang/gh-sql/pkg/sync/internal/synchub"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -20,20 +21,20 @@ type fetchRepository struct {
 	owner, repo string
 }
 
-var _ resource[*ent.Repository] = fetchRepository{}
+var _ synchub.Resource[*ent.Repository] = fetchRepository{}
 
 func (f fetchRepository) ID() string { return "/repos/" + f.owner + "/" + f.repo }
 
-func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, error) {
+func (f fetchRepository) Fetch(ctx context.Context, h *synchub.Hub) (*ent.Repository, error) {
 	var r struct {
 		ent.Repository
 		Owner model.SimpleUser `json:"owner"`
 	}
-	if err := httpGet(ctx, h, f.ID(), &r); err != nil {
+	if err := synchub.Get(ctx, h, f.ID(), &r); err != nil {
 		return nil, fmt.Errorf("fetchRepository%+v fetch: %w", f, err)
 	}
 
-	u, err := fetch(ctx, h, fetchUser{username: r.Owner.Login})
+	u, err := synchub.Fetch(ctx, h, fetchUser{username: r.Owner.Login})
 	if err != nil {
 		return nil, err
 	}
@@ -58,17 +59,17 @@ func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, er
 	return h.DB.Repository.Get(ctx, r.ID)
 }
 
-func fetchRepositories(ctx context.Context, h *hub, owner string, shouldFetch func(*ent.Repository) bool) {
-	iter := httpGetIterate[*ent.Repository](
+func fetchRepositories(ctx context.Context, h *synchub.Hub, owner string, shouldFetch func(*ent.Repository) bool) {
+	iter := synchub.GetIterate[*ent.Repository](
 		ctx, h,
 		fmt.Sprintf("/users/%s/repos?per_page=100", owner))
 	for r := range iter.Values {
 		if shouldFetch(r) {
-			fetchAsync(ctx, h, fetchRepository{owner, r.Name})
+			synchub.FetchAsync(ctx, h, fetchRepository{owner, r.Name})
 		}
 	}
 	if iter.Err != nil {
-		h.warn(fmt.Errorf("fetchRepositories(%q): %w", owner, iter.Err))
+		h.Warn(fmt.Errorf("fetchRepositories(%q): %w", owner, iter.Err))
 	}
 }
 
@@ -79,13 +80,13 @@ type fetchUser struct {
 	username string
 }
 
-var _ resource[*ent.User] = fetchUser{}
+var _ synchub.Resource[*ent.User] = fetchUser{}
 
 func (fu fetchUser) ID() string { return "/users/" + fu.username }
 
-func (fu fetchUser) Fetch(ctx context.Context, h *hub) (*ent.User, error) {
+func (fu fetchUser) Fetch(ctx context.Context, h *synchub.Hub) (*ent.User, error) {
 	var u ent.User
-	if err := httpGet(ctx, h, fu.ID(), &u); err != nil {
+	if err := synchub.Get(ctx, h, fu.ID(), &u); err != nil {
 		return nil, fmt.Errorf("fetchUser%+v get: %w", fu, err)
 	}
 
@@ -109,7 +110,7 @@ type fetchIssue struct {
 	issueNumber int64
 }
 
-var _ resource[*ent.Issue] = fetchIssue{}
+var _ synchub.Resource[*ent.Issue] = fetchIssue{}
 
 func (fi fetchIssue) ID() string {
 	return fmt.Sprintf("/repos/%s/%s/issues/%d",
@@ -124,15 +125,15 @@ type issueAndEdges struct {
 	Assignees []model.SimpleUser `json:"assignees"`
 }
 
-func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
+func (fi fetchIssue) Fetch(ctx context.Context, h *synchub.Hub) (*ent.Issue, error) {
 	var i issueAndEdges
-	if err := httpGet(ctx, h, fi.ID(), &i); err != nil {
+	if err := synchub.Get(ctx, h, fi.ID(), &i); err != nil {
 		return nil, fmt.Errorf("fetchIssue%+v get: %w", fi, err)
 	}
 	return fi.fetch(ctx, h, i)
 }
 
-func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.Issue, error) {
+func (fi fetchIssue) fetch(ctx context.Context, h *synchub.Hub, i issueAndEdges) (*ent.Issue, error) {
 	cr := h.DB.Issue.Create().CopyIssue(&i.Issue)
 
 	// Note: we don't pass the resulting context, as otherwise any `fetches`
@@ -140,7 +141,7 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 	eg, _ := errgroup.WithContext(ctx)
 	eg.Go(func() error {
 		// Fetch repository and set repo ID.
-		repo, err := fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
+		repo, err := synchub.Fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
 		if err != nil {
 			return err
 		}
@@ -154,7 +155,7 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 		}
 		eg.Go(func() error {
 			// Fetch creator
-			user, err := fetch(ctx, h, fetchUser{login})
+			user, err := synchub.Fetch(ctx, h, fetchUser{login})
 			if err != nil {
 				return err
 			}
@@ -189,7 +190,7 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 	if i.CommentsCount > 0 {
 		h.Go(func() error {
 			if err := fetchIssueComments(ctx, h, fi); err != nil {
-				h.warn(err)
+				h.Warn(err)
 			}
 			return nil
 		})
@@ -198,7 +199,7 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 		// TODO: probably have to fetch both timeline AND issue events to have a complete picture.
 		// why, github, why?
 		if err := fetchIssueEvents(ctx, h, fi); err != nil {
-			h.warn(err)
+			h.Warn(err)
 		}
 		return nil
 	})
@@ -206,8 +207,8 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 	return h.DB.Issue.Get(ctx, i.ID)
 }
 
-func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
-	iter := httpGetIterate[issueAndEdges](
+func fetchIssues(ctx context.Context, h *synchub.Hub, repoOwner, repoName string) {
+	iter := synchub.GetIterate[issueAndEdges](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName))
 	for i := range iter.Values {
@@ -216,7 +217,7 @@ func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 			Where(issue.ID(i.ID)).
 			Only(ctx)
 		if err != nil && !ent.IsNotFound(err) {
-			h.warn(err)
+			h.Warn(err)
 			continue
 		}
 
@@ -224,23 +225,23 @@ func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
 			// this does not incur in an additional request; we have all the data
 			// we want from this request already
 			fi := fetchIssue{repoOwner, repoName, i.Number}
-			fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
+			fn, created := synchub.SetUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
 				return fi.fetch(ctx, h, i)
 			})
 			if created {
 				if _, err := fn(); err != nil {
-					h.warn(err)
+					h.Warn(err)
 				}
 			}
 		}
 	}
 	if iter.Err != nil {
-		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err))
+		h.Warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err))
 	}
 }
 
-func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
-	iss, err := fetch(ctx, h, fi)
+func fetchIssueComments(ctx context.Context, h *synchub.Hub, fi fetchIssue) error {
+	iss, err := synchub.Fetch(ctx, h, fi)
 	if err != nil {
 		return err
 	}
@@ -248,7 +249,7 @@ func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
 		ent.IssueComment
 		User *model.SimpleUser `json:"user"`
 	}
-	iter := httpGetIterate[dstType](
+	iter := synchub.GetIterate[dstType](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/issues/%d/comments?per_page=100",
 			fi.owner, fi.repo, fi.issueNumber),
@@ -260,9 +261,9 @@ func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
 			SetIssueID(iss.ID)
 		// Assign user if possible.
 		if ic.User != nil && ic.User.Login != "" {
-			us, err := fetch(ctx, h, fetchUser{ic.User.Login})
+			us, err := synchub.Fetch(ctx, h, fetchUser{ic.User.Login})
 			if err != nil {
-				h.warn(err)
+				h.Warn(err)
 				continue
 			}
 			cr.SetUserID(us.ID)
@@ -271,7 +272,7 @@ func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
 			OnConflict().UpdateNewValues().
 			Exec(ctx)
 		if err != nil {
-			h.warn(err)
+			h.Warn(err)
 		}
 	}
 	if iter.Err != nil {
@@ -302,12 +303,12 @@ func (f *fetchIssueEventType) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func fetchIssueEvents(ctx context.Context, h *hub, fi fetchIssue) error {
-	iss, err := fetch(ctx, h, fi)
+func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error {
+	iss, err := synchub.Fetch(ctx, h, fi)
 	if err != nil {
 		return err
 	}
-	iter := httpGetIterate[fetchIssueEventType](
+	iter := synchub.GetIterate[fetchIssueEventType](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/issues/%d/timeline?per_page=100",
 			fi.owner, fi.repo, fi.issueNumber),
@@ -329,7 +330,7 @@ func fetchIssueEvents(ctx context.Context, h *hub, fi fetchIssue) error {
 
 		// Assign user if possible.
 		if actor != nil {
-			us, err := fetch(ctx, h, fetchUser{actor.Login})
+			us, err := synchub.Fetch(ctx, h, fetchUser{actor.Login})
 			if err != nil {
 				return err
 			}
@@ -340,7 +341,7 @@ func fetchIssueEvents(ctx context.Context, h *hub, fi fetchIssue) error {
 			OnConflict().UpdateNewValues().
 			Exec(ctx)
 		if err != nil {
-			h.warn(fmt.Errorf("save event of type %v: %w", iev.Event, err))
+			h.Warn(fmt.Errorf("save event of type %v: %w", iev.Event, err))
 		}
 		return nil
 	}
@@ -357,16 +358,16 @@ type fetchPullRequest struct {
 	pullNumber int64
 }
 
-var _ resource[*ent.PullRequest] = fetchPullRequest{}
+var _ synchub.Resource[*ent.PullRequest] = fetchPullRequest{}
 
 func (fi fetchPullRequest) ID() string {
 	return fmt.Sprintf("/repos/%s/%s/pulls/%d",
 		fi.owner, fi.repo, fi.pullNumber)
 }
 
-func (fi fetchPullRequest) Fetch(ctx context.Context, h *hub) (*ent.PullRequest, error) {
+func (fi fetchPullRequest) Fetch(ctx context.Context, h *synchub.Hub) (*ent.PullRequest, error) {
 	var pr pullAndEdges
-	if err := httpGet(ctx, h, fi.ID(), &pr); err != nil {
+	if err := synchub.Get(ctx, h, fi.ID(), &pr); err != nil {
 		return nil, fmt.Errorf("fetchPullRequest%+v get: %w", fi, err)
 	}
 	return fi.fetch(ctx, h, pr)
@@ -380,7 +381,7 @@ type pullAndEdges struct {
 	RequestedReviewers []model.SimpleUser `json:"requested_reviewers"`
 }
 
-func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (*ent.PullRequest, error) {
+func (fi fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAndEdges) (*ent.PullRequest, error) {
 	cr := h.DB.PullRequest.Create().CopyPullRequest(&pr.PullRequest)
 
 	eg, _ := errgroup.WithContext(ctx)
@@ -396,7 +397,7 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (
 	if iss == nil || iss.UpdatedAt.Before(pr.UpdatedAt) {
 		// Fetch issue.
 		eg.Go(func() error {
-			iss, err := fetch(ctx, h, fetchIssue{fi.owner, fi.repo, fi.pullNumber})
+			iss, err := synchub.Fetch(ctx, h, fetchIssue{fi.owner, fi.repo, fi.pullNumber})
 			if err != nil {
 				return err
 			}
@@ -408,7 +409,7 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (
 	}
 	eg.Go(func() error {
 		// Fetch repository and set repo ID.
-		repo, err := fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
+		repo, err := synchub.Fetch(ctx, h, fetchRepository{fi.owner, fi.repo})
 		if err != nil {
 			return err
 		}
@@ -422,7 +423,7 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (
 		}
 		eg.Go(func() error {
 			// Fetch creator
-			user, err := fetch(ctx, h, fetchUser{login})
+			user, err := synchub.Fetch(ctx, h, fetchUser{login})
 			if err != nil {
 				return err
 			}
@@ -458,8 +459,8 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (
 	return h.DB.PullRequest.Get(ctx, pr.ID)
 }
 
-func fetchPulls(ctx context.Context, h *hub, repoOwner, repoName string) {
-	iter := httpGetIterate[pullAndEdges](
+func fetchPulls(ctx context.Context, h *synchub.Hub, repoOwner, repoName string) {
+	iter := synchub.GetIterate[pullAndEdges](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/pulls?state=all&per_page=100", repoOwner, repoName))
 	for pr := range iter.Values {
@@ -468,7 +469,7 @@ func fetchPulls(ctx context.Context, h *hub, repoOwner, repoName string) {
 			Where(pullrequest.ID(pr.ID)).
 			Only(ctx)
 		if err != nil && !ent.IsNotFound(err) {
-			h.warn(err)
+			h.Warn(err)
 			continue
 		}
 
@@ -476,17 +477,17 @@ func fetchPulls(ctx context.Context, h *hub, repoOwner, repoName string) {
 			// this does not incur in an additional request; we have all the data
 			// we want from this request already
 			fi := fetchPullRequest{repoOwner, repoName, pr.Number}
-			fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.PullRequest, error) {
+			fn, created := synchub.SetUpdatedFunc(h, fi.ID(), func() (*ent.PullRequest, error) {
 				return fi.fetch(ctx, h, pr)
 			})
 			if created {
 				if _, err := fn(); err != nil {
-					h.warn(err)
+					h.Warn(err)
 				}
 			}
 		}
 	}
 	if iter.Err != nil {
-		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err))
+		h.Warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err))
 	}
 }
