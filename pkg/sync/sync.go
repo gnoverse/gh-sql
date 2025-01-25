@@ -105,8 +105,8 @@ func fetchRepositories(ctx context.Context, h *synchub.Hub, owner string, should
 			synchub.FetchAsync(ctx, h, fetchRepository{owner, r.Name})
 		}
 	}
-	if iter.Err != nil {
-		h.Warn(fmt.Errorf("fetchRepositories(%q): %w", owner, iter.Err))
+	if iter.Err() != nil {
+		h.Warn(fmt.Errorf("fetchRepositories(%q): %w", owner, iter.Err()))
 	}
 }
 

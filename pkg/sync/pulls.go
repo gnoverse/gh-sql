@@ -140,7 +140,7 @@ func fetchPulls(ctx context.Context, h *synchub.Hub, repoOwner, repoName string)
 			// this does not incur in an additional request; we have all the data
 			// we want from this request already
 			fi := fetchPullRequest{repoOwner, repoName, pr.Number}
-			fn, created := synchub.SetUpdatedFunc(h, fi.ID(), func() (*ent.PullRequest, error) {
+			fn, created := synchub.SetGetter(h, fi.ID(), func() (*ent.PullRequest, error) {
 				return fi.fetch(ctx, h, pr)
 			})
 			if created {
@@ -150,7 +150,7 @@ func fetchPulls(ctx context.Context, h *synchub.Hub, repoOwner, repoName string)
 			}
 		}
 	}
-	if iter.Err != nil {
-		h.Warn(fmt.Errorf("fetchPulls(%q, %q): %w", repoOwner, repoName, iter.Err))
+	if iter.Err() != nil {
+		h.Warn(fmt.Errorf("fetchPulls(%q, %q): %w", repoOwner, repoName, iter.Err()))
 	}
 }

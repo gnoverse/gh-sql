@@ -1,15 +1,13 @@
-// Package synchub provides a mechanism to synchronize requests and operations
-// in the sync package
+// Package synchub provides a data structure to manage:
+//
+//   - Rate limiting of requests to the GitHub API.
+//   - Memoization of request results.
+//   - Management of goroutines and inflight actions, through an errgroup.
 package synchub
 
 import (
 	"context"
-	"encoding/json"
-	"io"
 	"log"
-	"net/http"
-	"regexp"
-	"strconv"
 	"sync"
 	"time"
 
@@ -30,10 +28,9 @@ const (
 	starvingThreshold = 2000
 )
 
-// Options repsent the options to run Sync. These match the flags provided on
-// the command line.
+// Options repsent the options for creating a hub.
 type Options struct {
-	DB    *ent.Client
+	DB    *ent.Client // TODO: find a way to move it out of this package.
 	Token string
 
 	DebugHTTP bool
@@ -69,6 +66,8 @@ func New(ctx context.Context, opts Options) *Hub {
 	return h
 }
 
+// Hub is the main data structure provided by this package, to manage rate
+// limiting and request memoization.
 type Hub struct {
 	Options
 
@@ -107,16 +106,21 @@ type Resource[T any] interface {
 	Fetch(ctx context.Context, h *Hub) (T, error)
 }
 
+// Fetch calls Fetch on res if there is no memoized resource with the same
+// [Resource.ID]; otherwise, itreturns a previously memoized value from the [Hub] h.
 func Fetch[T any](ctx context.Context, h *Hub, res Resource[T]) (T, error) {
-	fn, _ := SetUpdatedFunc(h, res.ID(), func() (T, error) {
+	fn, _ := SetGetter(h, res.ID(), func() (T, error) {
 		return res.Fetch(ctx, h)
 	})
 
 	return fn()
 }
 
+// FetchAsync calls Fetch on the given resource res if necessary. It performs
+// this in another goroutine. No goroutine is created if Fetch or FetchAsync
+// were already called on a resource with the same [Resource.ID].
 func FetchAsync[T any](ctx context.Context, h *Hub, res Resource[T]) {
-	fn, created := SetUpdatedFunc(h, res.ID(), func() (T, error) {
+	fn, created := SetGetter(h, res.ID(), func() (T, error) {
 		return res.Fetch(ctx, h)
 	})
 
@@ -132,16 +136,16 @@ func FetchAsync[T any](ctx context.Context, h *Hub, res Resource[T]) {
 	}
 }
 
-// SetUpdatedFunc changes h.updated. If a value already exists, it is returneed
-// as the getter; otherwise, it will be set to fn. getter will be either fn or a
-// function to retrieve the cache from a previously done request with the same
-// id. created indicates whether the value at id was just created, and as such
-// if fn == getter.
+// SetGetter checks whether the internal map of updated resources already
+// contains a value with the given id. If it doesn't exist, fn is used as the
+// getter; otherwise the existing value is returned. The values are internally
+// wrapped in [sync.OnceValues], meaning that the values returned by the getter
+// a first time are "memoized"; so retrieval doesn't happen more than once.
 //
-// SetUpdatedFunc is generally used internally by [Fetch] and [FetchAsync];
+// SetGetter is generally used internally by [Fetch] and [FetchAsync];
 // it should be used elsewhere when the full resource in question has been
-// retrieved otherwise, and fetch/fetchAsync is not necessary.
-func SetUpdatedFunc[T any](h *Hub, id string, fn func() (T, error)) (getter func() (T, error), created bool) {
+// retrieved otherwise, and Fetch/FetchAsync is not necessary.
+func SetGetter[T any](h *Hub, id string, fn func() (T, error)) (getter func() (T, error), created bool) {
 	h.updatedMu.Lock()
 	getterRaw, ok := h.updated[id]
 	if !ok {
@@ -158,210 +162,4 @@ func SetUpdatedFunc[T any](h *Hub, id string, fn func() (T, error)) (getter func
 // Warn prints the given error as a warning, without halting execution.
 func (h *Hub) Warn(err error) {
 	log.Println("warning:", err)
-}
-
-// -----------------------------------------------------------------------------
-// Base HTTP clients for GitHub API
-
-const (
-	apiEndpoint = "https://api.github.com"
-	apiVersion  = "2022-11-28"
-)
-
-func httpInternal(ctx context.Context, h *Hub, method, uri string, body io.Reader) (*http.Response, error) {
-	// Two "flow regulators":
-	// - limitsTimer ensures that we are sending requests at a sustainable pace,
-	//   in accordance to GitHub's rate limit. Values are sent to it by [hub.limiter].
-	// - reqsInflight ensures that we are not making too many requests to GitHub
-	//   concurrently. It is only used by this function.
-	h.limitsTimer <- struct{}{}
-	h.reqsInflight <- struct{}{}
-	defer func() {
-		<-h.reqsInflight
-	}()
-
-	// set up request
-	req, err := http.NewRequestWithContext(ctx, method, uri, body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("X-GitHub-Api-Version", apiVersion)
-	req.Header.Set("User-Agent", "gnoverse/gh-sql")
-	if h.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+h.Token)
-	}
-
-	if h.DebugHTTP {
-		log.Printf("%s %s", req.Method, req.URL)
-	}
-
-	// do request
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.Header.Get("X-Ratelimit-Limit") != "" {
-		limits, err := parseLimits(resp)
-		if err != nil {
-			log.Printf("error parsing rate limits: %v", err)
-		} else {
-			h.limitsMu.Lock()
-			h.limits = limits
-			h.limitsMu.Unlock()
-		}
-	}
-	return resp, nil
-}
-
-func Get(ctx context.Context, h *Hub, path string, dst any) error {
-	resp, err := httpInternal(ctx, h, "GET", apiEndpoint+path, nil)
-	if err != nil {
-		return err
-	}
-
-	// unmarshal body into dst
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, dst)
-}
-
-var httpLinkHeaderRe = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"(?:,\s*|$)`)
-
-type IterWithError[T any] struct {
-	I func(yield func(T) bool) error
-	// Err is set after running i.Iter.
-	Err error
-}
-
-func (i *IterWithError[T]) Values(yield func(t T) bool) {
-	i.Err = i.I(yield)
-}
-
-func GetIterate[T any](ctx context.Context, h *Hub, path string) *IterWithError[T] {
-	uri := apiEndpoint + path
-
-	return &IterWithError[T]{I: func(yield func(T) bool) error {
-	Upper:
-		for {
-			resp, err := httpInternal(ctx, h, "GET", uri, nil)
-			if err != nil {
-				return err
-			}
-
-			// TODO(morgan): add debug flag to log failing requests.
-
-			// retrieve data
-			data, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return err
-			}
-			_ = resp.Body.Close()
-
-			// 100 is the max amount of elements on most GH API calls
-			dst := make([]T, 0, 100)
-			err = json.Unmarshal(data, &dst)
-			if err != nil {
-				return err
-			}
-
-			for _, item := range dst {
-				if ok := yield(item); !ok {
-					return nil
-				}
-			}
-
-			// https://go.dev/play/p/RcjolrF-xOt
-			matches := httpLinkHeaderRe.FindAllStringSubmatch(resp.Header.Get("Link"), -1)
-			for _, match := range matches {
-				if match[2] == "next" {
-					uri = match[1]
-					continue Upper
-				}
-			}
-
-			// "next" link not found, return
-			return nil
-		}
-
-	}}
-}
-
-// -----------------------------------------------------------------------------
-// Rate limiting management
-
-type rateLimitValues struct {
-	total     int
-	remaining int
-	reset     time.Time
-}
-
-// limiter creates a simple rate limiter based off GitHub's rate limiting.
-// It divides the time up into how many requests are left in the rate limit,
-// up to when it's supposed to reset.
-func (h *Hub) limiter(ctx context.Context) {
-	_ = h.limits // move nil check outside of loop
-	for {
-		h.limitsMu.Lock()
-		limits := h.limits
-		h.limitsMu.Unlock()
-
-		if limits.remaining == 0 && time.Until(limits.reset) > 0 {
-			dur := time.Until(limits.reset.Add(time.Second))
-			log.Printf("hit rate limit, waiting until %v (%v)", limits.reset, dur)
-			time.Sleep(dur)
-			h.limitsMu.Lock()
-			limits.remaining = limits.total
-			h.limitsMu.Unlock()
-			continue
-		}
-
-		if limits.remaining > starvingThreshold {
-			// not starving
-			// allow requests immediately to have speedy execution for
-			// incremental updates.
-			select {
-			case <-h.limitsTimer:
-			case <-ctx.Done():
-				return
-			}
-		} else {
-			// we're low on requests, perform them at a sustainable pace
-			// note that Personal Access Tokens in a GH account share rate limits;
-			// this allows other applications to use the same account to perform
-			// operations by not instantly depleting the rate limit.
-			wait := time.Until(limits.reset) / (time.Duration(limits.remaining) + 1)
-			log.Printf("rate limiter is starving: waiting %s [reset: %s | remaining: %d/%d]",
-				wait, limits.reset.String(), limits.remaining, limits.total)
-			select {
-			case <-time.After(wait):
-				<-h.limitsTimer
-			case <-ctx.Done():
-				return
-			}
-		}
-	}
-}
-
-func parseLimits(resp *http.Response) (vals rateLimitValues, err error) {
-	h := resp.Header
-	vals.total, err = strconv.Atoi(h.Get("X-Ratelimit-Limit"))
-	if err != nil {
-		return
-	}
-	vals.remaining, err = strconv.Atoi(h.Get("X-Ratelimit-Remaining"))
-	if err != nil {
-		return
-	}
-	var reset int64
-	reset, err = strconv.ParseInt(h.Get("X-Ratelimit-Reset"), 10, 64)
-	if err != nil {
-		return
-	}
-	vals.reset = time.Unix(reset, 0)
-	return
 }

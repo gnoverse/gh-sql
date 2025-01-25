@@ -135,7 +135,7 @@ func fetchIssues(ctx context.Context, h *synchub.Hub, repoOwner, repoName string
 			// this does not incur in an additional request; we have all the data
 			// we want from this request already
 			fi := fetchIssue{repoOwner, repoName, i.Number}
-			fn, created := synchub.SetUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
+			fn, created := synchub.SetGetter(h, fi.ID(), func() (*ent.Issue, error) {
 				return fi.fetch(ctx, h, i)
 			})
 			if created {
@@ -145,8 +145,8 @@ func fetchIssues(ctx context.Context, h *synchub.Hub, repoOwner, repoName string
 			}
 		}
 	}
-	if iter.Err != nil {
-		h.Warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err))
+	if iter.Err() != nil {
+		h.Warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err()))
 	}
 }
 
@@ -185,8 +185,8 @@ func fetchIssueComments(ctx context.Context, h *synchub.Hub, fi fetchIssue) erro
 			h.Warn(err)
 		}
 	}
-	if iter.Err != nil {
-		return fmt.Errorf("fetchIssueComments(%q): %w", fi.ID(), iter.Err)
+	if iter.Err() != nil {
+		return fmt.Errorf("fetchIssueComments(%q): %w", fi.ID(), iter.Err())
 	}
 	return nil
 }
@@ -256,8 +256,8 @@ func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error 
 		}
 		return nil
 	}
-	if iter.Err != nil {
-		return fmt.Errorf("fetchIssueEvents(%q): %w", fi.ID(), err)
+	if iter.Err() != nil {
+		return fmt.Errorf("fetchIssueEvents(%q): %w", fi.ID(), iter.Err())
 	}
 	return nil
 }
