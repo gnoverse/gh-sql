@@ -273,19 +273,13 @@ func (RenamedIssueEvent) Name() string { return "renamed" }
 type ReviewRequestedIssueEvent struct {
 	timelineEvent
 
-	ReviewRequester struct {
-		ID    int    `json:"id"`
-		Login string `json:"login"`
-	} `json:"review_requester"`
-	RequestedTeam *struct {
+	ReviewRequester SimpleUser `json:"review_requester"`
+	RequestedTeam   *struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 		Slug string `json:"slug"`
 	} `json:"requested_team,omitempty"`
-	RequestedReviewer *struct {
-		ID    int    `json:"id"`
-		Login string `json:"login"`
-	} `json:"requested_reviewer,omitempty"`
+	RequestedReviewer *SimpleUser `json:"requested_reviewer,omitempty"`
 }
 
 // Name is used to associate this type with the review_requested event.
@@ -296,19 +290,13 @@ func (ReviewRequestedIssueEvent) Name() string { return "review_requested" }
 type ReviewRequestRemovedIssueEvent struct {
 	timelineEvent
 
-	ReviewRequester struct {
-		ID    int    `json:"id"`
-		Login string `json:"login"`
-	} `json:"review_requester"`
-	RequestedTeam *struct {
+	ReviewRequester SimpleUser `json:"review_requester"`
+	RequestedTeam   *struct {
 		ID   int    `json:"id"`
 		Name string `json:"name"`
 		Slug string `json:"slug"`
 	} `json:"requested_team,omitempty"`
-	RequestedReviewer *struct {
-		ID    int    `json:"id"`
-		Login string `json:"login"`
-	} `json:"requested_reviewer,omitempty"`
+	RequestedReviewer *SimpleUser `json:"requested_reviewer,omitempty"`
 }
 
 // Name is used to associate this type with the review_request_removed event.
@@ -393,14 +381,6 @@ type ConvertedNoteToIssueIssueEvent struct {
 
 func (ConvertedNoteToIssueIssueEvent) Name() string { return "converted_note_to_issue" }
 
-// SimpleUser is used to keep track of user information in events.
-// The GitHub API actually contains more information, but for our
-// purposes it redundant.
-type SimpleUser struct {
-	Login string `json:"login"`
-	ID    int64  `json:"id"`
-}
-
 type TimelineCommentEvent struct {
 	timelineEvent
 
@@ -416,21 +396,6 @@ type TimelineCommentEvent struct {
 }
 
 func (TimelineCommentEvent) Name() string { return "commented" }
-
-// SimpleRepository is a reduced issue struct, keeping track of important information but avoiding redundancy.
-type SimpleRepository struct {
-	ID       int64      `json:"id"`
-	Name     string     `json:"name"`
-	FullName string     `json:"full_name"`
-	Owner    SimpleUser `json:"owner"`
-}
-
-// SimpleIssue is a reduced issue struct, keeping track of important information but avoiding redundancy.
-type SimpleIssue struct {
-	ID         int64            `json:"id"`
-	Number     int64            `json:"number"`
-	Repository SimpleRepository `json:"repository"`
-}
 
 type TimelineCrossReferencedEvent struct {
 	timelineEvent

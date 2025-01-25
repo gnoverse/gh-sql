@@ -204,6 +204,7 @@ func (f *fetchIssueEventType) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &dst); err != nil {
 		return err
 	}
+	*f = fetchIssueEventType(dst)
 
 	if err := f.Wrapper.UnmarshalJSON(b); err != nil {
 		return err

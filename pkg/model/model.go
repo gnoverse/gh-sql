@@ -86,3 +86,28 @@ type PRBranch struct {
 	User  SimpleUser       `json:"user"`
 	Repo  SimpleRepository `json:"repo"`
 }
+
+// SimpleUser is used to keep track of user information in events.
+// The GitHub API actually contains more information, but for our
+// purposes it redundant.
+type SimpleUser struct {
+	Login string `json:"login"`
+	ID    int64  `json:"id"`
+}
+
+// SimpleRepository is a reduced issue struct, keeping track of important
+// information but avoiding redundancy.
+type SimpleRepository struct {
+	ID       int64      `json:"id"`
+	Name     string     `json:"name"`
+	FullName string     `json:"full_name"`
+	Owner    SimpleUser `json:"owner"`
+}
+
+// SimpleIssue is a reduced issue struct, keeping track of important information
+// but avoiding redundancy.
+type SimpleIssue struct {
+	ID         int64            `json:"id"`
+	Number     int64            `json:"number"`
+	Repository SimpleRepository `json:"repository"`
+}
