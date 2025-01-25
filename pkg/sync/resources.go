@@ -27,9 +27,7 @@ func (f fetchRepository) ID() string { return "/repos/" + f.owner + "/" + f.repo
 func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, error) {
 	var r struct {
 		ent.Repository
-		Owner struct {
-			Login string `json:"login"`
-		} `json:"owner"`
+		Owner model.SimpleUser `json:"owner"`
 	}
 	if err := httpGet(ctx, h, f.ID(), &r); err != nil {
 		return nil, fmt.Errorf("fetchRepository%+v fetch: %w", f, err)
@@ -61,12 +59,15 @@ func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, er
 }
 
 func fetchRepositories(ctx context.Context, h *hub, owner string, shouldFetch func(*ent.Repository) bool) {
-	err := httpGetIterate(ctx, h, fmt.Sprintf("/users/%s/repos?per_page=100", owner), func(r *ent.Repository) error {
-		if shouldFetch(r) {
-			fetchAsync(ctx, h, fetchRepository{owner, r.Name})
-		}
-		return nil
-	})
+	err := httpGetIterate(
+		ctx, h,
+		fmt.Sprintf("/users/%s/repos?per_page=100", owner),
+		func(r *ent.Repository) error {
+			if shouldFetch(r) {
+				fetchAsync(ctx, h, fetchRepository{owner, r.Name})
+			}
+			return nil
+		})
 	if err != nil {
 		h.warn(fmt.Errorf("fetchRepositories(%q): %w", owner, err))
 	}
@@ -119,15 +120,9 @@ func (fi fetchIssue) ID() string {
 type issueAndEdges struct {
 	ent.Issue
 
-	User *struct {
-		Login string `json:"login"`
-	} `json:"user"`
-	ClosedBy *struct {
-		Login string `json:"login"`
-	} `json:"closed_by"`
-	Assignees []struct {
-		Login string `json:"login"`
-	} `json:"assignees"`
+	User      *model.SimpleUser  `json:"user"`
+	ClosedBy  *model.SimpleUser  `json:"closed_by"`
+	Assignees []model.SimpleUser `json:"assignees"`
 }
 
 func (fi fetchIssue) Fetch(ctx context.Context, h *hub) (*ent.Issue, error) {
@@ -213,30 +208,33 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 }
 
 func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
-	err := httpGetIterate(ctx, h, fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName), func(i issueAndEdges) error {
-		iss, err := h.DB.Issue.Query().
-			Select(issue.FieldUpdatedAt).
-			Where(issue.ID(i.ID)).
-			Only(ctx)
-		if err != nil && !ent.IsNotFound(err) {
-			return err
-		}
+	err := httpGetIterate(
+		ctx, h,
+		fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName),
+		func(i issueAndEdges) error {
+			iss, err := h.DB.Issue.Query().
+				Select(issue.FieldUpdatedAt).
+				Where(issue.ID(i.ID)).
+				Only(ctx)
+			if err != nil && !ent.IsNotFound(err) {
+				return err
+			}
 
-		if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
-			// this does not incur in an additional request; we have all the data
-			// we want from this request already
-			fi := fetchIssue{repoOwner, repoName, i.Number}
-			fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
-				return fi.fetch(ctx, h, i)
-			})
-			if created {
-				if _, err := fn(); err != nil {
-					h.warn(err)
+			if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
+				// this does not incur in an additional request; we have all the data
+				// we want from this request already
+				fi := fetchIssue{repoOwner, repoName, i.Number}
+				fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
+					return fi.fetch(ctx, h, i)
+				})
+				if created {
+					if _, err := fn(); err != nil {
+						h.warn(err)
+					}
 				}
 			}
-		}
-		return nil
-	})
+			return nil
+		})
 	if err != nil {
 		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, err))
 	}
@@ -249,9 +247,7 @@ func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
 	}
 	type dstType struct {
 		ent.IssueComment
-		User *struct {
-			Login string `json:"login"`
-		} `json:"user"`
+		User *model.SimpleUser `json:"user"`
 	}
 	err = httpGetIterate(
 		ctx, h,
@@ -283,22 +279,23 @@ func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
 
 type fetchIssueEventType struct {
 	ent.TimelineEvent
-	Actor *struct {
-		Login string `json:"login"`
-	} `json:"actor"`
-	model.TimelineEventWrapper
+	Actor   *model.SimpleUser `json:"actor"`
+	User    *model.SimpleUser `json:"user"`
+	Wrapper model.TimelineEventWrapper
 }
 
 func (f *fetchIssueEventType) UnmarshalJSON(b []byte) error {
-	if err := json.Unmarshal(b, &f.TimelineEvent); err != nil {
+	type dstType fetchIssueEventType
+	var dst dstType
+	if err := json.Unmarshal(b, &dst); err != nil {
 		return err
 	}
 
-	if err := f.TimelineEventWrapper.UnmarshalJSON(b); err != nil {
+	if err := f.Wrapper.UnmarshalJSON(b); err != nil {
 		return err
 	}
 
-	f.TimelineEvent.Data = f.TimelineEventWrapper
+	f.TimelineEvent.Data = f.Wrapper
 	return nil
 }
 
@@ -317,9 +314,18 @@ func fetchIssueEvents(ctx context.Context, h *hub, fi fetchIssue) error {
 				CopyTimelineEvent(&iev.TimelineEvent).
 				SetIssueID(iss.ID)
 
+			// This is a half-lie, but attempt to use the User as the Actor if
+			// it is not set. This is useful in some events like `reviewed`,
+			// which has user but not actor, and allows us to link many more
+			// events.
+			actor := iev.Actor
+			if actor == nil && iev.User != nil {
+				actor = iev.User
+			}
+
 			// Assign user if possible.
-			if iev.Actor != nil {
-				us, err := fetch(ctx, h, fetchUser{iev.Actor.Login})
+			if actor != nil {
+				us, err := fetch(ctx, h, fetchUser{actor.Login})
 				if err != nil {
 					return err
 				}
@@ -366,15 +372,9 @@ func (fi fetchPullRequest) Fetch(ctx context.Context, h *hub) (*ent.PullRequest,
 type pullAndEdges struct {
 	ent.PullRequest
 
-	User *struct {
-		Login string `json:"login"`
-	} `json:"user"`
-	Assignees []struct {
-		Login string `json:"login"`
-	} `json:"assignees"`
-	RequestedReviewers []struct {
-		Login string `json:"login"`
-	} `json:"requested_reviewers"`
+	User               *model.SimpleUser  `json:"user"`
+	Assignees          []model.SimpleUser `json:"assignees"`
+	RequestedReviewers []model.SimpleUser `json:"requested_reviewers"`
 }
 
 func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (*ent.PullRequest, error) {
@@ -456,7 +456,9 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (
 }
 
 func fetchPulls(ctx context.Context, h *hub, repoOwner, repoName string) {
-	err := httpGetIterate(ctx, h, fmt.Sprintf("/repos/%s/%s/pulls?state=all&per_page=100", repoOwner, repoName),
+	err := httpGetIterate(
+		ctx, h,
+		fmt.Sprintf("/repos/%s/%s/pulls?state=all&per_page=100", repoOwner, repoName),
 		func(pr pullAndEdges) error {
 			oldPR, err := h.DB.PullRequest.Query().
 				Select(pullrequest.FieldUpdatedAt).
