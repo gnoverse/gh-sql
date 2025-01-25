@@ -90,6 +90,9 @@ func (f fetchRepository) Fetch(ctx context.Context, h *synchub.Hub) (*ent.Reposi
 		// PRs they link to fetched into the database.
 		fetchIssues(ctx, h, r.Owner.Login, r.Name)
 		fetchPulls(ctx, h, r.Owner.Login, r.Name)
+		// TODO: fetch review comments - we can fetch these at repo level and
+		// concurrently with pulls, most likely.
+		// /repos/{owner}/{repo}/pulls/comments
 		return nil
 	})
 

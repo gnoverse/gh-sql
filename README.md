@@ -17,10 +17,11 @@ The tool has the following focuses:
 	(for integration with existing tools that use the GitHub API, by only
 	changing the API endpoint.)
 
-<!--
-## Notes
+Check out the [cookbook](https://github.com/gnoverse/gh-sql/wiki/Cookbook) for
+some more examples.
 
-- ffcli for flag parsing / configuration
-- ent for ORM
-- start out by syncing single Repository entity, and work from there
--->
+## Status
+
+Still pretty heavily work in progress, and I won't make migration strategies, so
+feel free to build up a database knowing that it'll likely have to be re-created
+from scratch when this gets updated.
