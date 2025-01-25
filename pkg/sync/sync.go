@@ -23,13 +23,21 @@ import (
 
 const (
 	maxConcurrentRequests = 4
+
+	// maximum requests per hour when unauthenticated.
+	unauthenticatedMaxRequests = 60
+	// maximum requests per hour when authenticated.
+	authenticatedMaxRequests = 5000
+
+	// When the number of requests left drops below the threshold, then we are
+	// "starving", and the rate limiter properly kicks in.
+	starvingThreshold = 2000
 )
 
 // Options repsent the options to run Sync. These match the flags provided on
 // the command line.
 type Options struct {
 	DB    *ent.Client
-	Full  bool
 	Token string
 
 	DebugHTTP bool
@@ -40,14 +48,14 @@ type Options struct {
 func Sync(ctx context.Context, repositories []string, opts Options) error {
 	values := rateLimitValues{
 		// GitHub defaults for unauthenticated
-		total:     60,
-		remaining: 60,
+		total:     unauthenticatedMaxRequests,
+		remaining: unauthenticatedMaxRequests,
 		reset:     time.Now().Truncate(time.Hour).Add(time.Hour),
 	}
 	if opts.Token != "" {
 		// GitHub defaults for authenticated
-		values.total = 5000
-		values.remaining = 5000
+		values.total = authenticatedMaxRequests
+		values.remaining = authenticatedMaxRequests
 	}
 
 	gr, ctx := errgroup.WithContext(ctx)
@@ -254,50 +262,63 @@ func httpInternal(ctx context.Context, h *hub, method, uri string, body io.Reade
 
 var httpLinkHeaderRe = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"(?:,\s*|$)`)
 
-// TODO(morgan): change to go iterator
-func httpGetIterate[T any](ctx context.Context, h *hub, path string, fn func(item T) error) error {
+type iterWithError[T any] struct {
+	I func(yield func(T) bool) error
+	// Err is set after running i.Iter.
+	Err error
+}
+
+func (i *iterWithError[T]) Values(yield func(t T) bool) {
+	i.Err = i.I(yield)
+}
+
+func httpGetIterate[T any](ctx context.Context, h *hub, path string) *iterWithError[T] {
 	uri := apiEndpoint + path
-Upper:
-	for {
-		resp, err := httpInternal(ctx, h, "GET", uri, nil)
-		if err != nil {
-			return err
-		}
 
-		// TODO(morgan): add debug flag to log failing requests.
-
-		// retrieve data
-		data, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		_ = resp.Body.Close()
-
-		// 100 is the max amount of elements on most GH API calls
-		dst := make([]T, 0, 100)
-		err = json.Unmarshal(data, &dst)
-		if err != nil {
-			return err
-		}
-
-		for _, item := range dst {
-			if err := fn(item); err != nil {
+	return &iterWithError[T]{I: func(yield func(T) bool) error {
+	Upper:
+		for {
+			resp, err := httpInternal(ctx, h, "GET", uri, nil)
+			if err != nil {
 				return err
 			}
-		}
 
-		// https://go.dev/play/p/RcjolrF-xOt
-		matches := httpLinkHeaderRe.FindAllStringSubmatch(resp.Header.Get("Link"), -1)
-		for _, match := range matches {
-			if match[2] == "next" {
-				uri = match[1]
-				continue Upper
+			// TODO(morgan): add debug flag to log failing requests.
+
+			// retrieve data
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return err
 			}
+			_ = resp.Body.Close()
+
+			// 100 is the max amount of elements on most GH API calls
+			dst := make([]T, 0, 100)
+			err = json.Unmarshal(data, &dst)
+			if err != nil {
+				return err
+			}
+
+			for _, item := range dst {
+				if ok := yield(item); !ok {
+					return nil
+				}
+			}
+
+			// https://go.dev/play/p/RcjolrF-xOt
+			matches := httpLinkHeaderRe.FindAllStringSubmatch(resp.Header.Get("Link"), -1)
+			for _, match := range matches {
+				if match[2] == "next" {
+					uri = match[1]
+					continue Upper
+				}
+			}
+
+			// "next" link not found, return
+			return nil
 		}
 
-		// "next" link not found, return
-		return nil
-	}
+	}}
 }
 
 // -----------------------------------------------------------------------------
@@ -329,7 +350,7 @@ func (h *hub) limiter(ctx context.Context) {
 			continue
 		}
 
-		if limits.remaining > 2000 {
+		if limits.remaining > starvingThreshold {
 			// not starving
 			// allow requests immediately to have speedy execution for
 			// incremental updates.

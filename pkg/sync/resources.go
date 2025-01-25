@@ -59,17 +59,16 @@ func (f fetchRepository) Fetch(ctx context.Context, h *hub) (*ent.Repository, er
 }
 
 func fetchRepositories(ctx context.Context, h *hub, owner string, shouldFetch func(*ent.Repository) bool) {
-	err := httpGetIterate(
+	iter := httpGetIterate[*ent.Repository](
 		ctx, h,
-		fmt.Sprintf("/users/%s/repos?per_page=100", owner),
-		func(r *ent.Repository) error {
-			if shouldFetch(r) {
-				fetchAsync(ctx, h, fetchRepository{owner, r.Name})
-			}
-			return nil
-		})
-	if err != nil {
-		h.warn(fmt.Errorf("fetchRepositories(%q): %w", owner, err))
+		fmt.Sprintf("/users/%s/repos?per_page=100", owner))
+	for r := range iter.Values {
+		if shouldFetch(r) {
+			fetchAsync(ctx, h, fetchRepository{owner, r.Name})
+		}
+	}
+	if iter.Err != nil {
+		h.warn(fmt.Errorf("fetchRepositories(%q): %w", owner, iter.Err))
 	}
 }
 
@@ -208,35 +207,35 @@ func (fi fetchIssue) fetch(ctx context.Context, h *hub, i issueAndEdges) (*ent.I
 }
 
 func fetchIssues(ctx context.Context, h *hub, repoOwner, repoName string) {
-	err := httpGetIterate(
+	iter := httpGetIterate[issueAndEdges](
 		ctx, h,
-		fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName),
-		func(i issueAndEdges) error {
-			iss, err := h.DB.Issue.Query().
-				Select(issue.FieldUpdatedAt).
-				Where(issue.ID(i.ID)).
-				Only(ctx)
-			if err != nil && !ent.IsNotFound(err) {
-				return err
-			}
+		fmt.Sprintf("/repos/%s/%s/issues?state=all&per_page=100", repoOwner, repoName))
+	for i := range iter.Values {
+		iss, err := h.DB.Issue.Query().
+			Select(issue.FieldUpdatedAt).
+			Where(issue.ID(i.ID)).
+			Only(ctx)
+		if err != nil && !ent.IsNotFound(err) {
+			h.warn(err)
+			continue
+		}
 
-			if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
-				// this does not incur in an additional request; we have all the data
-				// we want from this request already
-				fi := fetchIssue{repoOwner, repoName, i.Number}
-				fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
-					return fi.fetch(ctx, h, i)
-				})
-				if created {
-					if _, err := fn(); err != nil {
-						h.warn(err)
-					}
+		if iss == nil || !iss.UpdatedAt.Equal(i.UpdatedAt) {
+			// this does not incur in an additional request; we have all the data
+			// we want from this request already
+			fi := fetchIssue{repoOwner, repoName, i.Number}
+			fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.Issue, error) {
+				return fi.fetch(ctx, h, i)
+			})
+			if created {
+				if _, err := fn(); err != nil {
+					h.warn(err)
 				}
 			}
-			return nil
-		})
-	if err != nil {
-		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, err))
+		}
+	}
+	if iter.Err != nil {
+		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err))
 	}
 }
 
@@ -249,30 +248,34 @@ func fetchIssueComments(ctx context.Context, h *hub, fi fetchIssue) error {
 		ent.IssueComment
 		User *model.SimpleUser `json:"user"`
 	}
-	err = httpGetIterate(
+	iter := httpGetIterate[dstType](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/issues/%d/comments?per_page=100",
 			fi.owner, fi.repo, fi.issueNumber),
-		func(ic *dstType) error {
-			// Create issue comment
-			cr := h.DB.IssueComment.Create().
-				CopyIssueComment(&ic.IssueComment).
-				SetIssueID(iss.ID)
-			// Assign user if possible.
-			if ic.User != nil && ic.User.Login != "" {
-				us, err := fetch(ctx, h, fetchUser{ic.User.Login})
-				if err != nil {
-					return err
-				}
-				cr.SetUserID(us.ID)
-			}
-			return cr.
-				OnConflict().UpdateNewValues().
-				Exec(ctx)
-		},
 	)
-	if err != nil {
-		return fmt.Errorf("fetchIssueComments(%q): %w", fi.ID(), err)
+	for ic := range iter.Values {
+		// Create issue comment
+		cr := h.DB.IssueComment.Create().
+			CopyIssueComment(&ic.IssueComment).
+			SetIssueID(iss.ID)
+		// Assign user if possible.
+		if ic.User != nil && ic.User.Login != "" {
+			us, err := fetch(ctx, h, fetchUser{ic.User.Login})
+			if err != nil {
+				h.warn(err)
+				continue
+			}
+			cr.SetUserID(us.ID)
+		}
+		err = cr.
+			OnConflict().UpdateNewValues().
+			Exec(ctx)
+		if err != nil {
+			h.warn(err)
+		}
+	}
+	if iter.Err != nil {
+		return fmt.Errorf("fetchIssueComments(%q): %w", fi.ID(), iter.Err)
 	}
 	return nil
 }
@@ -304,44 +307,44 @@ func fetchIssueEvents(ctx context.Context, h *hub, fi fetchIssue) error {
 	if err != nil {
 		return err
 	}
-	err = httpGetIterate(
+	iter := httpGetIterate[fetchIssueEventType](
 		ctx, h,
 		fmt.Sprintf("/repos/%s/%s/issues/%d/timeline?per_page=100",
 			fi.owner, fi.repo, fi.issueNumber),
-		func(iev *fetchIssueEventType) error {
-			// Create issue event.
-			cr := h.DB.TimelineEvent.Create().
-				CopyTimelineEvent(&iev.TimelineEvent).
-				SetIssueID(iss.ID)
-
-			// This is a half-lie, but attempt to use the User as the Actor if
-			// it is not set. This is useful in some events like `reviewed`,
-			// which has user but not actor, and allows us to link many more
-			// events.
-			actor := iev.Actor
-			if actor == nil && iev.User != nil {
-				actor = iev.User
-			}
-
-			// Assign user if possible.
-			if actor != nil {
-				us, err := fetch(ctx, h, fetchUser{actor.Login})
-				if err != nil {
-					return err
-				}
-				cr.SetActorID(us.ID)
-			}
-
-			err := cr.
-				OnConflict().UpdateNewValues().
-				Exec(ctx)
-			if err != nil {
-				h.warn(fmt.Errorf("save event of type %v: %w", iev.Event, err))
-			}
-			return nil
-		},
 	)
-	if err != nil {
+	for iev := range iter.Values {
+		// Create issue event.
+		cr := h.DB.TimelineEvent.Create().
+			CopyTimelineEvent(&iev.TimelineEvent).
+			SetIssueID(iss.ID)
+
+		// This is a half-lie, but attempt to use the User as the Actor if
+		// it is not set. This is useful in some events like `reviewed`,
+		// which has user but not actor, and allows us to link many more
+		// events.
+		actor := iev.Actor
+		if actor == nil && iev.User != nil {
+			actor = iev.User
+		}
+
+		// Assign user if possible.
+		if actor != nil {
+			us, err := fetch(ctx, h, fetchUser{actor.Login})
+			if err != nil {
+				return err
+			}
+			cr.SetActorID(us.ID)
+		}
+
+		err := cr.
+			OnConflict().UpdateNewValues().
+			Exec(ctx)
+		if err != nil {
+			h.warn(fmt.Errorf("save event of type %v: %w", iev.Event, err))
+		}
+		return nil
+	}
+	if iter.Err != nil {
 		return fmt.Errorf("fetchIssueEvents(%q): %w", fi.ID(), err)
 	}
 	return nil
@@ -456,34 +459,34 @@ func (fi fetchPullRequest) fetch(ctx context.Context, h *hub, pr pullAndEdges) (
 }
 
 func fetchPulls(ctx context.Context, h *hub, repoOwner, repoName string) {
-	err := httpGetIterate(
+	iter := httpGetIterate[pullAndEdges](
 		ctx, h,
-		fmt.Sprintf("/repos/%s/%s/pulls?state=all&per_page=100", repoOwner, repoName),
-		func(pr pullAndEdges) error {
-			oldPR, err := h.DB.PullRequest.Query().
-				Select(pullrequest.FieldUpdatedAt).
-				Where(pullrequest.ID(pr.ID)).
-				Only(ctx)
-			if err != nil && !ent.IsNotFound(err) {
-				return err
-			}
+		fmt.Sprintf("/repos/%s/%s/pulls?state=all&per_page=100", repoOwner, repoName))
+	for pr := range iter.Values {
+		oldPR, err := h.DB.PullRequest.Query().
+			Select(pullrequest.FieldUpdatedAt).
+			Where(pullrequest.ID(pr.ID)).
+			Only(ctx)
+		if err != nil && !ent.IsNotFound(err) {
+			h.warn(err)
+			continue
+		}
 
-			if oldPR == nil || !oldPR.UpdatedAt.Equal(pr.UpdatedAt) {
-				// this does not incur in an additional request; we have all the data
-				// we want from this request already
-				fi := fetchPullRequest{repoOwner, repoName, pr.Number}
-				fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.PullRequest, error) {
-					return fi.fetch(ctx, h, pr)
-				})
-				if created {
-					if _, err := fn(); err != nil {
-						h.warn(err)
-					}
+		if oldPR == nil || !oldPR.UpdatedAt.Equal(pr.UpdatedAt) {
+			// this does not incur in an additional request; we have all the data
+			// we want from this request already
+			fi := fetchPullRequest{repoOwner, repoName, pr.Number}
+			fn, created := setUpdatedFunc(h, fi.ID(), func() (*ent.PullRequest, error) {
+				return fi.fetch(ctx, h, pr)
+			})
+			if created {
+				if _, err := fn(); err != nil {
+					h.warn(err)
 				}
 			}
-			return nil
-		})
-	if err != nil {
-		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, err))
+		}
+	}
+	if iter.Err != nil {
+		h.warn(fmt.Errorf("fetchIssues(%q, %q): %w", repoOwner, repoName, iter.Err))
 	}
 }

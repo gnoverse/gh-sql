@@ -80,8 +80,6 @@ const (
 	EdgeIssuesClosed = "issues_closed"
 	// EdgePrsCreated holds the string denoting the prs_created edge name in mutations.
 	EdgePrsCreated = "prs_created"
-	// EdgePrsMerged holds the string denoting the prs_merged edge name in mutations.
-	EdgePrsMerged = "prs_merged"
 	// EdgeCommentsCreated holds the string denoting the comments_created edge name in mutations.
 	EdgeCommentsCreated = "comments_created"
 	// EdgeIssuesAssigned holds the string denoting the issues_assigned edge name in mutations.
@@ -122,13 +120,6 @@ const (
 	PrsCreatedInverseTable = "pull_requests"
 	// PrsCreatedColumn is the table column denoting the prs_created relation/edge.
 	PrsCreatedColumn = "user_prs_created"
-	// PrsMergedTable is the table that holds the prs_merged relation/edge.
-	PrsMergedTable = "pull_requests"
-	// PrsMergedInverseTable is the table name for the PullRequest entity.
-	// It exists in this package in order to avoid circular dependency with the "pullrequest" package.
-	PrsMergedInverseTable = "pull_requests"
-	// PrsMergedColumn is the table column denoting the prs_merged relation/edge.
-	PrsMergedColumn = "user_prs_merged"
 	// CommentsCreatedTable is the table that holds the comments_created relation/edge.
 	CommentsCreatedTable = "issue_comments"
 	// CommentsCreatedInverseTable is the table name for the IssueComment entity.
@@ -431,20 +422,6 @@ func ByPrsCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByPrsMergedCount orders the results by prs_merged count.
-func ByPrsMergedCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newPrsMergedStep(), opts...)
-	}
-}
-
-// ByPrsMerged orders the results by prs_merged terms.
-func ByPrsMerged(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newPrsMergedStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
 // ByCommentsCreatedCount orders the results by comments_created count.
 func ByCommentsCreatedCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -540,13 +517,6 @@ func newPrsCreatedStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PrsCreatedInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, PrsCreatedTable, PrsCreatedColumn),
-	)
-}
-func newPrsMergedStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(PrsMergedInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, PrsMergedTable, PrsMergedColumn),
 	)
 }
 func newCommentsCreatedStep() *sqlgraph.Step {

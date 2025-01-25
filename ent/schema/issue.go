@@ -50,7 +50,7 @@ func (Issue) Fields() []ent.Field {
 		field.Time("updated_at"),
 		field.Bool("draft"),
 		field.Enum("author_association").GoType(model.AuthorAssociation("")),
-		field.JSON("reactions", model.ReactionRollup(nil)),
+		field.JSON("reactions", model.ReactionRollup{}),
 	}
 }
 

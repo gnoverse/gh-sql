@@ -38,7 +38,7 @@ type IssueComment struct {
 	// AuthorAssociation holds the value of the "author_association" field.
 	AuthorAssociation model.AuthorAssociation `json:"author_association"`
 	// Reactions holds the value of the "reactions" field.
-	Reactions map[string]interface{} `json:"reactions"`
+	Reactions model.ReactionRollup `json:"reactions"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the IssueCommentQuery when eager-loading is set.
 	Edges                 IssueCommentEdges `json:"-"`

@@ -28,7 +28,6 @@ type PullRequestQuery struct {
 	withRepository         *RepositoryQuery
 	withIssue              *IssueQuery
 	withUser               *UserQuery
-	withMergedBy           *UserQuery
 	withAssignees          *UserQuery
 	withRequestedReviewers *UserQuery
 	withFKs                bool
@@ -127,28 +126,6 @@ func (prq *PullRequestQuery) QueryUser() *UserQuery {
 			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, pullrequest.UserTable, pullrequest.UserColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(prq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryMergedBy chains the current query on the "merged_by" edge.
-func (prq *PullRequestQuery) QueryMergedBy() *UserQuery {
-	query := (&UserClient{config: prq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := prq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := prq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, pullrequest.MergedByTable, pullrequest.MergedByColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(prq.driver.Dialect(), step)
 		return fromU, nil
@@ -395,7 +372,6 @@ func (prq *PullRequestQuery) Clone() *PullRequestQuery {
 		withRepository:         prq.withRepository.Clone(),
 		withIssue:              prq.withIssue.Clone(),
 		withUser:               prq.withUser.Clone(),
-		withMergedBy:           prq.withMergedBy.Clone(),
 		withAssignees:          prq.withAssignees.Clone(),
 		withRequestedReviewers: prq.withRequestedReviewers.Clone(),
 		// clone intermediate query.
@@ -434,17 +410,6 @@ func (prq *PullRequestQuery) WithUser(opts ...func(*UserQuery)) *PullRequestQuer
 		opt(query)
 	}
 	prq.withUser = query
-	return prq
-}
-
-// WithMergedBy tells the query-builder to eager-load the nodes that are connected to
-// the "merged_by" edge. The optional arguments are used to configure the query builder of the edge.
-func (prq *PullRequestQuery) WithMergedBy(opts ...func(*UserQuery)) *PullRequestQuery {
-	query := (&UserClient{config: prq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	prq.withMergedBy = query
 	return prq
 }
 
@@ -549,16 +514,15 @@ func (prq *PullRequestQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 		nodes       = []*PullRequest{}
 		withFKs     = prq.withFKs
 		_spec       = prq.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [5]bool{
 			prq.withRepository != nil,
 			prq.withIssue != nil,
 			prq.withUser != nil,
-			prq.withMergedBy != nil,
 			prq.withAssignees != nil,
 			prq.withRequestedReviewers != nil,
 		}
 	)
-	if prq.withRepository != nil || prq.withIssue != nil || prq.withUser != nil || prq.withMergedBy != nil {
+	if prq.withRepository != nil || prq.withIssue != nil || prq.withUser != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -597,12 +561,6 @@ func (prq *PullRequestQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if query := prq.withUser; query != nil {
 		if err := prq.loadUser(ctx, query, nodes, nil,
 			func(n *PullRequest, e *User) { n.Edges.User = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := prq.withMergedBy; query != nil {
-		if err := prq.loadMergedBy(ctx, query, nodes, nil,
-			func(n *PullRequest, e *User) { n.Edges.MergedBy = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -712,38 +670,6 @@ func (prq *PullRequestQuery) loadUser(ctx context.Context, query *UserQuery, nod
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "user_prs_created" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (prq *PullRequestQuery) loadMergedBy(ctx context.Context, query *UserQuery, nodes []*PullRequest, init func(*PullRequest), assign func(*PullRequest, *User)) error {
-	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*PullRequest)
-	for i := range nodes {
-		if nodes[i].user_prs_merged == nil {
-			continue
-		}
-		fk := *nodes[i].user_prs_merged
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_prs_merged" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

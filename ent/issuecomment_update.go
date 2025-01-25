@@ -143,8 +143,16 @@ func (icu *IssueCommentUpdate) SetNillableAuthorAssociation(ma *model.AuthorAsso
 }
 
 // SetReactions sets the "reactions" field.
-func (icu *IssueCommentUpdate) SetReactions(m map[string]interface{}) *IssueCommentUpdate {
-	icu.mutation.SetReactions(m)
+func (icu *IssueCommentUpdate) SetReactions(mr model.ReactionRollup) *IssueCommentUpdate {
+	icu.mutation.SetReactions(mr)
+	return icu
+}
+
+// SetNillableReactions sets the "reactions" field if the given value is not nil.
+func (icu *IssueCommentUpdate) SetNillableReactions(mr *model.ReactionRollup) *IssueCommentUpdate {
+	if mr != nil {
+		icu.SetReactions(*mr)
+	}
 	return icu
 }
 
@@ -470,8 +478,16 @@ func (icuo *IssueCommentUpdateOne) SetNillableAuthorAssociation(ma *model.Author
 }
 
 // SetReactions sets the "reactions" field.
-func (icuo *IssueCommentUpdateOne) SetReactions(m map[string]interface{}) *IssueCommentUpdateOne {
-	icuo.mutation.SetReactions(m)
+func (icuo *IssueCommentUpdateOne) SetReactions(mr model.ReactionRollup) *IssueCommentUpdateOne {
+	icuo.mutation.SetReactions(mr)
+	return icuo
+}
+
+// SetNillableReactions sets the "reactions" field if the given value is not nil.
+func (icuo *IssueCommentUpdateOne) SetNillableReactions(mr *model.ReactionRollup) *IssueCommentUpdateOne {
+	if mr != nil {
+		icuo.SetReactions(*mr)
+	}
 	return icuo
 }
 

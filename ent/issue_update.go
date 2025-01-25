@@ -358,6 +358,14 @@ func (iu *IssueUpdate) SetReactions(mr model.ReactionRollup) *IssueUpdate {
 	return iu
 }
 
+// SetNillableReactions sets the "reactions" field if the given value is not nil.
+func (iu *IssueUpdate) SetNillableReactions(mr *model.ReactionRollup) *IssueUpdate {
+	if mr != nil {
+		iu.SetReactions(*mr)
+	}
+	return iu
+}
+
 // SetRepositoryID sets the "repository" edge to the Repository entity by ID.
 func (iu *IssueUpdate) SetRepositoryID(id int64) *IssueUpdate {
 	iu.mutation.SetRepositoryID(id)
@@ -1293,6 +1301,14 @@ func (iuo *IssueUpdateOne) SetNillableAuthorAssociation(ma *model.AuthorAssociat
 // SetReactions sets the "reactions" field.
 func (iuo *IssueUpdateOne) SetReactions(mr model.ReactionRollup) *IssueUpdateOne {
 	iuo.mutation.SetReactions(mr)
+	return iuo
+}
+
+// SetNillableReactions sets the "reactions" field if the given value is not nil.
+func (iuo *IssueUpdateOne) SetNillableReactions(mr *model.ReactionRollup) *IssueUpdateOne {
+	if mr != nil {
+		iuo.SetReactions(*mr)
+	}
 	return iuo
 }
 

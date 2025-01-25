@@ -2107,7 +2107,7 @@ type IssueCommentMutation struct {
 	updated_at         *string
 	issue_url          *string
 	author_association *model.AuthorAssociation
-	reactions          *map[string]interface{}
+	reactions          *model.ReactionRollup
 	clearedFields      map[string]struct{}
 	issue              *int64
 	clearedissue       bool
@@ -2511,12 +2511,12 @@ func (m *IssueCommentMutation) ResetAuthorAssociation() {
 }
 
 // SetReactions sets the "reactions" field.
-func (m *IssueCommentMutation) SetReactions(value map[string]interface{}) {
-	m.reactions = &value
+func (m *IssueCommentMutation) SetReactions(mr model.ReactionRollup) {
+	m.reactions = &mr
 }
 
 // Reactions returns the value of the "reactions" field in the mutation.
-func (m *IssueCommentMutation) Reactions() (r map[string]interface{}, exists bool) {
+func (m *IssueCommentMutation) Reactions() (r model.ReactionRollup, exists bool) {
 	v := m.reactions
 	if v == nil {
 		return
@@ -2527,7 +2527,7 @@ func (m *IssueCommentMutation) Reactions() (r map[string]interface{}, exists boo
 // OldReactions returns the old "reactions" field's value of the IssueComment entity.
 // If the IssueComment object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *IssueCommentMutation) OldReactions(ctx context.Context) (v map[string]interface{}, err error) {
+func (m *IssueCommentMutation) OldReactions(ctx context.Context) (v model.ReactionRollup, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldReactions is only allowed on UpdateOne operations")
 	}
@@ -2805,7 +2805,7 @@ func (m *IssueCommentMutation) SetField(name string, value ent.Value) error {
 		m.SetAuthorAssociation(v)
 		return nil
 	case issuecomment.FieldReactions:
-		v, ok := value.(map[string]interface{})
+		v, ok := value.(model.ReactionRollup)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -3022,8 +3022,6 @@ type PullRequestMutation struct {
 	clearedissue               bool
 	user                       *int64
 	cleareduser                bool
-	merged_by                  *int64
-	clearedmerged_by           bool
 	assignees                  map[int64]struct{}
 	removedassignees           map[int64]struct{}
 	clearedassignees           bool
@@ -4241,45 +4239,6 @@ func (m *PullRequestMutation) ResetUser() {
 	m.cleareduser = false
 }
 
-// SetMergedByID sets the "merged_by" edge to the User entity by id.
-func (m *PullRequestMutation) SetMergedByID(id int64) {
-	m.merged_by = &id
-}
-
-// ClearMergedBy clears the "merged_by" edge to the User entity.
-func (m *PullRequestMutation) ClearMergedBy() {
-	m.clearedmerged_by = true
-}
-
-// MergedByCleared reports if the "merged_by" edge to the User entity was cleared.
-func (m *PullRequestMutation) MergedByCleared() bool {
-	return m.clearedmerged_by
-}
-
-// MergedByID returns the "merged_by" edge ID in the mutation.
-func (m *PullRequestMutation) MergedByID() (id int64, exists bool) {
-	if m.merged_by != nil {
-		return *m.merged_by, true
-	}
-	return
-}
-
-// MergedByIDs returns the "merged_by" edge IDs in the mutation.
-// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// MergedByID instead. It exists only for internal usage by the builders.
-func (m *PullRequestMutation) MergedByIDs() (ids []int64) {
-	if id := m.merged_by; id != nil {
-		ids = append(ids, *id)
-	}
-	return
-}
-
-// ResetMergedBy resets all changes to the "merged_by" edge.
-func (m *PullRequestMutation) ResetMergedBy() {
-	m.merged_by = nil
-	m.clearedmerged_by = false
-}
-
 // AddAssigneeIDs adds the "assignees" edge to the User entity by ids.
 func (m *PullRequestMutation) AddAssigneeIDs(ids ...int64) {
 	if m.assignees == nil {
@@ -4977,7 +4936,7 @@ func (m *PullRequestMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *PullRequestMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 5)
 	if m.repository != nil {
 		edges = append(edges, pullrequest.EdgeRepository)
 	}
@@ -4986,9 +4945,6 @@ func (m *PullRequestMutation) AddedEdges() []string {
 	}
 	if m.user != nil {
 		edges = append(edges, pullrequest.EdgeUser)
-	}
-	if m.merged_by != nil {
-		edges = append(edges, pullrequest.EdgeMergedBy)
 	}
 	if m.assignees != nil {
 		edges = append(edges, pullrequest.EdgeAssignees)
@@ -5015,10 +4971,6 @@ func (m *PullRequestMutation) AddedIDs(name string) []ent.Value {
 		if id := m.user; id != nil {
 			return []ent.Value{*id}
 		}
-	case pullrequest.EdgeMergedBy:
-		if id := m.merged_by; id != nil {
-			return []ent.Value{*id}
-		}
 	case pullrequest.EdgeAssignees:
 		ids := make([]ent.Value, 0, len(m.assignees))
 		for id := range m.assignees {
@@ -5037,7 +4989,7 @@ func (m *PullRequestMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PullRequestMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 5)
 	if m.removedassignees != nil {
 		edges = append(edges, pullrequest.EdgeAssignees)
 	}
@@ -5069,7 +5021,7 @@ func (m *PullRequestMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *PullRequestMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 5)
 	if m.clearedrepository {
 		edges = append(edges, pullrequest.EdgeRepository)
 	}
@@ -5078,9 +5030,6 @@ func (m *PullRequestMutation) ClearedEdges() []string {
 	}
 	if m.cleareduser {
 		edges = append(edges, pullrequest.EdgeUser)
-	}
-	if m.clearedmerged_by {
-		edges = append(edges, pullrequest.EdgeMergedBy)
 	}
 	if m.clearedassignees {
 		edges = append(edges, pullrequest.EdgeAssignees)
@@ -5101,8 +5050,6 @@ func (m *PullRequestMutation) EdgeCleared(name string) bool {
 		return m.clearedissue
 	case pullrequest.EdgeUser:
 		return m.cleareduser
-	case pullrequest.EdgeMergedBy:
-		return m.clearedmerged_by
 	case pullrequest.EdgeAssignees:
 		return m.clearedassignees
 	case pullrequest.EdgeRequestedReviewers:
@@ -5124,9 +5071,6 @@ func (m *PullRequestMutation) ClearEdge(name string) error {
 	case pullrequest.EdgeUser:
 		m.ClearUser()
 		return nil
-	case pullrequest.EdgeMergedBy:
-		m.ClearMergedBy()
-		return nil
 	}
 	return fmt.Errorf("unknown PullRequest unique edge %s", name)
 }
@@ -5143,9 +5087,6 @@ func (m *PullRequestMutation) ResetEdge(name string) error {
 		return nil
 	case pullrequest.EdgeUser:
 		m.ResetUser()
-		return nil
-	case pullrequest.EdgeMergedBy:
-		m.ResetMergedBy()
 		return nil
 	case pullrequest.EdgeAssignees:
 		m.ResetAssignees()
@@ -11116,9 +11057,6 @@ type UserMutation struct {
 	prs_created                    map[int64]struct{}
 	removedprs_created             map[int64]struct{}
 	clearedprs_created             bool
-	prs_merged                     map[int64]struct{}
-	removedprs_merged              map[int64]struct{}
-	clearedprs_merged              bool
 	comments_created               map[int64]struct{}
 	removedcomments_created        map[int64]struct{}
 	clearedcomments_created        bool
@@ -12723,60 +12661,6 @@ func (m *UserMutation) ResetPrsCreated() {
 	m.removedprs_created = nil
 }
 
-// AddPrsMergedIDs adds the "prs_merged" edge to the PullRequest entity by ids.
-func (m *UserMutation) AddPrsMergedIDs(ids ...int64) {
-	if m.prs_merged == nil {
-		m.prs_merged = make(map[int64]struct{})
-	}
-	for i := range ids {
-		m.prs_merged[ids[i]] = struct{}{}
-	}
-}
-
-// ClearPrsMerged clears the "prs_merged" edge to the PullRequest entity.
-func (m *UserMutation) ClearPrsMerged() {
-	m.clearedprs_merged = true
-}
-
-// PrsMergedCleared reports if the "prs_merged" edge to the PullRequest entity was cleared.
-func (m *UserMutation) PrsMergedCleared() bool {
-	return m.clearedprs_merged
-}
-
-// RemovePrsMergedIDs removes the "prs_merged" edge to the PullRequest entity by IDs.
-func (m *UserMutation) RemovePrsMergedIDs(ids ...int64) {
-	if m.removedprs_merged == nil {
-		m.removedprs_merged = make(map[int64]struct{})
-	}
-	for i := range ids {
-		delete(m.prs_merged, ids[i])
-		m.removedprs_merged[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedPrsMerged returns the removed IDs of the "prs_merged" edge to the PullRequest entity.
-func (m *UserMutation) RemovedPrsMergedIDs() (ids []int64) {
-	for id := range m.removedprs_merged {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// PrsMergedIDs returns the "prs_merged" edge IDs in the mutation.
-func (m *UserMutation) PrsMergedIDs() (ids []int64) {
-	for id := range m.prs_merged {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetPrsMerged resets all changes to the "prs_merged" edge.
-func (m *UserMutation) ResetPrsMerged() {
-	m.prs_merged = nil
-	m.clearedprs_merged = false
-	m.removedprs_merged = nil
-}
-
 // AddCommentsCreatedIDs adds the "comments_created" edge to the IssueComment entity by ids.
 func (m *UserMutation) AddCommentsCreatedIDs(ids ...int64) {
 	if m.comments_created == nil {
@@ -13775,7 +13659,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 9)
 	if m.repositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -13787,9 +13671,6 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.prs_created != nil {
 		edges = append(edges, user.EdgePrsCreated)
-	}
-	if m.prs_merged != nil {
-		edges = append(edges, user.EdgePrsMerged)
 	}
 	if m.comments_created != nil {
 		edges = append(edges, user.EdgeCommentsCreated)
@@ -13837,12 +13718,6 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case user.EdgePrsMerged:
-		ids := make([]ent.Value, 0, len(m.prs_merged))
-		for id := range m.prs_merged {
-			ids = append(ids, id)
-		}
-		return ids
 	case user.EdgeCommentsCreated:
 		ids := make([]ent.Value, 0, len(m.comments_created))
 		for id := range m.comments_created {
@@ -13879,7 +13754,7 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 9)
 	if m.removedrepositories != nil {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -13891,9 +13766,6 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedprs_created != nil {
 		edges = append(edges, user.EdgePrsCreated)
-	}
-	if m.removedprs_merged != nil {
-		edges = append(edges, user.EdgePrsMerged)
 	}
 	if m.removedcomments_created != nil {
 		edges = append(edges, user.EdgeCommentsCreated)
@@ -13941,12 +13813,6 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case user.EdgePrsMerged:
-		ids := make([]ent.Value, 0, len(m.removedprs_merged))
-		for id := range m.removedprs_merged {
-			ids = append(ids, id)
-		}
-		return ids
 	case user.EdgeCommentsCreated:
 		ids := make([]ent.Value, 0, len(m.removedcomments_created))
 		for id := range m.removedcomments_created {
@@ -13983,7 +13849,7 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 9)
 	if m.clearedrepositories {
 		edges = append(edges, user.EdgeRepositories)
 	}
@@ -13995,9 +13861,6 @@ func (m *UserMutation) ClearedEdges() []string {
 	}
 	if m.clearedprs_created {
 		edges = append(edges, user.EdgePrsCreated)
-	}
-	if m.clearedprs_merged {
-		edges = append(edges, user.EdgePrsMerged)
 	}
 	if m.clearedcomments_created {
 		edges = append(edges, user.EdgeCommentsCreated)
@@ -14029,8 +13892,6 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedissues_closed
 	case user.EdgePrsCreated:
 		return m.clearedprs_created
-	case user.EdgePrsMerged:
-		return m.clearedprs_merged
 	case user.EdgeCommentsCreated:
 		return m.clearedcomments_created
 	case user.EdgeIssuesAssigned:
@@ -14068,9 +13929,6 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgePrsCreated:
 		m.ResetPrsCreated()
-		return nil
-	case user.EdgePrsMerged:
-		m.ResetPrsMerged()
 		return nil
 	case user.EdgeCommentsCreated:
 		m.ResetCommentsCreated()

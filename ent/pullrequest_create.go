@@ -263,25 +263,6 @@ func (prc *PullRequestCreate) SetUser(u *User) *PullRequestCreate {
 	return prc.SetUserID(u.ID)
 }
 
-// SetMergedByID sets the "merged_by" edge to the User entity by ID.
-func (prc *PullRequestCreate) SetMergedByID(id int64) *PullRequestCreate {
-	prc.mutation.SetMergedByID(id)
-	return prc
-}
-
-// SetNillableMergedByID sets the "merged_by" edge to the User entity by ID if the given value is not nil.
-func (prc *PullRequestCreate) SetNillableMergedByID(id *int64) *PullRequestCreate {
-	if id != nil {
-		prc = prc.SetMergedByID(*id)
-	}
-	return prc
-}
-
-// SetMergedBy sets the "merged_by" edge to the User entity.
-func (prc *PullRequestCreate) SetMergedBy(u *User) *PullRequestCreate {
-	return prc.SetMergedByID(u.ID)
-}
-
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
 func (prc *PullRequestCreate) AddAssigneeIDs(ids ...int64) *PullRequestCreate {
 	prc.mutation.AddAssigneeIDs(ids...)
@@ -604,23 +585,6 @@ func (prc *PullRequestCreate) createSpec() (*PullRequest, *sqlgraph.CreateSpec) 
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.user_prs_created = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := prc.mutation.MergedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   pullrequest.MergedByTable,
-			Columns: []string{pullrequest.MergedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.user_prs_merged = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := prc.mutation.AssigneesIDs(); len(nodes) > 0 {

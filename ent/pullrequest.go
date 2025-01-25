@@ -78,7 +78,6 @@ type PullRequest struct {
 	issue_pull_request       *int64
 	repository_pull_requests *int64
 	user_prs_created         *int64
-	user_prs_merged          *int64
 	selectValues             sql.SelectValues
 }
 
@@ -90,15 +89,13 @@ type PullRequestEdges struct {
 	Issue *Issue `json:"issue,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
-	// MergedBy holds the value of the merged_by edge.
-	MergedBy *User `json:"merged_by,omitempty"`
 	// Assignees holds the value of the assignees edge.
 	Assignees []*User `json:"assignees,omitempty"`
 	// RequestedReviewers holds the value of the requested_reviewers edge.
 	RequestedReviewers []*User `json:"requested_reviewers,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [5]bool
 }
 
 // RepositoryOrErr returns the Repository value or an error if the edge
@@ -134,21 +131,10 @@ func (e PullRequestEdges) UserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "user"}
 }
 
-// MergedByOrErr returns the MergedBy value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e PullRequestEdges) MergedByOrErr() (*User, error) {
-	if e.MergedBy != nil {
-		return e.MergedBy, nil
-	} else if e.loadedTypes[3] {
-		return nil, &NotFoundError{label: user.Label}
-	}
-	return nil, &NotLoadedError{edge: "merged_by"}
-}
-
 // AssigneesOrErr returns the Assignees value or an error if the edge
 // was not loaded in eager-loading.
 func (e PullRequestEdges) AssigneesOrErr() ([]*User, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[3] {
 		return e.Assignees, nil
 	}
 	return nil, &NotLoadedError{edge: "assignees"}
@@ -157,7 +143,7 @@ func (e PullRequestEdges) AssigneesOrErr() ([]*User, error) {
 // RequestedReviewersOrErr returns the RequestedReviewers value or an error if the edge
 // was not loaded in eager-loading.
 func (e PullRequestEdges) RequestedReviewersOrErr() ([]*User, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[4] {
 		return e.RequestedReviewers, nil
 	}
 	return nil, &NotLoadedError{edge: "requested_reviewers"}
@@ -183,8 +169,6 @@ func (*PullRequest) scanValues(columns []string) ([]any, error) {
 		case pullrequest.ForeignKeys[1]: // repository_pull_requests
 			values[i] = new(sql.NullInt64)
 		case pullrequest.ForeignKeys[2]: // user_prs_created
-			values[i] = new(sql.NullInt64)
-		case pullrequest.ForeignKeys[3]: // user_prs_merged
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -383,13 +367,6 @@ func (pr *PullRequest) assignValues(columns []string, values []any) error {
 				pr.user_prs_created = new(int64)
 				*pr.user_prs_created = int64(value.Int64)
 			}
-		case pullrequest.ForeignKeys[3]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_prs_merged", value)
-			} else if value.Valid {
-				pr.user_prs_merged = new(int64)
-				*pr.user_prs_merged = int64(value.Int64)
-			}
 		default:
 			pr.selectValues.Set(columns[i], values[i])
 		}
@@ -416,11 +393,6 @@ func (pr *PullRequest) QueryIssue() *IssueQuery {
 // QueryUser queries the "user" edge of the PullRequest entity.
 func (pr *PullRequest) QueryUser() *UserQuery {
 	return NewPullRequestClient(pr.config).QueryUser(pr)
-}
-
-// QueryMergedBy queries the "merged_by" edge of the PullRequest entity.
-func (pr *PullRequest) QueryMergedBy() *UserQuery {
-	return NewPullRequestClient(pr.config).QueryMergedBy(pr)
 }
 
 // QueryAssignees queries the "assignees" edge of the PullRequest entity.

@@ -1,6 +1,6 @@
 module github.com/gnolang/gh-sql
 
-go 1.21.1
+go 1.23.2
 
 require (
 	entgo.io/ent v0.13.1

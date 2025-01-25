@@ -460,25 +460,6 @@ func (pru *PullRequestUpdate) SetUser(u *User) *PullRequestUpdate {
 	return pru.SetUserID(u.ID)
 }
 
-// SetMergedByID sets the "merged_by" edge to the User entity by ID.
-func (pru *PullRequestUpdate) SetMergedByID(id int64) *PullRequestUpdate {
-	pru.mutation.SetMergedByID(id)
-	return pru
-}
-
-// SetNillableMergedByID sets the "merged_by" edge to the User entity by ID if the given value is not nil.
-func (pru *PullRequestUpdate) SetNillableMergedByID(id *int64) *PullRequestUpdate {
-	if id != nil {
-		pru = pru.SetMergedByID(*id)
-	}
-	return pru
-}
-
-// SetMergedBy sets the "merged_by" edge to the User entity.
-func (pru *PullRequestUpdate) SetMergedBy(u *User) *PullRequestUpdate {
-	return pru.SetMergedByID(u.ID)
-}
-
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
 func (pru *PullRequestUpdate) AddAssigneeIDs(ids ...int64) *PullRequestUpdate {
 	pru.mutation.AddAssigneeIDs(ids...)
@@ -529,12 +510,6 @@ func (pru *PullRequestUpdate) ClearIssue() *PullRequestUpdate {
 // ClearUser clears the "user" edge to the User entity.
 func (pru *PullRequestUpdate) ClearUser() *PullRequestUpdate {
 	pru.mutation.ClearUser()
-	return pru
-}
-
-// ClearMergedBy clears the "merged_by" edge to the User entity.
-func (pru *PullRequestUpdate) ClearMergedBy() *PullRequestUpdate {
-	pru.mutation.ClearMergedBy()
 	return pru
 }
 
@@ -810,35 +785,6 @@ func (pru *PullRequestUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Inverse: true,
 			Table:   pullrequest.UserTable,
 			Columns: []string{pullrequest.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if pru.mutation.MergedByCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   pullrequest.MergedByTable,
-			Columns: []string{pullrequest.MergedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pru.mutation.MergedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   pullrequest.MergedByTable,
-			Columns: []string{pullrequest.MergedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
@@ -1387,25 +1333,6 @@ func (pruo *PullRequestUpdateOne) SetUser(u *User) *PullRequestUpdateOne {
 	return pruo.SetUserID(u.ID)
 }
 
-// SetMergedByID sets the "merged_by" edge to the User entity by ID.
-func (pruo *PullRequestUpdateOne) SetMergedByID(id int64) *PullRequestUpdateOne {
-	pruo.mutation.SetMergedByID(id)
-	return pruo
-}
-
-// SetNillableMergedByID sets the "merged_by" edge to the User entity by ID if the given value is not nil.
-func (pruo *PullRequestUpdateOne) SetNillableMergedByID(id *int64) *PullRequestUpdateOne {
-	if id != nil {
-		pruo = pruo.SetMergedByID(*id)
-	}
-	return pruo
-}
-
-// SetMergedBy sets the "merged_by" edge to the User entity.
-func (pruo *PullRequestUpdateOne) SetMergedBy(u *User) *PullRequestUpdateOne {
-	return pruo.SetMergedByID(u.ID)
-}
-
 // AddAssigneeIDs adds the "assignees" edge to the User entity by IDs.
 func (pruo *PullRequestUpdateOne) AddAssigneeIDs(ids ...int64) *PullRequestUpdateOne {
 	pruo.mutation.AddAssigneeIDs(ids...)
@@ -1456,12 +1383,6 @@ func (pruo *PullRequestUpdateOne) ClearIssue() *PullRequestUpdateOne {
 // ClearUser clears the "user" edge to the User entity.
 func (pruo *PullRequestUpdateOne) ClearUser() *PullRequestUpdateOne {
 	pruo.mutation.ClearUser()
-	return pruo
-}
-
-// ClearMergedBy clears the "merged_by" edge to the User entity.
-func (pruo *PullRequestUpdateOne) ClearMergedBy() *PullRequestUpdateOne {
-	pruo.mutation.ClearMergedBy()
 	return pruo
 }
 
@@ -1767,35 +1688,6 @@ func (pruo *PullRequestUpdateOne) sqlSave(ctx context.Context) (_node *PullReque
 			Inverse: true,
 			Table:   pullrequest.UserTable,
 			Columns: []string{pullrequest.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if pruo.mutation.MergedByCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   pullrequest.MergedByTable,
-			Columns: []string{pullrequest.MergedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pruo.mutation.MergedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   pullrequest.MergedByTable,
-			Columns: []string{pullrequest.MergedByColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),

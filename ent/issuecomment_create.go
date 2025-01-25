@@ -73,8 +73,8 @@ func (icc *IssueCommentCreate) SetAuthorAssociation(ma model.AuthorAssociation) 
 }
 
 // SetReactions sets the "reactions" field.
-func (icc *IssueCommentCreate) SetReactions(m map[string]interface{}) *IssueCommentCreate {
-	icc.mutation.SetReactions(m)
+func (icc *IssueCommentCreate) SetReactions(mr model.ReactionRollup) *IssueCommentCreate {
+	icc.mutation.SetReactions(mr)
 	return icc
 }
 
@@ -440,7 +440,7 @@ func (u *IssueCommentUpsert) UpdateAuthorAssociation() *IssueCommentUpsert {
 }
 
 // SetReactions sets the "reactions" field.
-func (u *IssueCommentUpsert) SetReactions(v map[string]interface{}) *IssueCommentUpsert {
+func (u *IssueCommentUpsert) SetReactions(v model.ReactionRollup) *IssueCommentUpsert {
 	u.Set(issuecomment.FieldReactions, v)
 	return u
 }
@@ -612,7 +612,7 @@ func (u *IssueCommentUpsertOne) UpdateAuthorAssociation() *IssueCommentUpsertOne
 }
 
 // SetReactions sets the "reactions" field.
-func (u *IssueCommentUpsertOne) SetReactions(v map[string]interface{}) *IssueCommentUpsertOne {
+func (u *IssueCommentUpsertOne) SetReactions(v model.ReactionRollup) *IssueCommentUpsertOne {
 	return u.Update(func(s *IssueCommentUpsert) {
 		s.SetReactions(v)
 	})
@@ -951,7 +951,7 @@ func (u *IssueCommentUpsertBulk) UpdateAuthorAssociation() *IssueCommentUpsertBu
 }
 
 // SetReactions sets the "reactions" field.
-func (u *IssueCommentUpsertBulk) SetReactions(v map[string]interface{}) *IssueCommentUpsertBulk {
+func (u *IssueCommentUpsertBulk) SetReactions(v model.ReactionRollup) *IssueCommentUpsertBulk {
 	return u.Update(func(s *IssueCommentUpsert) {
 		s.SetReactions(v)
 	})

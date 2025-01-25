@@ -1460,29 +1460,6 @@ func HasUserWith(preds ...predicate.User) predicate.PullRequest {
 	})
 }
 
-// HasMergedBy applies the HasEdge predicate on the "merged_by" edge.
-func HasMergedBy() predicate.PullRequest {
-	return predicate.PullRequest(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, MergedByTable, MergedByColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasMergedByWith applies the HasEdge predicate on the "merged_by" edge with a given conditions (other predicates).
-func HasMergedByWith(preds ...predicate.User) predicate.PullRequest {
-	return predicate.PullRequest(func(s *sql.Selector) {
-		step := newMergedByStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasAssignees applies the HasEdge predicate on the "assignees" edge.
 func HasAssignees() predicate.PullRequest {
 	return predicate.PullRequest(func(s *sql.Selector) {

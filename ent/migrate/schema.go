@@ -135,7 +135,6 @@ var (
 		{Name: "issue_pull_request", Type: field.TypeInt64, Unique: true},
 		{Name: "repository_pull_requests", Type: field.TypeInt64},
 		{Name: "user_prs_created", Type: field.TypeInt64, Nullable: true},
-		{Name: "user_prs_merged", Type: field.TypeInt64, Nullable: true},
 	}
 	// PullRequestsTable holds the schema information for the "pull_requests" table.
 	PullRequestsTable = &schema.Table{
@@ -158,12 +157,6 @@ var (
 			{
 				Symbol:     "pull_requests_users_prs_created",
 				Columns:    []*schema.Column{PullRequestsColumns[28]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
-			},
-			{
-				Symbol:     "pull_requests_users_prs_merged",
-				Columns:    []*schema.Column{PullRequestsColumns[29]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -435,7 +428,6 @@ func init() {
 	PullRequestsTable.ForeignKeys[0].RefTable = IssuesTable
 	PullRequestsTable.ForeignKeys[1].RefTable = RepositoriesTable
 	PullRequestsTable.ForeignKeys[2].RefTable = UsersTable
-	PullRequestsTable.ForeignKeys[3].RefTable = UsersTable
 	RepositoriesTable.ForeignKeys[0].RefTable = UsersTable
 	TimelineEventsTable.ForeignKeys[0].RefTable = IssuesTable
 	TimelineEventsTable.ForeignKeys[1].RefTable = UsersTable

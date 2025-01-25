@@ -811,22 +811,6 @@ func (c *PullRequestClient) QueryUser(pr *PullRequest) *UserQuery {
 	return query
 }
 
-// QueryMergedBy queries the merged_by edge of a PullRequest.
-func (c *PullRequestClient) QueryMergedBy(pr *PullRequest) *UserQuery {
-	query := (&UserClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := pr.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(pullrequest.Table, pullrequest.FieldID, id),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, pullrequest.MergedByTable, pullrequest.MergedByColumn),
-		)
-		fromV = sqlgraph.Neighbors(pr.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // QueryAssignees queries the assignees edge of a PullRequest.
 func (c *PullRequestClient) QueryAssignees(pr *PullRequest) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
@@ -1395,22 +1379,6 @@ func (c *UserClient) QueryPrsCreated(u *User) *PullRequestQuery {
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.PrsCreatedTable, user.PrsCreatedColumn),
-		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryPrsMerged queries the prs_merged edge of a User.
-func (c *UserClient) QueryPrsMerged(u *User) *PullRequestQuery {
-	query := (&PullRequestClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, id),
-			sqlgraph.To(pullrequest.Table, pullrequest.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.PrsMergedTable, user.PrsMergedColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil

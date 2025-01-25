@@ -38,16 +38,29 @@ var authorAssociations = [...]string{
 	string(AssociationNone),
 }
 
+// Values returns the possible values of an [AuthorAssociation].
 func (AuthorAssociation) Values() []string {
 	return authorAssociations[:]
 }
 
-// TODO: improve
-type ReactionRollup map[string]any
+// ReactionRollup associates to each reaction a number of users who clicked it.
+type ReactionRollup struct {
+	ThumbsUp   int    `json:"+1"`
+	ThumbsDown int    `json:"-1"`
+	Confused   int    `json:"confused"`
+	Eyes       int    `json:"eyes"`
+	Heart      int    `json:"heart"`
+	Hooray     int    `json:"hooray"`
+	Laugh      int    `json:"laugh"`
+	Rocket     int    `json:"rocket"`
+	TotalCount int    `json:"total_count"`
+	URL        string `json:"url"`
+}
 
 // StateReason is the reason an issue was closed or reopened.
 type StateReason string
 
+// Possible values of [StateReason].
 const (
 	StateReasonCompleted  StateReason = "completed"
 	StateReasonReopened   StateReason = "reopened"
@@ -60,14 +73,16 @@ var stateReasons = [...]string{
 	string(StateReasonNotPlanned),
 }
 
+// Values returns the possible values of a [StateReason].
 func (StateReason) Values() []string {
 	return stateReasons[:]
 }
 
+// PRBranch is the representation of a branch.
 type PRBranch struct {
-	Label string `json:"label"`
-	Ref   string `json:"ref"`
-	Sha   string `json:"sha"`
-	// NOTE: there is also repo, user,
-	// but we don't implement those for our use case.
+	Label string           `json:"label"`
+	Ref   string           `json:"ref"`
+	Sha   string           `json:"sha"`
+	User  SimpleUser       `json:"user"`
+	Repo  SimpleRepository `json:"repo"`
 }

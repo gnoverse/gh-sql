@@ -71,8 +71,6 @@ const (
 	EdgeIssue = "issue"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
-	// EdgeMergedBy holds the string denoting the merged_by edge name in mutations.
-	EdgeMergedBy = "merged_by"
 	// EdgeAssignees holds the string denoting the assignees edge name in mutations.
 	EdgeAssignees = "assignees"
 	// EdgeRequestedReviewers holds the string denoting the requested_reviewers edge name in mutations.
@@ -100,13 +98,6 @@ const (
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
 	UserColumn = "user_prs_created"
-	// MergedByTable is the table that holds the merged_by relation/edge.
-	MergedByTable = "pull_requests"
-	// MergedByInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	MergedByInverseTable = "users"
-	// MergedByColumn is the table column denoting the merged_by relation/edge.
-	MergedByColumn = "user_prs_merged"
 	// AssigneesTable is the table that holds the assignees relation/edge. The primary key declared below.
 	AssigneesTable = "pull_request_assignees"
 	// AssigneesInverseTable is the table name for the User entity.
@@ -155,7 +146,6 @@ var ForeignKeys = []string{
 	"issue_pull_request",
 	"repository_pull_requests",
 	"user_prs_created",
-	"user_prs_merged",
 }
 
 var (
@@ -359,13 +349,6 @@ func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByMergedByField orders the results by merged_by field.
-func ByMergedByField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newMergedByStep(), sql.OrderByField(field, opts...))
-	}
-}
-
 // ByAssigneesCount orders the results by assignees count.
 func ByAssigneesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -412,13 +395,6 @@ func newUserStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
-	)
-}
-func newMergedByStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(MergedByInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, MergedByTable, MergedByColumn),
 	)
 }
 func newAssigneesStep() *sqlgraph.Step {

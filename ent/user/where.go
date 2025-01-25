@@ -2067,29 +2067,6 @@ func HasPrsCreatedWith(preds ...predicate.PullRequest) predicate.User {
 	})
 }
 
-// HasPrsMerged applies the HasEdge predicate on the "prs_merged" edge.
-func HasPrsMerged() predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, PrsMergedTable, PrsMergedColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasPrsMergedWith applies the HasEdge predicate on the "prs_merged" edge with a given conditions (other predicates).
-func HasPrsMergedWith(preds ...predicate.PullRequest) predicate.User {
-	return predicate.User(func(s *sql.Selector) {
-		step := newPrsMergedStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasCommentsCreated applies the HasEdge predicate on the "comments_created" edge.
 func HasCommentsCreated() predicate.User {
 	return predicate.User(func(s *sql.Selector) {

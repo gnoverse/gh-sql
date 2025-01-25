@@ -106,7 +106,6 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 	var (
 		fset = ff.NewFlagSet("gh-sql sync").SetParent(fs)
 
-		full  = fset.BoolLong("full", "sync repositories from scratch (non-incremental), automatic if more than >10_000 events to retrieve")
 		token = fset.StringLong("token", "", "github personal access token to use (heavily suggested)")
 
 		debugHTTP        = fset.BoolLong("debug.http", "log http requests")
@@ -134,7 +133,6 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 
 			return sync.Sync(ctx, args, sync.Options{
 				DB:        ec.db,
-				Full:      *full,
 				Token:     *token,
 				DebugHTTP: *debugHTTP,
 			})

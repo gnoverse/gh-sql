@@ -26,8 +26,7 @@ func (IssueComment) Fields() []ent.Field {
 		field.String("updated_at"),
 		field.String("issue_url"),
 		field.Enum("author_association").GoType(model.AuthorAssociation("")),
-		// TODO: better type
-		field.JSON("reactions", map[string]any{}),
+		field.JSON("reactions", model.ReactionRollup{}),
 	}
 }
 

@@ -337,21 +337,6 @@ func (uc *UserCreate) AddPrsCreated(p ...*PullRequest) *UserCreate {
 	return uc.AddPrsCreatedIDs(ids...)
 }
 
-// AddPrsMergedIDs adds the "prs_merged" edge to the PullRequest entity by IDs.
-func (uc *UserCreate) AddPrsMergedIDs(ids ...int64) *UserCreate {
-	uc.mutation.AddPrsMergedIDs(ids...)
-	return uc
-}
-
-// AddPrsMerged adds the "prs_merged" edges to the PullRequest entity.
-func (uc *UserCreate) AddPrsMerged(p ...*PullRequest) *UserCreate {
-	ids := make([]int64, len(p))
-	for i := range p {
-		ids[i] = p[i].ID
-	}
-	return uc.AddPrsMergedIDs(ids...)
-}
-
 // AddCommentsCreatedIDs adds the "comments_created" edge to the IssueComment entity by IDs.
 func (uc *UserCreate) AddCommentsCreatedIDs(ids ...int64) *UserCreate {
 	uc.mutation.AddCommentsCreatedIDs(ids...)
@@ -734,22 +719,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Inverse: false,
 			Table:   user.PrsCreatedTable,
 			Columns: []string{user.PrsCreatedColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := uc.mutation.PrsMergedIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.PrsMergedTable,
-			Columns: []string{user.PrsMergedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pullrequest.FieldID, field.TypeInt64),
