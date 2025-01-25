@@ -15,8 +15,7 @@ type TimelineEvent struct {
 // Fields of the TimelineEvent.
 func (TimelineEvent) Fields() []ent.Field {
 	return []ent.Field{
-		// Here we don't '
-		field.String("id").StructTag(`json:"node_id"`),
+		field.String("id").StructTag(`json:"node_id"`).NotEmpty(),
 		field.String("url"),
 		field.String("event"),
 		field.String("commit_id").

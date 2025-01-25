@@ -168,6 +168,11 @@ func (tec *TimelineEventCreate) check() error {
 	if _, ok := tec.mutation.Data(); !ok {
 		return &ValidationError{Name: "data", err: errors.New(`ent: missing required field "TimelineEvent.data"`)}
 	}
+	if v, ok := tec.mutation.ID(); ok {
+		if err := timelineevent.IDValidator(v); err != nil {
+			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "TimelineEvent.id": %w`, err)}
+		}
+	}
 	return nil
 }
 

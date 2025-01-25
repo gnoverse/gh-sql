@@ -2,8 +2,19 @@
 
 package ent
 
+import (
+	"github.com/gnoverse/gh-sql/ent/schema"
+	"github.com/gnoverse/gh-sql/ent/timelineevent"
+)
+
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	timelineeventFields := schema.TimelineEvent{}.Fields()
+	_ = timelineeventFields
+	// timelineeventDescID is the schema descriptor for id field.
+	timelineeventDescID := timelineeventFields[0].Descriptor()
+	// timelineevent.IDValidator is a validator for the "id" field. It is called by the builders before save.
+	timelineevent.IDValidator = timelineeventDescID.Validators[0].(func(string) error)
 }
