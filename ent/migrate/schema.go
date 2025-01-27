@@ -260,7 +260,9 @@ var (
 	}
 	// TimelineEventsColumns holds the columns for the "timeline_events" table.
 	TimelineEventsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeString},
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "numeric_id", Type: field.TypeInt64},
+		{Name: "node_id", Type: field.TypeString},
 		{Name: "url", Type: field.TypeString},
 		{Name: "event", Type: field.TypeString},
 		{Name: "commit_id", Type: field.TypeString, Nullable: true},
@@ -278,13 +280,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "timeline_events_issues_timeline",
-				Columns:    []*schema.Column{TimelineEventsColumns[7]},
+				Columns:    []*schema.Column{TimelineEventsColumns[9]},
 				RefColumns: []*schema.Column{IssuesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "timeline_events_users_actor",
-				Columns:    []*schema.Column{TimelineEventsColumns[8]},
+				Columns:    []*schema.Column{TimelineEventsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

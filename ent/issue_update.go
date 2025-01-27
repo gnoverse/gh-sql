@@ -446,14 +446,14 @@ func (iu *IssueUpdate) AddComments(i ...*IssueComment) *IssueUpdate {
 }
 
 // AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by IDs.
-func (iu *IssueUpdate) AddTimelineIDs(ids ...string) *IssueUpdate {
+func (iu *IssueUpdate) AddTimelineIDs(ids ...int64) *IssueUpdate {
 	iu.mutation.AddTimelineIDs(ids...)
 	return iu
 }
 
 // AddTimeline adds the "timeline" edges to the TimelineEvent entity.
 func (iu *IssueUpdate) AddTimeline(t ...*TimelineEvent) *IssueUpdate {
-	ids := make([]string, len(t))
+	ids := make([]int64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -551,14 +551,14 @@ func (iu *IssueUpdate) ClearTimeline() *IssueUpdate {
 }
 
 // RemoveTimelineIDs removes the "timeline" edge to TimelineEvent entities by IDs.
-func (iu *IssueUpdate) RemoveTimelineIDs(ids ...string) *IssueUpdate {
+func (iu *IssueUpdate) RemoveTimelineIDs(ids ...int64) *IssueUpdate {
 	iu.mutation.RemoveTimelineIDs(ids...)
 	return iu
 }
 
 // RemoveTimeline removes "timeline" edges to TimelineEvent entities.
 func (iu *IssueUpdate) RemoveTimeline(t ...*TimelineEvent) *IssueUpdate {
-	ids := make([]string, len(t))
+	ids := make([]int64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -894,7 +894,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.TimelineColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -907,7 +907,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.TimelineColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -923,7 +923,7 @@ func (iu *IssueUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: []string{issue.TimelineColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1392,14 +1392,14 @@ func (iuo *IssueUpdateOne) AddComments(i ...*IssueComment) *IssueUpdateOne {
 }
 
 // AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by IDs.
-func (iuo *IssueUpdateOne) AddTimelineIDs(ids ...string) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) AddTimelineIDs(ids ...int64) *IssueUpdateOne {
 	iuo.mutation.AddTimelineIDs(ids...)
 	return iuo
 }
 
 // AddTimeline adds the "timeline" edges to the TimelineEvent entity.
 func (iuo *IssueUpdateOne) AddTimeline(t ...*TimelineEvent) *IssueUpdateOne {
-	ids := make([]string, len(t))
+	ids := make([]int64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -1497,14 +1497,14 @@ func (iuo *IssueUpdateOne) ClearTimeline() *IssueUpdateOne {
 }
 
 // RemoveTimelineIDs removes the "timeline" edge to TimelineEvent entities by IDs.
-func (iuo *IssueUpdateOne) RemoveTimelineIDs(ids ...string) *IssueUpdateOne {
+func (iuo *IssueUpdateOne) RemoveTimelineIDs(ids ...int64) *IssueUpdateOne {
 	iuo.mutation.RemoveTimelineIDs(ids...)
 	return iuo
 }
 
 // RemoveTimeline removes "timeline" edges to TimelineEvent entities.
 func (iuo *IssueUpdateOne) RemoveTimeline(t ...*TimelineEvent) *IssueUpdateOne {
-	ids := make([]string, len(t))
+	ids := make([]int64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -1870,7 +1870,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.TimelineColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -1883,7 +1883,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.TimelineColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {
@@ -1899,7 +1899,7 @@ func (iuo *IssueUpdateOne) sqlSave(ctx context.Context) (_node *Issue, err error
 			Columns: []string{issue.TimelineColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

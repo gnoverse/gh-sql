@@ -20,7 +20,11 @@ import (
 type TimelineEvent struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID string `json:"node_id"`
+	ID int64 `json:"internal_id"`
+	// NumericID holds the value of the "numeric_id" field.
+	NumericID int64 `json:"id"`
+	// NodeID holds the value of the "node_id" field.
+	NodeID string `json:"node_id"`
 	// URL holds the value of the "url" field.
 	URL string `json:"url"`
 	// Event holds the value of the "event" field.
@@ -81,7 +85,9 @@ func (*TimelineEvent) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case timelineevent.FieldData:
 			values[i] = new([]byte)
-		case timelineevent.FieldID, timelineevent.FieldURL, timelineevent.FieldEvent, timelineevent.FieldCommitID, timelineevent.FieldCommitURL:
+		case timelineevent.FieldID, timelineevent.FieldNumericID:
+			values[i] = new(sql.NullInt64)
+		case timelineevent.FieldNodeID, timelineevent.FieldURL, timelineevent.FieldEvent, timelineevent.FieldCommitID, timelineevent.FieldCommitURL:
 			values[i] = new(sql.NullString)
 		case timelineevent.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -105,10 +111,22 @@ func (te *TimelineEvent) assignValues(columns []string, values []any) error {
 	for i := range columns {
 		switch columns[i] {
 		case timelineevent.FieldID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field id", values[i])
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			te.ID = int64(value.Int64)
+		case timelineevent.FieldNumericID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field numeric_id", values[i])
 			} else if value.Valid {
-				te.ID = value.String
+				te.NumericID = value.Int64
+			}
+		case timelineevent.FieldNodeID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field node_id", values[i])
+			} else if value.Valid {
+				te.NodeID = value.String
 			}
 		case timelineevent.FieldURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -210,6 +228,12 @@ func (te *TimelineEvent) String() string {
 	var builder strings.Builder
 	builder.WriteString("TimelineEvent(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", te.ID))
+	builder.WriteString("numeric_id=")
+	builder.WriteString(fmt.Sprintf("%v", te.NumericID))
+	builder.WriteString(", ")
+	builder.WriteString("node_id=")
+	builder.WriteString(te.NodeID)
+	builder.WriteString(", ")
 	builder.WriteString("url=")
 	builder.WriteString(te.URL)
 	builder.WriteString(", ")

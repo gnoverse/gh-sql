@@ -11,58 +11,58 @@ import (
 )
 
 // ID filters vertices based on their ID field.
-func ID(id string) predicate.TimelineEvent {
+func ID(id int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldEQ(FieldID, id))
 }
 
 // IDEQ applies the EQ predicate on the ID field.
-func IDEQ(id string) predicate.TimelineEvent {
+func IDEQ(id int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldEQ(FieldID, id))
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
-func IDNEQ(id string) predicate.TimelineEvent {
+func IDNEQ(id int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldNEQ(FieldID, id))
 }
 
 // IDIn applies the In predicate on the ID field.
-func IDIn(ids ...string) predicate.TimelineEvent {
+func IDIn(ids ...int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldIn(FieldID, ids...))
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
-func IDNotIn(ids ...string) predicate.TimelineEvent {
+func IDNotIn(ids ...int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldNotIn(FieldID, ids...))
 }
 
 // IDGT applies the GT predicate on the ID field.
-func IDGT(id string) predicate.TimelineEvent {
+func IDGT(id int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldGT(FieldID, id))
 }
 
 // IDGTE applies the GTE predicate on the ID field.
-func IDGTE(id string) predicate.TimelineEvent {
+func IDGTE(id int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldGTE(FieldID, id))
 }
 
 // IDLT applies the LT predicate on the ID field.
-func IDLT(id string) predicate.TimelineEvent {
+func IDLT(id int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldLT(FieldID, id))
 }
 
 // IDLTE applies the LTE predicate on the ID field.
-func IDLTE(id string) predicate.TimelineEvent {
+func IDLTE(id int64) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldLTE(FieldID, id))
 }
 
-// IDEqualFold applies the EqualFold predicate on the ID field.
-func IDEqualFold(id string) predicate.TimelineEvent {
-	return predicate.TimelineEvent(sql.FieldEqualFold(FieldID, id))
+// NumericID applies equality check predicate on the "numeric_id" field. It's identical to NumericIDEQ.
+func NumericID(v int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldEQ(FieldNumericID, v))
 }
 
-// IDContainsFold applies the ContainsFold predicate on the ID field.
-func IDContainsFold(id string) predicate.TimelineEvent {
-	return predicate.TimelineEvent(sql.FieldContainsFold(FieldID, id))
+// NodeID applies equality check predicate on the "node_id" field. It's identical to NodeIDEQ.
+func NodeID(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldEQ(FieldNodeID, v))
 }
 
 // URL applies equality check predicate on the "url" field. It's identical to URLEQ.
@@ -88,6 +88,111 @@ func CommitURL(v string) predicate.TimelineEvent {
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.TimelineEvent {
 	return predicate.TimelineEvent(sql.FieldEQ(FieldCreatedAt, v))
+}
+
+// NumericIDEQ applies the EQ predicate on the "numeric_id" field.
+func NumericIDEQ(v int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldEQ(FieldNumericID, v))
+}
+
+// NumericIDNEQ applies the NEQ predicate on the "numeric_id" field.
+func NumericIDNEQ(v int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldNEQ(FieldNumericID, v))
+}
+
+// NumericIDIn applies the In predicate on the "numeric_id" field.
+func NumericIDIn(vs ...int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldIn(FieldNumericID, vs...))
+}
+
+// NumericIDNotIn applies the NotIn predicate on the "numeric_id" field.
+func NumericIDNotIn(vs ...int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldNotIn(FieldNumericID, vs...))
+}
+
+// NumericIDGT applies the GT predicate on the "numeric_id" field.
+func NumericIDGT(v int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldGT(FieldNumericID, v))
+}
+
+// NumericIDGTE applies the GTE predicate on the "numeric_id" field.
+func NumericIDGTE(v int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldGTE(FieldNumericID, v))
+}
+
+// NumericIDLT applies the LT predicate on the "numeric_id" field.
+func NumericIDLT(v int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldLT(FieldNumericID, v))
+}
+
+// NumericIDLTE applies the LTE predicate on the "numeric_id" field.
+func NumericIDLTE(v int64) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldLTE(FieldNumericID, v))
+}
+
+// NodeIDEQ applies the EQ predicate on the "node_id" field.
+func NodeIDEQ(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldEQ(FieldNodeID, v))
+}
+
+// NodeIDNEQ applies the NEQ predicate on the "node_id" field.
+func NodeIDNEQ(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldNEQ(FieldNodeID, v))
+}
+
+// NodeIDIn applies the In predicate on the "node_id" field.
+func NodeIDIn(vs ...string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldIn(FieldNodeID, vs...))
+}
+
+// NodeIDNotIn applies the NotIn predicate on the "node_id" field.
+func NodeIDNotIn(vs ...string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldNotIn(FieldNodeID, vs...))
+}
+
+// NodeIDGT applies the GT predicate on the "node_id" field.
+func NodeIDGT(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldGT(FieldNodeID, v))
+}
+
+// NodeIDGTE applies the GTE predicate on the "node_id" field.
+func NodeIDGTE(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldGTE(FieldNodeID, v))
+}
+
+// NodeIDLT applies the LT predicate on the "node_id" field.
+func NodeIDLT(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldLT(FieldNodeID, v))
+}
+
+// NodeIDLTE applies the LTE predicate on the "node_id" field.
+func NodeIDLTE(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldLTE(FieldNodeID, v))
+}
+
+// NodeIDContains applies the Contains predicate on the "node_id" field.
+func NodeIDContains(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldContains(FieldNodeID, v))
+}
+
+// NodeIDHasPrefix applies the HasPrefix predicate on the "node_id" field.
+func NodeIDHasPrefix(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldHasPrefix(FieldNodeID, v))
+}
+
+// NodeIDHasSuffix applies the HasSuffix predicate on the "node_id" field.
+func NodeIDHasSuffix(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldHasSuffix(FieldNodeID, v))
+}
+
+// NodeIDEqualFold applies the EqualFold predicate on the "node_id" field.
+func NodeIDEqualFold(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldEqualFold(FieldNodeID, v))
+}
+
+// NodeIDContainsFold applies the ContainsFold predicate on the "node_id" field.
+func NodeIDContainsFold(v string) predicate.TimelineEvent {
+	return predicate.TimelineEvent(sql.FieldContainsFold(FieldNodeID, v))
 }
 
 // URLEQ applies the EQ predicate on the "url" field.

@@ -31,6 +31,41 @@ func (teu *TimelineEventUpdate) Where(ps ...predicate.TimelineEvent) *TimelineEv
 	return teu
 }
 
+// SetNumericID sets the "numeric_id" field.
+func (teu *TimelineEventUpdate) SetNumericID(i int64) *TimelineEventUpdate {
+	teu.mutation.ResetNumericID()
+	teu.mutation.SetNumericID(i)
+	return teu
+}
+
+// SetNillableNumericID sets the "numeric_id" field if the given value is not nil.
+func (teu *TimelineEventUpdate) SetNillableNumericID(i *int64) *TimelineEventUpdate {
+	if i != nil {
+		teu.SetNumericID(*i)
+	}
+	return teu
+}
+
+// AddNumericID adds i to the "numeric_id" field.
+func (teu *TimelineEventUpdate) AddNumericID(i int64) *TimelineEventUpdate {
+	teu.mutation.AddNumericID(i)
+	return teu
+}
+
+// SetNodeID sets the "node_id" field.
+func (teu *TimelineEventUpdate) SetNodeID(s string) *TimelineEventUpdate {
+	teu.mutation.SetNodeID(s)
+	return teu
+}
+
+// SetNillableNodeID sets the "node_id" field if the given value is not nil.
+func (teu *TimelineEventUpdate) SetNillableNodeID(s *string) *TimelineEventUpdate {
+	if s != nil {
+		teu.SetNodeID(*s)
+	}
+	return teu
+}
+
 // SetURL sets the "url" field.
 func (teu *TimelineEventUpdate) SetURL(s string) *TimelineEventUpdate {
 	teu.mutation.SetURL(s)
@@ -210,13 +245,22 @@ func (teu *TimelineEventUpdate) ExecX(ctx context.Context) {
 }
 
 func (teu *TimelineEventUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := sqlgraph.NewUpdateSpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64))
 	if ps := teu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := teu.mutation.NumericID(); ok {
+		_spec.SetField(timelineevent.FieldNumericID, field.TypeInt64, value)
+	}
+	if value, ok := teu.mutation.AddedNumericID(); ok {
+		_spec.AddField(timelineevent.FieldNumericID, field.TypeInt64, value)
+	}
+	if value, ok := teu.mutation.NodeID(); ok {
+		_spec.SetField(timelineevent.FieldNodeID, field.TypeString, value)
 	}
 	if value, ok := teu.mutation.URL(); ok {
 		_spec.SetField(timelineevent.FieldURL, field.TypeString, value)
@@ -318,6 +362,41 @@ type TimelineEventUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TimelineEventMutation
+}
+
+// SetNumericID sets the "numeric_id" field.
+func (teuo *TimelineEventUpdateOne) SetNumericID(i int64) *TimelineEventUpdateOne {
+	teuo.mutation.ResetNumericID()
+	teuo.mutation.SetNumericID(i)
+	return teuo
+}
+
+// SetNillableNumericID sets the "numeric_id" field if the given value is not nil.
+func (teuo *TimelineEventUpdateOne) SetNillableNumericID(i *int64) *TimelineEventUpdateOne {
+	if i != nil {
+		teuo.SetNumericID(*i)
+	}
+	return teuo
+}
+
+// AddNumericID adds i to the "numeric_id" field.
+func (teuo *TimelineEventUpdateOne) AddNumericID(i int64) *TimelineEventUpdateOne {
+	teuo.mutation.AddNumericID(i)
+	return teuo
+}
+
+// SetNodeID sets the "node_id" field.
+func (teuo *TimelineEventUpdateOne) SetNodeID(s string) *TimelineEventUpdateOne {
+	teuo.mutation.SetNodeID(s)
+	return teuo
+}
+
+// SetNillableNodeID sets the "node_id" field if the given value is not nil.
+func (teuo *TimelineEventUpdateOne) SetNillableNodeID(s *string) *TimelineEventUpdateOne {
+	if s != nil {
+		teuo.SetNodeID(*s)
+	}
+	return teuo
 }
 
 // SetURL sets the "url" field.
@@ -512,7 +591,7 @@ func (teuo *TimelineEventUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (teuo *TimelineEventUpdateOne) sqlSave(ctx context.Context) (_node *TimelineEvent, err error) {
-	_spec := sqlgraph.NewUpdateSpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString))
+	_spec := sqlgraph.NewUpdateSpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64))
 	id, ok := teuo.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "TimelineEvent.id" for update`)}
@@ -536,6 +615,15 @@ func (teuo *TimelineEventUpdateOne) sqlSave(ctx context.Context) (_node *Timelin
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := teuo.mutation.NumericID(); ok {
+		_spec.SetField(timelineevent.FieldNumericID, field.TypeInt64, value)
+	}
+	if value, ok := teuo.mutation.AddedNumericID(); ok {
+		_spec.AddField(timelineevent.FieldNumericID, field.TypeInt64, value)
+	}
+	if value, ok := teuo.mutation.NodeID(); ok {
+		_spec.SetField(timelineevent.FieldNodeID, field.TypeString, value)
 	}
 	if value, ok := teuo.mutation.URL(); ok {
 		_spec.SetField(timelineevent.FieldURL, field.TypeString, value)

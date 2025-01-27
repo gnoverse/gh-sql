@@ -398,14 +398,14 @@ func (uc *UserCreate) AddPrsReviewRequested(p ...*PullRequest) *UserCreate {
 }
 
 // AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by IDs.
-func (uc *UserCreate) AddTimelineEventsCreatedIDs(ids ...string) *UserCreate {
+func (uc *UserCreate) AddTimelineEventsCreatedIDs(ids ...int64) *UserCreate {
 	uc.mutation.AddTimelineEventsCreatedIDs(ids...)
 	return uc
 }
 
 // AddTimelineEventsCreated adds the "timeline_events_created" edges to the TimelineEvent entity.
 func (uc *UserCreate) AddTimelineEventsCreated(t ...*TimelineEvent) *UserCreate {
-	ids := make([]string, len(t))
+	ids := make([]int64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -801,7 +801,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: []string{user.TimelineEventsCreatedColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

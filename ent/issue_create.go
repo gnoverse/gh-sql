@@ -272,14 +272,14 @@ func (ic *IssueCreate) AddComments(i ...*IssueComment) *IssueCreate {
 }
 
 // AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by IDs.
-func (ic *IssueCreate) AddTimelineIDs(ids ...string) *IssueCreate {
+func (ic *IssueCreate) AddTimelineIDs(ids ...int64) *IssueCreate {
 	ic.mutation.AddTimelineIDs(ids...)
 	return ic
 }
 
 // AddTimeline adds the "timeline" edges to the TimelineEvent entity.
 func (ic *IssueCreate) AddTimeline(t ...*TimelineEvent) *IssueCreate {
-	ids := make([]string, len(t))
+	ids := make([]int64, len(t))
 	for i := range t {
 		ids[i] = t[i].ID
 	}
@@ -611,7 +611,7 @@ func (ic *IssueCreate) createSpec() (*Issue, *sqlgraph.CreateSpec) {
 			Columns: []string{issue.TimelineColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString),
+				IDSpec: sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

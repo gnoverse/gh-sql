@@ -2,8 +2,6 @@ package sync
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -209,10 +207,9 @@ func fetchIssueComments(ctx context.Context, h *synchub.Hub, fi fetchIssue) erro
 type fetchIssueEventType struct {
 	ent.TimelineEvent
 	// Acts as a fallback when the ID doesn't exist.
-	NumericID int64             `json:"id"`
-	Actor     *model.SimpleUser `json:"actor"`
-	User      *model.SimpleUser `json:"user"`
-	Wrapper   model.TimelineEventWrapper
+	Actor   *model.SimpleUser `json:"actor"`
+	User    *model.SimpleUser `json:"user"`
+	Wrapper model.TimelineEventWrapper
 }
 
 func (f *fetchIssueEventType) UnmarshalJSON(b []byte) error {
@@ -225,10 +222,6 @@ func (f *fetchIssueEventType) UnmarshalJSON(b []byte) error {
 
 	if err := f.Wrapper.UnmarshalJSON(b); err != nil {
 		return err
-	}
-	if f.NumericID == 0 {
-		sum := sha256.Sum256(b)
-		f.NumericID = int64(binary.LittleEndian.Uint64(sum[:8]) >> 1)
 	}
 
 	f.TimelineEvent.Data = f.Wrapper
@@ -267,10 +260,6 @@ func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error 
 				return err
 			}
 			cr.SetActorID(us.ID)
-		}
-
-		if iev.ID == "" {
-			cr.SetID(fmt.Sprintf("ghsql_%d", iev.NumericID))
 		}
 
 		err := cr.

@@ -12,6 +12,10 @@ const (
 	Label = "timeline_event"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
+	// FieldNumericID holds the string denoting the numeric_id field in the database.
+	FieldNumericID = "numeric_id"
+	// FieldNodeID holds the string denoting the node_id field in the database.
+	FieldNodeID = "node_id"
 	// FieldURL holds the string denoting the url field in the database.
 	FieldURL = "url"
 	// FieldEvent holds the string denoting the event field in the database.
@@ -49,6 +53,8 @@ const (
 // Columns holds all SQL columns for timelineevent fields.
 var Columns = []string{
 	FieldID,
+	FieldNumericID,
+	FieldNodeID,
 	FieldURL,
 	FieldEvent,
 	FieldCommitID,
@@ -79,17 +85,22 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-var (
-	// IDValidator is a validator for the "id" field. It is called by the builders before save.
-	IDValidator func(string) error
-)
-
 // OrderOption defines the ordering options for the TimelineEvent queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByNumericID orders the results by the numeric_id field.
+func ByNumericID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNumericID, opts...).ToFunc()
+}
+
+// ByNodeID orders the results by the node_id field.
+func ByNodeID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNodeID, opts...).ToFunc()
 }
 
 // ByURL orders the results by the url field.

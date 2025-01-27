@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -24,6 +23,18 @@ type TimelineEventCreate struct {
 	mutation *TimelineEventMutation
 	hooks    []Hook
 	conflict []sql.ConflictOption
+}
+
+// SetNumericID sets the "numeric_id" field.
+func (tec *TimelineEventCreate) SetNumericID(i int64) *TimelineEventCreate {
+	tec.mutation.SetNumericID(i)
+	return tec
+}
+
+// SetNodeID sets the "node_id" field.
+func (tec *TimelineEventCreate) SetNodeID(s string) *TimelineEventCreate {
+	tec.mutation.SetNodeID(s)
+	return tec
 }
 
 // SetURL sets the "url" field.
@@ -79,8 +90,8 @@ func (tec *TimelineEventCreate) SetData(mew model.TimelineEventWrapper) *Timelin
 }
 
 // SetID sets the "id" field.
-func (tec *TimelineEventCreate) SetID(s string) *TimelineEventCreate {
-	tec.mutation.SetID(s)
+func (tec *TimelineEventCreate) SetID(i int64) *TimelineEventCreate {
+	tec.mutation.SetID(i)
 	return tec
 }
 
@@ -156,6 +167,12 @@ func (tec *TimelineEventCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tec *TimelineEventCreate) check() error {
+	if _, ok := tec.mutation.NumericID(); !ok {
+		return &ValidationError{Name: "numeric_id", err: errors.New(`ent: missing required field "TimelineEvent.numeric_id"`)}
+	}
+	if _, ok := tec.mutation.NodeID(); !ok {
+		return &ValidationError{Name: "node_id", err: errors.New(`ent: missing required field "TimelineEvent.node_id"`)}
+	}
 	if _, ok := tec.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "TimelineEvent.url"`)}
 	}
@@ -167,11 +184,6 @@ func (tec *TimelineEventCreate) check() error {
 	}
 	if _, ok := tec.mutation.Data(); !ok {
 		return &ValidationError{Name: "data", err: errors.New(`ent: missing required field "TimelineEvent.data"`)}
-	}
-	if v, ok := tec.mutation.ID(); ok {
-		if err := timelineevent.IDValidator(v); err != nil {
-			return &ValidationError{Name: "id", err: fmt.Errorf(`ent: validator failed for field "TimelineEvent.id": %w`, err)}
-		}
 	}
 	return nil
 }
@@ -187,12 +199,9 @@ func (tec *TimelineEventCreate) sqlSave(ctx context.Context) (*TimelineEvent, er
 		}
 		return nil, err
 	}
-	if _spec.ID.Value != nil {
-		if id, ok := _spec.ID.Value.(string); ok {
-			_node.ID = id
-		} else {
-			return nil, fmt.Errorf("unexpected TimelineEvent.ID type: %T", _spec.ID.Value)
-		}
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int64(id)
 	}
 	tec.mutation.id = &_node.ID
 	tec.mutation.done = true
@@ -202,12 +211,20 @@ func (tec *TimelineEventCreate) sqlSave(ctx context.Context) (*TimelineEvent, er
 func (tec *TimelineEventCreate) createSpec() (*TimelineEvent, *sqlgraph.CreateSpec) {
 	var (
 		_node = &TimelineEvent{config: tec.config}
-		_spec = sqlgraph.NewCreateSpec(timelineevent.Table, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString))
+		_spec = sqlgraph.NewCreateSpec(timelineevent.Table, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64))
 	)
 	_spec.OnConflict = tec.conflict
 	if id, ok := tec.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
+	}
+	if value, ok := tec.mutation.NumericID(); ok {
+		_spec.SetField(timelineevent.FieldNumericID, field.TypeInt64, value)
+		_node.NumericID = value
+	}
+	if value, ok := tec.mutation.NodeID(); ok {
+		_spec.SetField(timelineevent.FieldNodeID, field.TypeString, value)
+		_node.NodeID = value
 	}
 	if value, ok := tec.mutation.URL(); ok {
 		_spec.SetField(timelineevent.FieldURL, field.TypeString, value)
@@ -274,7 +291,7 @@ func (tec *TimelineEventCreate) createSpec() (*TimelineEvent, *sqlgraph.CreateSp
 // of the `INSERT` statement. For example:
 //
 //	client.TimelineEvent.Create().
-//		SetURL(v).
+//		SetNumericID(v).
 //		OnConflict(
 //			// Update the row with the new values
 //			// the was proposed for insertion.
@@ -283,7 +300,7 @@ func (tec *TimelineEventCreate) createSpec() (*TimelineEvent, *sqlgraph.CreateSp
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TimelineEventUpsert) {
-//			SetURL(v+v).
+//			SetNumericID(v+v).
 //		}).
 //		Exec(ctx)
 func (tec *TimelineEventCreate) OnConflict(opts ...sql.ConflictOption) *TimelineEventUpsertOne {
@@ -318,6 +335,36 @@ type (
 		*sql.UpdateSet
 	}
 )
+
+// SetNumericID sets the "numeric_id" field.
+func (u *TimelineEventUpsert) SetNumericID(v int64) *TimelineEventUpsert {
+	u.Set(timelineevent.FieldNumericID, v)
+	return u
+}
+
+// UpdateNumericID sets the "numeric_id" field to the value that was provided on create.
+func (u *TimelineEventUpsert) UpdateNumericID() *TimelineEventUpsert {
+	u.SetExcluded(timelineevent.FieldNumericID)
+	return u
+}
+
+// AddNumericID adds v to the "numeric_id" field.
+func (u *TimelineEventUpsert) AddNumericID(v int64) *TimelineEventUpsert {
+	u.Add(timelineevent.FieldNumericID, v)
+	return u
+}
+
+// SetNodeID sets the "node_id" field.
+func (u *TimelineEventUpsert) SetNodeID(v string) *TimelineEventUpsert {
+	u.Set(timelineevent.FieldNodeID, v)
+	return u
+}
+
+// UpdateNodeID sets the "node_id" field to the value that was provided on create.
+func (u *TimelineEventUpsert) UpdateNodeID() *TimelineEventUpsert {
+	u.SetExcluded(timelineevent.FieldNodeID)
+	return u
+}
 
 // SetURL sets the "url" field.
 func (u *TimelineEventUpsert) SetURL(v string) *TimelineEventUpsert {
@@ -451,6 +498,41 @@ func (u *TimelineEventUpsertOne) Update(set func(*TimelineEventUpsert)) *Timelin
 	return u
 }
 
+// SetNumericID sets the "numeric_id" field.
+func (u *TimelineEventUpsertOne) SetNumericID(v int64) *TimelineEventUpsertOne {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.SetNumericID(v)
+	})
+}
+
+// AddNumericID adds v to the "numeric_id" field.
+func (u *TimelineEventUpsertOne) AddNumericID(v int64) *TimelineEventUpsertOne {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.AddNumericID(v)
+	})
+}
+
+// UpdateNumericID sets the "numeric_id" field to the value that was provided on create.
+func (u *TimelineEventUpsertOne) UpdateNumericID() *TimelineEventUpsertOne {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.UpdateNumericID()
+	})
+}
+
+// SetNodeID sets the "node_id" field.
+func (u *TimelineEventUpsertOne) SetNodeID(v string) *TimelineEventUpsertOne {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.SetNodeID(v)
+	})
+}
+
+// UpdateNodeID sets the "node_id" field to the value that was provided on create.
+func (u *TimelineEventUpsertOne) UpdateNodeID() *TimelineEventUpsertOne {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.UpdateNodeID()
+	})
+}
+
 // SetURL sets the "url" field.
 func (u *TimelineEventUpsertOne) SetURL(v string) *TimelineEventUpsertOne {
 	return u.Update(func(s *TimelineEventUpsert) {
@@ -565,12 +647,7 @@ func (u *TimelineEventUpsertOne) ExecX(ctx context.Context) {
 }
 
 // Exec executes the UPSERT query and returns the inserted/updated ID.
-func (u *TimelineEventUpsertOne) ID(ctx context.Context) (id string, err error) {
-	if u.create.driver.Dialect() == dialect.MySQL {
-		// In case of "ON CONFLICT", there is no way to get back non-numeric ID
-		// fields from the database since MySQL does not support the RETURNING clause.
-		return id, errors.New("ent: TimelineEventUpsertOne.ID is not supported by MySQL driver. Use TimelineEventUpsertOne.Exec instead")
-	}
+func (u *TimelineEventUpsertOne) ID(ctx context.Context) (id int64, err error) {
 	node, err := u.create.Save(ctx)
 	if err != nil {
 		return id, err
@@ -579,7 +656,7 @@ func (u *TimelineEventUpsertOne) ID(ctx context.Context) (id string, err error) 
 }
 
 // IDX is like ID, but panics if an error occurs.
-func (u *TimelineEventUpsertOne) IDX(ctx context.Context) string {
+func (u *TimelineEventUpsertOne) IDX(ctx context.Context) int64 {
 	id, err := u.ID(ctx)
 	if err != nil {
 		panic(err)
@@ -633,6 +710,10 @@ func (tecb *TimelineEventCreateBulk) Save(ctx context.Context) ([]*TimelineEvent
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int64(id)
+				}
 				mutation.done = true
 				return nodes[i], nil
 			})
@@ -684,7 +765,7 @@ func (tecb *TimelineEventCreateBulk) ExecX(ctx context.Context) {
 //		// Override some of the fields with custom
 //		// update values.
 //		Update(func(u *ent.TimelineEventUpsert) {
-//			SetURL(v+v).
+//			SetNumericID(v+v).
 //		}).
 //		Exec(ctx)
 func (tecb *TimelineEventCreateBulk) OnConflict(opts ...sql.ConflictOption) *TimelineEventUpsertBulk {
@@ -761,6 +842,41 @@ func (u *TimelineEventUpsertBulk) Update(set func(*TimelineEventUpsert)) *Timeli
 		set(&TimelineEventUpsert{UpdateSet: update})
 	}))
 	return u
+}
+
+// SetNumericID sets the "numeric_id" field.
+func (u *TimelineEventUpsertBulk) SetNumericID(v int64) *TimelineEventUpsertBulk {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.SetNumericID(v)
+	})
+}
+
+// AddNumericID adds v to the "numeric_id" field.
+func (u *TimelineEventUpsertBulk) AddNumericID(v int64) *TimelineEventUpsertBulk {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.AddNumericID(v)
+	})
+}
+
+// UpdateNumericID sets the "numeric_id" field to the value that was provided on create.
+func (u *TimelineEventUpsertBulk) UpdateNumericID() *TimelineEventUpsertBulk {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.UpdateNumericID()
+	})
+}
+
+// SetNodeID sets the "node_id" field.
+func (u *TimelineEventUpsertBulk) SetNodeID(v string) *TimelineEventUpsertBulk {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.SetNodeID(v)
+	})
+}
+
+// UpdateNodeID sets the "node_id" field to the value that was provided on create.
+func (u *TimelineEventUpsertBulk) UpdateNodeID() *TimelineEventUpsertBulk {
+	return u.Update(func(s *TimelineEventUpsert) {
+		s.UpdateNodeID()
+	})
 }
 
 // SetURL sets the "url" field.

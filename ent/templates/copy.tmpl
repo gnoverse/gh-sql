@@ -1,3 +1,22 @@
+{{/*
+	- fields: list of fields to process
+	- receiver: name of receiver
+*/}}
+{{ define "copy/helper/fields" -}}
+	{{- range .fields -}}
+		{{- $setter := print "Set" .StructField -}}
+		{{- if ne nil .Annotations.no_copy_template -}}
+			{{/* skip */}}
+		{{- else if .Nillable }}
+			if input.{{ .StructField }} != nil {
+				{{ $.receiver }}.{{ $setter }}(*input.{{ .StructField }})
+			}
+		{{- else }}
+			{{ $.receiver }}.{{ $setter }}(input.{{ .StructField }})
+		{{- end }}
+	{{- end -}}
+{{ end }}
+
 {{ define "copy" }}
 
 {{/* Add the base header for the generated file */}}
@@ -5,44 +24,28 @@
 {{ template "header" $ }}
 
 {{ range $n := $.Nodes }}
-    {{ $builder := $n.CreateName }}
-    {{ $receiver := receiver $builder }}
+	{{ $builder := $n.CreateName }}
+	{{ $receiver := receiver $builder }}
 
 	// Copy{{ $n.Name }} allows to create a new {{ $n.Name }} copying the existing
 	// values of input.
-    func ({{ $receiver }} *{{ $builder }}) Copy{{ $n.Name }}(input *{{ $n.Name }}) *{{ $builder }} {
-	{{ $receiver }}.{{ print "Set" $n.ID.StructField }}(input.{{ $n.ID.StructField }})
+	func ({{ $receiver }} *{{ $builder }}) Copy{{ $n.Name }}(input *{{ $n.Name }}) *{{ $builder }} {
+		{{- if eq nil .ID.Annotations.no_copy_template }}
+		{{ $receiver }}.{{ print "Set" $n.ID.StructField }}(input.{{ $n.ID.StructField }})
+		{{- end -}}
 
-        {{- range $f := $n.Fields }}
-            {{- $setter := print "Set" $f.StructField }}
-			{{- if $f.Nillable }}
-				if input.{{ $f.StructField }} != nil {
-					{{ $receiver }}.{{ $setter }}(*input.{{ $f.StructField }})
-				}
-			{{- else }}
-				{{ $receiver }}.{{ $setter }}(input.{{ $f.StructField }})
-			{{- end }}
-        {{- end }}
-        return {{ $receiver }}
-    }
+		{{- template "copy/helper/fields" (dict "fields" $n.Fields "receiver" $receiver) }}
+		return {{ $receiver }}
+	}
 
-    {{ $builder := $n.UpdateOneName }}
-    {{ $receiver := receiver $builder }}
+	{{ $builder := $n.UpdateOneName }}
+	{{ $receiver := receiver $builder }}
 	// Copy{{ $n.Name }} allows to update a {{ $n.Name }} copying the existing
 	// values of input.
-    func ({{ $receiver }} *{{ $builder }}) Copy{{ $n.Name }}(input *{{ $n.Name }}) *{{ $builder }} {
-        {{- range $f := $n.Fields }}
-            {{- $setter := print "Set" $f.StructField }}
-			{{- if $f.Nillable }}
-				if input.{{ $f.StructField }} != nil {
-					{{ $receiver }}.{{ $setter }}(*input.{{ $f.StructField }})
-				}
-			{{- else }}
-				{{ $receiver }}.{{ $setter }}(input.{{ $f.StructField }})
-			{{- end }}
-        {{- end }}
-        return {{ $receiver }}
-    }
+	func ({{ $receiver }} *{{ $builder }}) Copy{{ $n.Name }}(input *{{ $n.Name }}) *{{ $builder }} {
+		{{- template "copy/helper/fields" (dict "fields" $n.Fields "receiver" $receiver) }}
+		return {{ $receiver }}
+	}
 {{ end }}
 
 {{ end }}

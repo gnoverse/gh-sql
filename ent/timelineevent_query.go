@@ -130,8 +130,8 @@ func (teq *TimelineEventQuery) FirstX(ctx context.Context) *TimelineEvent {
 
 // FirstID returns the first TimelineEvent ID from the query.
 // Returns a *NotFoundError when no TimelineEvent ID was found.
-func (teq *TimelineEventQuery) FirstID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (teq *TimelineEventQuery) FirstID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = teq.Limit(1).IDs(setContextOp(ctx, teq.ctx, "FirstID")); err != nil {
 		return
 	}
@@ -143,7 +143,7 @@ func (teq *TimelineEventQuery) FirstID(ctx context.Context) (id string, err erro
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (teq *TimelineEventQuery) FirstIDX(ctx context.Context) string {
+func (teq *TimelineEventQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := teq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -181,8 +181,8 @@ func (teq *TimelineEventQuery) OnlyX(ctx context.Context) *TimelineEvent {
 // OnlyID is like Only, but returns the only TimelineEvent ID in the query.
 // Returns a *NotSingularError when more than one TimelineEvent ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (teq *TimelineEventQuery) OnlyID(ctx context.Context) (id string, err error) {
-	var ids []string
+func (teq *TimelineEventQuery) OnlyID(ctx context.Context) (id int64, err error) {
+	var ids []int64
 	if ids, err = teq.Limit(2).IDs(setContextOp(ctx, teq.ctx, "OnlyID")); err != nil {
 		return
 	}
@@ -198,7 +198,7 @@ func (teq *TimelineEventQuery) OnlyID(ctx context.Context) (id string, err error
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (teq *TimelineEventQuery) OnlyIDX(ctx context.Context) string {
+func (teq *TimelineEventQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := teq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -226,7 +226,7 @@ func (teq *TimelineEventQuery) AllX(ctx context.Context) []*TimelineEvent {
 }
 
 // IDs executes the query and returns a list of TimelineEvent IDs.
-func (teq *TimelineEventQuery) IDs(ctx context.Context) (ids []string, err error) {
+func (teq *TimelineEventQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if teq.ctx.Unique == nil && teq.path != nil {
 		teq.Unique(true)
 	}
@@ -238,7 +238,7 @@ func (teq *TimelineEventQuery) IDs(ctx context.Context) (ids []string, err error
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (teq *TimelineEventQuery) IDsX(ctx context.Context) []string {
+func (teq *TimelineEventQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := teq.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -334,12 +334,12 @@ func (teq *TimelineEventQuery) WithIssue(opts ...func(*IssueQuery)) *TimelineEve
 // Example:
 //
 //	var v []struct {
-//		URL string `json:"url"`
+//		NumericID int64 `json:"id"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.TimelineEvent.Query().
-//		GroupBy(timelineevent.FieldURL).
+//		GroupBy(timelineevent.FieldNumericID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (teq *TimelineEventQuery) GroupBy(field string, fields ...string) *TimelineEventGroupBy {
@@ -357,11 +357,11 @@ func (teq *TimelineEventQuery) GroupBy(field string, fields ...string) *Timeline
 // Example:
 //
 //	var v []struct {
-//		URL string `json:"url"`
+//		NumericID int64 `json:"id"`
 //	}
 //
 //	client.TimelineEvent.Query().
-//		Select(timelineevent.FieldURL).
+//		Select(timelineevent.FieldNumericID).
 //		Scan(ctx, &v)
 func (teq *TimelineEventQuery) Select(fields ...string) *TimelineEventSelect {
 	teq.ctx.Fields = append(teq.ctx.Fields, fields...)
@@ -526,7 +526,7 @@ func (teq *TimelineEventQuery) sqlCount(ctx context.Context) (int, error) {
 }
 
 func (teq *TimelineEventQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeString))
+	_spec := sqlgraph.NewQuerySpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64))
 	_spec.From = teq.sql
 	if unique := teq.ctx.Unique; unique != nil {
 		_spec.Unique = *unique

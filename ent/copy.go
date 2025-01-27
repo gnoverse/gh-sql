@@ -349,7 +349,8 @@ func (ruo *RepositoryUpdateOne) CopyRepository(input *Repository) *RepositoryUpd
 // CopyTimelineEvent allows to create a new TimelineEvent copying the existing
 // values of input.
 func (tec *TimelineEventCreate) CopyTimelineEvent(input *TimelineEvent) *TimelineEventCreate {
-	tec.SetID(input.ID)
+	tec.SetNumericID(input.NumericID)
+	tec.SetNodeID(input.NodeID)
 	tec.SetURL(input.URL)
 	tec.SetEvent(input.Event)
 	if input.CommitID != nil {
@@ -366,6 +367,8 @@ func (tec *TimelineEventCreate) CopyTimelineEvent(input *TimelineEvent) *Timelin
 // CopyTimelineEvent allows to update a TimelineEvent copying the existing
 // values of input.
 func (teuo *TimelineEventUpdateOne) CopyTimelineEvent(input *TimelineEvent) *TimelineEventUpdateOne {
+	teuo.SetNumericID(input.NumericID)
+	teuo.SetNodeID(input.NodeID)
 	teuo.SetURL(input.URL)
 	teuo.SetEvent(input.Event)
 	if input.CommitID != nil {

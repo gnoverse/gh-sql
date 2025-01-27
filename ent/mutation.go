@@ -80,8 +80,8 @@ type IssueMutation struct {
 	comments            map[int64]struct{}
 	removedcomments     map[int64]struct{}
 	clearedcomments     bool
-	timeline            map[string]struct{}
-	removedtimeline     map[string]struct{}
+	timeline            map[int64]struct{}
+	removedtimeline     map[int64]struct{}
 	clearedtimeline     bool
 	pull_request        *int64
 	clearedpull_request bool
@@ -1268,9 +1268,9 @@ func (m *IssueMutation) ResetComments() {
 }
 
 // AddTimelineIDs adds the "timeline" edge to the TimelineEvent entity by ids.
-func (m *IssueMutation) AddTimelineIDs(ids ...string) {
+func (m *IssueMutation) AddTimelineIDs(ids ...int64) {
 	if m.timeline == nil {
-		m.timeline = make(map[string]struct{})
+		m.timeline = make(map[int64]struct{})
 	}
 	for i := range ids {
 		m.timeline[ids[i]] = struct{}{}
@@ -1288,9 +1288,9 @@ func (m *IssueMutation) TimelineCleared() bool {
 }
 
 // RemoveTimelineIDs removes the "timeline" edge to the TimelineEvent entity by IDs.
-func (m *IssueMutation) RemoveTimelineIDs(ids ...string) {
+func (m *IssueMutation) RemoveTimelineIDs(ids ...int64) {
 	if m.removedtimeline == nil {
-		m.removedtimeline = make(map[string]struct{})
+		m.removedtimeline = make(map[int64]struct{})
 	}
 	for i := range ids {
 		delete(m.timeline, ids[i])
@@ -1299,7 +1299,7 @@ func (m *IssueMutation) RemoveTimelineIDs(ids ...string) {
 }
 
 // RemovedTimeline returns the removed IDs of the "timeline" edge to the TimelineEvent entity.
-func (m *IssueMutation) RemovedTimelineIDs() (ids []string) {
+func (m *IssueMutation) RemovedTimelineIDs() (ids []int64) {
 	for id := range m.removedtimeline {
 		ids = append(ids, id)
 	}
@@ -1307,7 +1307,7 @@ func (m *IssueMutation) RemovedTimelineIDs() (ids []string) {
 }
 
 // TimelineIDs returns the "timeline" edge IDs in the mutation.
-func (m *IssueMutation) TimelineIDs() (ids []string) {
+func (m *IssueMutation) TimelineIDs() (ids []int64) {
 	for id := range m.timeline {
 		ids = append(ids, id)
 	}
@@ -10240,7 +10240,10 @@ type TimelineEventMutation struct {
 	config
 	op            Op
 	typ           string
-	id            *string
+	id            *int64
+	numeric_id    *int64
+	addnumeric_id *int64
+	node_id       *string
 	url           *string
 	event         *string
 	commit_id     *string
@@ -10277,7 +10280,7 @@ func newTimelineEventMutation(c config, op Op, opts ...timelineeventOption) *Tim
 }
 
 // withTimelineEventID sets the ID field of the mutation.
-func withTimelineEventID(id string) timelineeventOption {
+func withTimelineEventID(id int64) timelineeventOption {
 	return func(m *TimelineEventMutation) {
 		var (
 			err   error
@@ -10329,13 +10332,13 @@ func (m TimelineEventMutation) Tx() (*Tx, error) {
 
 // SetID sets the value of the id field. Note that this
 // operation is only accepted on creation of TimelineEvent entities.
-func (m *TimelineEventMutation) SetID(id string) {
+func (m *TimelineEventMutation) SetID(id int64) {
 	m.id = &id
 }
 
 // ID returns the ID value in the mutation. Note that the ID is only available
 // if it was provided to the builder or after it was returned from the database.
-func (m *TimelineEventMutation) ID() (id string, exists bool) {
+func (m *TimelineEventMutation) ID() (id int64, exists bool) {
 	if m.id == nil {
 		return
 	}
@@ -10346,12 +10349,12 @@ func (m *TimelineEventMutation) ID() (id string, exists bool) {
 // That means, if the mutation is applied within a transaction with an isolation level such
 // as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
 // or updated by the mutation.
-func (m *TimelineEventMutation) IDs(ctx context.Context) ([]string, error) {
+func (m *TimelineEventMutation) IDs(ctx context.Context) ([]int64, error) {
 	switch {
 	case m.op.Is(OpUpdateOne | OpDeleteOne):
 		id, exists := m.ID()
 		if exists {
-			return []string{id}, nil
+			return []int64{id}, nil
 		}
 		fallthrough
 	case m.op.Is(OpUpdate | OpDelete):
@@ -10359,6 +10362,98 @@ func (m *TimelineEventMutation) IDs(ctx context.Context) ([]string, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetNumericID sets the "numeric_id" field.
+func (m *TimelineEventMutation) SetNumericID(i int64) {
+	m.numeric_id = &i
+	m.addnumeric_id = nil
+}
+
+// NumericID returns the value of the "numeric_id" field in the mutation.
+func (m *TimelineEventMutation) NumericID() (r int64, exists bool) {
+	v := m.numeric_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNumericID returns the old "numeric_id" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldNumericID(ctx context.Context) (v int64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNumericID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNumericID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNumericID: %w", err)
+	}
+	return oldValue.NumericID, nil
+}
+
+// AddNumericID adds i to the "numeric_id" field.
+func (m *TimelineEventMutation) AddNumericID(i int64) {
+	if m.addnumeric_id != nil {
+		*m.addnumeric_id += i
+	} else {
+		m.addnumeric_id = &i
+	}
+}
+
+// AddedNumericID returns the value that was added to the "numeric_id" field in this mutation.
+func (m *TimelineEventMutation) AddedNumericID() (r int64, exists bool) {
+	v := m.addnumeric_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetNumericID resets all changes to the "numeric_id" field.
+func (m *TimelineEventMutation) ResetNumericID() {
+	m.numeric_id = nil
+	m.addnumeric_id = nil
+}
+
+// SetNodeID sets the "node_id" field.
+func (m *TimelineEventMutation) SetNodeID(s string) {
+	m.node_id = &s
+}
+
+// NodeID returns the value of the "node_id" field in the mutation.
+func (m *TimelineEventMutation) NodeID() (r string, exists bool) {
+	v := m.node_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNodeID returns the old "node_id" field's value of the TimelineEvent entity.
+// If the TimelineEvent object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TimelineEventMutation) OldNodeID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNodeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNodeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNodeID: %w", err)
+	}
+	return oldValue.NodeID, nil
+}
+
+// ResetNodeID resets all changes to the "node_id" field.
+func (m *TimelineEventMutation) ResetNodeID() {
+	m.node_id = nil
 }
 
 // SetURL sets the "url" field.
@@ -10715,7 +10810,13 @@ func (m *TimelineEventMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TimelineEventMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 8)
+	if m.numeric_id != nil {
+		fields = append(fields, timelineevent.FieldNumericID)
+	}
+	if m.node_id != nil {
+		fields = append(fields, timelineevent.FieldNodeID)
+	}
 	if m.url != nil {
 		fields = append(fields, timelineevent.FieldURL)
 	}
@@ -10742,6 +10843,10 @@ func (m *TimelineEventMutation) Fields() []string {
 // schema.
 func (m *TimelineEventMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case timelineevent.FieldNumericID:
+		return m.NumericID()
+	case timelineevent.FieldNodeID:
+		return m.NodeID()
 	case timelineevent.FieldURL:
 		return m.URL()
 	case timelineevent.FieldEvent:
@@ -10763,6 +10868,10 @@ func (m *TimelineEventMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *TimelineEventMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case timelineevent.FieldNumericID:
+		return m.OldNumericID(ctx)
+	case timelineevent.FieldNodeID:
+		return m.OldNodeID(ctx)
 	case timelineevent.FieldURL:
 		return m.OldURL(ctx)
 	case timelineevent.FieldEvent:
@@ -10784,6 +10893,20 @@ func (m *TimelineEventMutation) OldField(ctx context.Context, name string) (ent.
 // type.
 func (m *TimelineEventMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case timelineevent.FieldNumericID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNumericID(v)
+		return nil
+	case timelineevent.FieldNodeID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNodeID(v)
+		return nil
 	case timelineevent.FieldURL:
 		v, ok := value.(string)
 		if !ok {
@@ -10833,13 +10956,21 @@ func (m *TimelineEventMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *TimelineEventMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addnumeric_id != nil {
+		fields = append(fields, timelineevent.FieldNumericID)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *TimelineEventMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case timelineevent.FieldNumericID:
+		return m.AddedNumericID()
+	}
 	return nil, false
 }
 
@@ -10848,6 +10979,13 @@ func (m *TimelineEventMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TimelineEventMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case timelineevent.FieldNumericID:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNumericID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown TimelineEvent numeric field %s", name)
 }
@@ -10890,6 +11028,12 @@ func (m *TimelineEventMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *TimelineEventMutation) ResetField(name string) error {
 	switch name {
+	case timelineevent.FieldNumericID:
+		m.ResetNumericID()
+		return nil
+	case timelineevent.FieldNodeID:
+		m.ResetNodeID()
+		return nil
 	case timelineevent.FieldURL:
 		m.ResetURL()
 		return nil
@@ -11069,8 +11213,8 @@ type UserMutation struct {
 	prs_review_requested           map[int64]struct{}
 	removedprs_review_requested    map[int64]struct{}
 	clearedprs_review_requested    bool
-	timeline_events_created        map[string]struct{}
-	removedtimeline_events_created map[string]struct{}
+	timeline_events_created        map[int64]struct{}
+	removedtimeline_events_created map[int64]struct{}
 	clearedtimeline_events_created bool
 	done                           bool
 	oldValue                       func(context.Context) (*User, error)
@@ -12878,9 +13022,9 @@ func (m *UserMutation) ResetPrsReviewRequested() {
 }
 
 // AddTimelineEventsCreatedIDs adds the "timeline_events_created" edge to the TimelineEvent entity by ids.
-func (m *UserMutation) AddTimelineEventsCreatedIDs(ids ...string) {
+func (m *UserMutation) AddTimelineEventsCreatedIDs(ids ...int64) {
 	if m.timeline_events_created == nil {
-		m.timeline_events_created = make(map[string]struct{})
+		m.timeline_events_created = make(map[int64]struct{})
 	}
 	for i := range ids {
 		m.timeline_events_created[ids[i]] = struct{}{}
@@ -12898,9 +13042,9 @@ func (m *UserMutation) TimelineEventsCreatedCleared() bool {
 }
 
 // RemoveTimelineEventsCreatedIDs removes the "timeline_events_created" edge to the TimelineEvent entity by IDs.
-func (m *UserMutation) RemoveTimelineEventsCreatedIDs(ids ...string) {
+func (m *UserMutation) RemoveTimelineEventsCreatedIDs(ids ...int64) {
 	if m.removedtimeline_events_created == nil {
-		m.removedtimeline_events_created = make(map[string]struct{})
+		m.removedtimeline_events_created = make(map[int64]struct{})
 	}
 	for i := range ids {
 		delete(m.timeline_events_created, ids[i])
@@ -12909,7 +13053,7 @@ func (m *UserMutation) RemoveTimelineEventsCreatedIDs(ids ...string) {
 }
 
 // RemovedTimelineEventsCreated returns the removed IDs of the "timeline_events_created" edge to the TimelineEvent entity.
-func (m *UserMutation) RemovedTimelineEventsCreatedIDs() (ids []string) {
+func (m *UserMutation) RemovedTimelineEventsCreatedIDs() (ids []int64) {
 	for id := range m.removedtimeline_events_created {
 		ids = append(ids, id)
 	}
@@ -12917,7 +13061,7 @@ func (m *UserMutation) RemovedTimelineEventsCreatedIDs() (ids []string) {
 }
 
 // TimelineEventsCreatedIDs returns the "timeline_events_created" edge IDs in the mutation.
-func (m *UserMutation) TimelineEventsCreatedIDs() (ids []string) {
+func (m *UserMutation) TimelineEventsCreatedIDs() (ids []int64) {
 	for id := range m.timeline_events_created {
 		ids = append(ids, id)
 	}

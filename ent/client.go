@@ -1110,7 +1110,7 @@ func (c *TimelineEventClient) UpdateOne(te *TimelineEvent) *TimelineEventUpdateO
 }
 
 // UpdateOneID returns an update builder for the given id.
-func (c *TimelineEventClient) UpdateOneID(id string) *TimelineEventUpdateOne {
+func (c *TimelineEventClient) UpdateOneID(id int64) *TimelineEventUpdateOne {
 	mutation := newTimelineEventMutation(c.config, OpUpdateOne, withTimelineEventID(id))
 	return &TimelineEventUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
@@ -1127,7 +1127,7 @@ func (c *TimelineEventClient) DeleteOne(te *TimelineEvent) *TimelineEventDeleteO
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TimelineEventClient) DeleteOneID(id string) *TimelineEventDeleteOne {
+func (c *TimelineEventClient) DeleteOneID(id int64) *TimelineEventDeleteOne {
 	builder := c.Delete().Where(timelineevent.ID(id))
 	builder.mutation.id = &id
 	builder.mutation.op = OpDeleteOne
@@ -1144,12 +1144,12 @@ func (c *TimelineEventClient) Query() *TimelineEventQuery {
 }
 
 // Get returns a TimelineEvent entity by its id.
-func (c *TimelineEventClient) Get(ctx context.Context, id string) (*TimelineEvent, error) {
+func (c *TimelineEventClient) Get(ctx context.Context, id int64) (*TimelineEvent, error) {
 	return c.Query().Where(timelineevent.ID(id)).Only(ctx)
 }
 
 // GetX is like Get, but panics if an error occurs.
-func (c *TimelineEventClient) GetX(ctx context.Context, id string) *TimelineEvent {
+func (c *TimelineEventClient) GetX(ctx context.Context, id int64) *TimelineEvent {
 	obj, err := c.Get(ctx, id)
 	if err != nil {
 		panic(err)
