@@ -85,6 +85,11 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// NodeIDValidator is a validator for the "node_id" field. It is called by the builders before save.
+	NodeIDValidator func(string) error
+)
+
 // OrderOption defines the ordering options for the TimelineEvent queries.
 type OrderOption func(*sql.Selector)
 

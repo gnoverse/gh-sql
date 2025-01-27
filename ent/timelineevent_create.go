@@ -173,6 +173,11 @@ func (tec *TimelineEventCreate) check() error {
 	if _, ok := tec.mutation.NodeID(); !ok {
 		return &ValidationError{Name: "node_id", err: errors.New(`ent: missing required field "TimelineEvent.node_id"`)}
 	}
+	if v, ok := tec.mutation.NodeID(); ok {
+		if err := timelineevent.NodeIDValidator(v); err != nil {
+			return &ValidationError{Name: "node_id", err: fmt.Errorf(`ent: validator failed for field "TimelineEvent.node_id": %w`, err)}
+		}
+	}
 	if _, ok := tec.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New(`ent: missing required field "TimelineEvent.url"`)}
 	}

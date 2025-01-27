@@ -20,7 +20,7 @@ import (
 type TimelineEvent struct {
 	config `json:"-"`
 	// ID of the ent.
-	ID int64 `json:"internal_id"`
+	ID int64 `json:"-"`
 	// NumericID holds the value of the "numeric_id" field.
 	NumericID int64 `json:"id"`
 	// NodeID holds the value of the "node_id" field.

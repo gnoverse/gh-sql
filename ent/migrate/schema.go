@@ -262,7 +262,7 @@ var (
 	TimelineEventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
 		{Name: "numeric_id", Type: field.TypeInt64},
-		{Name: "node_id", Type: field.TypeString},
+		{Name: "node_id", Type: field.TypeString, Unique: true},
 		{Name: "url", Type: field.TypeString},
 		{Name: "event", Type: field.TypeString},
 		{Name: "commit_id", Type: field.TypeString, Nullable: true},

@@ -21,7 +21,7 @@ func (TimelineEvent) Fields() []ent.Field {
 			StructTag(`json:"-"`).
 			Annotations(model.NoCopyTemplate{}),
 		field.Int64("numeric_id").StructTag(`json:"id"`),
-		field.String("node_id"),
+		field.String("node_id").Unique().NotEmpty(),
 		field.String("url"),
 		field.String("event"),
 		field.String("commit_id").

@@ -244,7 +244,20 @@ func (teu *TimelineEventUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (teu *TimelineEventUpdate) check() error {
+	if v, ok := teu.mutation.NodeID(); ok {
+		if err := timelineevent.NodeIDValidator(v); err != nil {
+			return &ValidationError{Name: "node_id", err: fmt.Errorf(`ent: validator failed for field "TimelineEvent.node_id": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (teu *TimelineEventUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := teu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64))
 	if ps := teu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -590,7 +603,20 @@ func (teuo *TimelineEventUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (teuo *TimelineEventUpdateOne) check() error {
+	if v, ok := teuo.mutation.NodeID(); ok {
+		if err := timelineevent.NodeIDValidator(v); err != nil {
+			return &ValidationError{Name: "node_id", err: fmt.Errorf(`ent: validator failed for field "TimelineEvent.node_id": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (teuo *TimelineEventUpdateOne) sqlSave(ctx context.Context) (_node *TimelineEvent, err error) {
+	if err := teuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(timelineevent.Table, timelineevent.Columns, sqlgraph.NewFieldSpec(timelineevent.FieldID, field.TypeInt64))
 	id, ok := teuo.mutation.ID()
 	if !ok {

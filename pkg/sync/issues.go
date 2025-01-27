@@ -1,10 +1,14 @@
 package sync
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gnoverse/gh-sql/ent"
 	"github.com/gnoverse/gh-sql/ent/issue"
@@ -208,9 +212,11 @@ func fetchIssueComments(ctx context.Context, h *synchub.Hub, fi fetchIssue) erro
 
 type fetchIssueEventType struct {
 	ent.TimelineEvent
-	// Acts as a fallback when the ID doesn't exist.
+	// User is a fallback when Actor is not set
 	Actor   *model.SimpleUser `json:"actor"`
 	User    *model.SimpleUser `json:"user"`
+	// Fallback for CreatedAt when not available.
+	SubmittedAt time.Time `json:"submitted_at"`
 	Wrapper model.TimelineEventWrapper
 }
 
@@ -241,6 +247,10 @@ func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error 
 			fi.owner, fi.repo, fi.issueNumber),
 	)
 	for iev := range iter.Values {
+		if iev.CreatedAt.IsZero() && !iev.SubmittedAt.IsZero() {
+			iev.CreatedAt = iev.SubmittedAt
+		}
+
 		// Create issue event.
 		cr := fi.DB.TimelineEvent.Create().
 			CopyTimelineEvent(&iev.TimelineEvent).
@@ -264,8 +274,27 @@ func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error 
 			cr.SetActorID(us.ID)
 		}
 
+		if iev.NodeID == "" {
+			switch t := iev.Data.TimelineEvent.(type) {
+			case *model.TimelineCrossReferencedEvent:
+				// cross-referenced events don't contain a node id field.
+				// use an alternative "fake" node id instead.
+				var buf bytes.Buffer
+				binary.Write(&buf, binary.LittleEndian, struct {
+					ActorID   int64
+					IssueID   int64
+					CreatedAt int64
+				}{actor.ID, t.Source.Issue.ID, iev.CreatedAt.Unix()})
+				hash := base64.RawStdEncoding.EncodeToString(buf.Bytes())
+				cr.SetNodeID("GHSQL_cr_" + hash)
+			default:
+				h.Warn(fmt.Errorf("invalid type with empty node ID: %T", t))
+				continue
+			}
+		}
+
 		err := cr.
-			OnConflictColumns(timelineevent.FieldID).UpdateNewValues().
+			OnConflictColumns(timelineevent.FieldNodeID).UpdateNewValues().
 			Exec(ctx)
 		if err != nil {
 			h.Warn(fmt.Errorf("save event of type %v: %w", iev.Event, err))
