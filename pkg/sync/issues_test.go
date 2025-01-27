@@ -19,7 +19,7 @@ func Test_fetchIssueEventType(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, fetchIssueEventType{
 		TimelineEvent: ent.TimelineEvent{
-			ID: "RRE_lADOE-u6Jc6nWXfDzwAAAAO8joIJ",
+			NodeID: "RRE_lADOE-u6Jc6nWXfDzwAAAAO8joIJ",
 		},
 		Actor: &model.SimpleUser{
 			Login: "thehowl",
@@ -27,7 +27,7 @@ func Test_fetchIssueEventType(t *testing.T) {
 		},
 	}, fetchIssueEventType{
 		TimelineEvent: ent.TimelineEvent{
-			ID: fi[0].ID,
+			NodeID: fi[0].NodeID,
 		},
 		Actor: fi[0].Actor,
 		User:  fi[0].User,
