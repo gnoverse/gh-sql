@@ -123,7 +123,7 @@ func (fpr fetchPullRequest) fetch(ctx context.Context, h *synchub.Hub, pr pullAn
 		return nil, fmt.Errorf("fetchPullRequest%+v fetch deps: %w", fpr, err)
 	}
 
-	err = cr.OnConflict().UpdateNewValues().
+	err = cr.OnConflictColumns(pullrequest.FieldID).UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetchPullRequest%+v save: %w", fpr, err)

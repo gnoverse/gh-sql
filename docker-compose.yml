@@ -1,0 +1,29 @@
+services:
+  gh-sql:
+    build: .
+    command: gh-sql sync --debug.http gnoverse/gh-sql
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - GHSQL_DSN=postgres://postgres:postgres@db/gh-sql
+      - GHSQL_TOKEN
+
+  db:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gh-sql
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

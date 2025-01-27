@@ -8,6 +8,8 @@ import (
 
 	"github.com/gnoverse/gh-sql/ent"
 	"github.com/gnoverse/gh-sql/ent/issue"
+	"github.com/gnoverse/gh-sql/ent/issuecomment"
+	"github.com/gnoverse/gh-sql/ent/timelineevent"
 	"github.com/gnoverse/gh-sql/pkg/model"
 	"github.com/gnoverse/gh-sql/pkg/sync/internal/synchub"
 	"golang.org/x/sync/errgroup"
@@ -96,7 +98,7 @@ func (fi fetchIssue) fetch(ctx context.Context, h *synchub.Hub, i issueAndEdges)
 		return nil, fmt.Errorf("fetchIssue%+v fetch deps: %w", fi, err)
 	}
 
-	err = cr.OnConflict().UpdateNewValues().
+	err = cr.OnConflictColumns(issue.FieldID).UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetchIssue%+v save: %w", fi, err)
@@ -192,7 +194,7 @@ func fetchIssueComments(ctx context.Context, h *synchub.Hub, fi fetchIssue) erro
 			cr.SetUserID(us.ID)
 		}
 		err = cr.
-			OnConflict().UpdateNewValues().
+			OnConflictColumns(issuecomment.FieldID).UpdateNewValues().
 			Exec(ctx)
 		if err != nil {
 			h.Warn(err)
@@ -263,7 +265,7 @@ func fetchIssueEvents(ctx context.Context, h *synchub.Hub, fi fetchIssue) error 
 		}
 
 		err := cr.
-			OnConflict().UpdateNewValues().
+			OnConflictColumns(timelineevent.FieldID).UpdateNewValues().
 			Exec(ctx)
 		if err != nil {
 			h.Warn(fmt.Errorf("save event of type %v: %w", iev.Event, err))

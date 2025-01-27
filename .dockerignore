@@ -1,5 +1,8 @@
+config.txt
 misc/schema2schema/schema.json
 *.sqlite
 config.txt
 *.vim
 .env
+Dockerfile
+docker-compose.yml

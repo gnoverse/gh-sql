@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gnoverse/gh-sql/ent"
@@ -20,7 +21,9 @@ import (
 	"github.com/peterbourgon/ff/v4"
 	"github.com/peterbourgon/ff/v4/ffhelp"
 
+	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "modernc.org/sqlite"
 )
 
@@ -33,19 +36,64 @@ func main() {
 	}
 }
 
+// TODO: ideally this should go in the help for dsn, see https://github.com/peterbourgon/ff/issues/140
+const longHelp = `gh-sql is a tool to synchronize data from the GitHub REST API into a
+SQL database.
+
+CONFIGURATION
+
+All the options of the program can be passed through flags, environment variables,
+or a configuration file (and the -config flag), in this order of precedence.
+
+- Environment variables match the flag name, by prepending "GHSQL_" to the name
+  of the flag and replacing hyphens and periods with an underscore. For instance,
+  --debug.http is available as GHSQL_DEBUG_HTTP.
+- The config file is a simple key/value association, using ff's "PlainParser".
+  For more information:
+  <https://pkg.go.dev/github.com/peterbourgon/ff/v4@v4.0.0-alpha.4#PlainParser>
+
+DATABASE SUPPORT
+
+gh-sql currently supports postgres and sqlite as SQL databases. The database is
+selected with the --dsn flag, which accepts an URL with information for
+connecting to the specified database.
+
+- sqlite://<FILE>
+	<FILE> may be an absolute or relative path.
+- postgres://[<USER>[:<PASS>]@][<HOST>][/<DB_NAME>]
+	a postgres connection string
+		see: <https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING-URIS>
+	postgres environment variables are also recognized
+		see: <https://pkg.go.dev/github.com/jackc/pgx/v5@v5.7.2/pgconn#ParseConfig>
+
+CREDITS
+
+Contribute: <https://github.com/gnoverse/gh-sql>
+Report an issue: <https://github.com/gnoverse/gh-sql/issues/new/choose>
+
+Morgan Bazalgette <morgan@howl.moe>
+Licensed under the Apache License 2.0`
+
+const (
+	sqliteSchema   = "sqlite://"
+	postgresSchema = "postgres://"
+)
+
 func run() error {
 	// Parse configuration
 	var (
 		globalFS = ff.NewFlagSet("gh-sql")
-		entDebug = globalFS.BoolLong("debug.ent", "use ent's debug client (very verbose)")
+		dsn      = globalFS.StringLong("dsn", "sqlite://database.sqlite", "data source name URL, see long help")
 		_        = globalFS.StringLong("config", "", "config file (optional)")
+		entDebug = globalFS.BoolLong("debug.ent", "use ent's debug client (very verbose)")
 		ctx      = &execContext{}
 	)
+	_ = dsn
 	cmd := &ff.Command{
 		Name:      "gh-sql",
 		Usage:     "gh-sql SUBCOMMAND ...",
 		ShortHelp: "a tool to locally store information about GitHub repository, query them and serve them.",
-		LongHelp:  "", // TODO
+		LongHelp:  longHelp,
 		Flags:     globalFS,
 		Subcommands: []*ff.Command{
 			newSyncCmd(globalFS, ctx),
@@ -57,7 +105,7 @@ func run() error {
 	}
 
 	err := cmd.Parse(os.Args[1:],
-		ff.WithEnvVarPrefix("GHSQL_"),
+		ff.WithEnvVarPrefix("GHSQL"),
 		ff.WithConfigFileFlag("config"),
 		ff.WithConfigFileParser(ff.PlainParser),
 	)
@@ -66,18 +114,37 @@ func run() error {
 		return err
 	}
 
-	abs, err := filepath.Abs("./database.sqlite")
-	if err != nil {
-		return err
-	}
+	var entDrv *entsql.Driver
+	switch {
+	case strings.HasPrefix(*dsn, sqliteSchema):
+		fname := (*dsn)[len(sqliteSchema):]
+		abs, err := filepath.Abs(fname)
+		if err != nil {
+			return fmt.Errorf("could not make file path absolute: %w", err)
+		}
+		ctx.sqlDB, err = sql.Open("sqlite", fmt.Sprintf("file://%s?_pragma=foreign_keys(1)&_txlock=exclusive", abs))
+		if err != nil {
+			return fmt.Errorf("failed opening connection to postgres: %v", err)
+		}
+		defer ctx.sqlDB.Close()
+		// sync has mostly writes to the database, and modernc.org/sqlite
+		// does not support concurrent writes. Set MaxOpenConns=1 to avoid errors.
+		ctx.sqlDB.SetMaxOpenConns(1)
 
-	ctx.sqlDB, err = sql.Open("sqlite", fmt.Sprintf("file://%s?_pragma=foreign_keys(1)&_txlock=exclusive", abs))
-	if err != nil {
-		return fmt.Errorf("failed opening connection to postgres: %v", err)
-	}
-	defer ctx.sqlDB.Close()
+		entDrv = entsql.OpenDB(dialect.SQLite, ctx.sqlDB)
+	case strings.HasPrefix(*dsn, postgresSchema):
+		ctx.sqlDB, err = sql.Open("pgx", *dsn)
+		if err != nil {
+			return fmt.Errorf("failed opening connection to postgres: %v", err)
+		}
+		defer ctx.sqlDB.Close()
 
-	entDrv := entsql.OpenDB("sqlite3", ctx.sqlDB)
+		entDrv = entsql.OpenDB(dialect.Postgres, ctx.sqlDB)
+	default:
+		return fmt.Errorf("unsupported dsn URL: %q", *dsn)
+	}
+	// TODO: test out postgres
+
 	ctx.db = ent.NewClient(ent.Driver(entDrv))
 	if *entDebug {
 		ctx.db = ctx.db.Debug()
@@ -118,17 +185,11 @@ func newSyncCmd(fs *ff.FlagSet, ec *execContext) *ff.Command {
 	)
 	return &ff.Command{
 		Name:      "sync",
-		Usage:     "gh-sql sync [FLAGS...] REPOS...",
+		Usage:     "gh-sql sync [FLAGS]... REPOS...",
 		ShortHelp: "synchronize the current state with GitHub",
 		LongHelp:  "Repositories must be specified with the syntax <owner>/<repo>.",
 		Flags:     fset,
 		Exec: func(ctx context.Context, args []string) error {
-			// sync has mostly writes to the database, and modernc.org/sqlite
-			// does not support concurrent writes. Set MaxOpenConns=1 to avoid errors.
-			// TODO: when adding support for multiple databases, ensure to drop
-			// this line for all other DBs
-			ec.sqlDB.SetMaxOpenConns(1)
-
 			if *debugJSONCatcher != "" {
 				model.EventsMissedData = &onDemandFile{fileName: *debugJSONCatcher}
 			}

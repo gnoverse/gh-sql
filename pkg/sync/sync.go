@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/gnoverse/gh-sql/ent"
+	"github.com/gnoverse/gh-sql/ent/repository"
+	"github.com/gnoverse/gh-sql/ent/user"
 	"github.com/gnoverse/gh-sql/pkg/model"
 	"github.com/gnoverse/gh-sql/pkg/sync/internal/synchub"
 )
@@ -92,7 +94,7 @@ func (f fetchRepository) Fetch(ctx context.Context, h *synchub.Hub) (*ent.Reposi
 	err = f.DB.Repository.Create().
 		CopyRepository(&r.Repository).
 		SetOwnerID(u.ID).
-		OnConflict().UpdateNewValues().
+		OnConflictColumns(repository.FieldID).UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetchRepository%+v save: %w", f, err)
@@ -148,7 +150,7 @@ func (fu fetchUser) Fetch(ctx context.Context, h *synchub.Hub) (*ent.User, error
 
 	err := fu.DB.User.Create().
 		CopyUser(&u).
-		OnConflict().UpdateNewValues().
+		OnConflictColumns(user.FieldID).UpdateNewValues().
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetchUser%+v save: %w", fu, err)
